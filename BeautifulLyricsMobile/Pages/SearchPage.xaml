@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BeautifulLyricsMobile.Pages.SearchPage"
+             xmlns:viewmodels="clr-namespace:BeautifulLyricsMobile.Models"
+             xmlns:local="clr-namespace:BeautifulLyricsMobile"
+             Title="SearchPage">
+
+    <ContentPage.BindingContext>
+        <viewmodels:SearchViewModel/>
+    </ContentPage.BindingContext>
+
+    <VerticalStackLayout>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="20"/>
+            </Grid.RowDefinitions>
+
+            <SearchBar x:Name="searchBar" Placeholder="What do you want to listen to?" HorizontalOptions="Center" WidthRequest="300" Keyboard="Chat" SearchCommand="{Binding Search}" SearchCommandParameter="{Binding Text, Source={x:Reference searchBar}}"/>
+
+            <ListView x:Name="searchResults" Grid.Row="1" ItemsSource="{Binding SearchResults}" Margin="0,20" HasUnevenRows="True" ItemSelected="searchResults_ItemSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <local:CustomViewCell SelectedBackgroundColor="#212121">
+                            <Grid Padding="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Image Grid.RowSpan="2" Source="{Binding ImageUrl}" Aspect="AspectFill" HeightRequest="60" WidthRequest="60"/>
+                                <Label Grid.Column="1" Text="{Binding Title}" FontSize="Medium" FontAttributes="Bold" Margin="10,0,0,0"/>
+                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding Artist}" TextColor="LightGray" Margin="10,-20,0,0"/>
+                            </Grid>
+                        </local:CustomViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+    </VerticalStackLayout>
+</ContentPage>

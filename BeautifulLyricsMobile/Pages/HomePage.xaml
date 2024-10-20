@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:BeautifulLyricsMobile.Models"
+             x:Class="BeautifulLyricsMobile.Pages.HomePage"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+             Title="HomePage">
+    <ContentPage.BindingContext>
+        <viewmodels:SongViewModel x:Name="SongViewModel"/>
+    </ContentPage.BindingContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="70"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+
+        <ScrollView>
+            <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="Transparent">
+                <Label.Shadow>
+                    <Shadow Brush="White" Offset="2,2" Radius="40" Opacity="0.6"/>
+                </Label.Shadow>
+            </Label>
+        </ScrollView>
+
+        <Border x:Name="songInformationSmall" BackgroundColor="#292929" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="10,0,10,10">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped"/>
+            </Border.GestureRecognizers>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="68"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="60"/>
+                </Grid.ColumnDefinitions>
+
+                <Border WidthRequest="50" HeightRequest="50" StrokeThickness="0" StrokeShape="RoundRectangle 5,5,5,5" Margin="8,0,0,0" VerticalOptions="Center" HorizontalOptions="Start">
+                    <Image Source="{Binding Image}"/>
+                </Border>
+
+                <VerticalStackLayout Grid.Column="1" Margin="0,8,0,0">
+                    <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="18" MaxLines="1"/>
+                    <Label Text="{Binding Artist}" TextColor="LightGray" Margin="1,0,0,0"/> <!-- idk why, but the margin was just really bothering me -->
+                </VerticalStackLayout>
+
+                <!--<mi:MauiIcon Icon="{mi:MaterialRounded Icon={Binding PlayStatus}, BindingContext={x:Reference SongViewModel}}" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center"/>-->
+                <!--<mi:MauiIcon x:Name="pauseIcon" Icon="{mi:MaterialRounded Icon=Pause}" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center"/>
+                <mi:MauiIcon x:Name="playIcon" Icon="{mi:MaterialRounded Icon=PlayArrow}" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center" IsVisible="False"/>-->
+                <Button x:Name="pauseButton" Text="{mi:MaterialRounded Icon=Pause}" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause"/>
+                <Button x:Name="playButton" Text="{mi:MaterialRounded Icon=PlayArrow}" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause" IsVisible="False"/>
+            </Grid>
+        </Border>
+
+        <Border x:Name="fullSongCard" BackgroundColor="#292929" Grid.RowSpan="2" StrokeThickness="0" IsVisible="False">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="250"/>
+                </Grid.RowDefinitions>
+
+                <HorizontalStackLayout Spacing="120">
+                    <Button Text="{mi:MaterialRounded Icon=KeyboardControlKey}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Rotation="180" Clicked="FullCardCollapse"/>
+                    <Button Text="{mi:MaterialRounded Icon=AddCircleOutline}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="AddLyrics"/>
+                    <Button Text="{mi:MaterialRounded Icon=Lyrics}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="LyricsView"/>
+                </HorizontalStackLayout>
+
+                <Border Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="20" HorizontalOptions="Center">
+                    <Image Source="{Binding Image}"/>
+                </Border>
+
+                <VerticalStackLayout Grid.Row="2" Margin="30,15,0,0" Spacing="5">
+                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" FontSize="Title" MaxLines="1"/>
+                    <Label Text="{Binding Artist}" TextColor="LightGray" FontSize="Subtitle"/>
+
+                    <Slider WidthRequest="375" HorizontalOptions="Start" Margin="-10,20,0,0" Maximum="{Binding Duration}" Value="{Binding Timestamp}" ValueChanged="Slider_ValueChanged"/>
+
+                    <HorizontalStackLayout Spacing="300">
+                        <Label Text="{Binding TimestampString}" TextColor="LightGray" FontSize="Caption"/>
+                        <Label Text="{Binding DurationString}" TextColor="LightGray" FontSize="Caption" Margin="0,0,0,0"/>
+                    </HorizontalStackLayout>
+
+                    <Button Text="Delete Song" Clicked="DeleteSong"/>
+
+                    <HorizontalStackLayout Margin="20,-5,0,0" Spacing="15">
+                        <Button Text="{mi:MaterialRounded Icon=Shuffle}" Margin="-5,0,0,0" Padding="0,7,0,0" BackgroundColor="Transparent" TextColor="White"/>
+                        <Button Text="{mi:MaterialRounded Icon=SkipPrevious}" Padding="0,0,-50,0" BackgroundColor="Transparent" TextColor="White" Clicked="SkipPrevious"/>
+                        <Button x:Name="fullPlayButton" Text="{mi:MaterialRounded Icon=PlayCircle, IconSize=55}" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause" IsVisible="False"/>
+                        <Button x:Name="fullPauseButton" Text="{mi:MaterialRounded Icon=PauseCircle, IconSize=55}" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause"/>
+                        <Button Text="{mi:MaterialRounded Icon=SkipNext}" Padding="-50,0,0,0" BackgroundColor="Transparent" TextColor="White" Clicked="SkipNext"/>
+                        <Button Text="{mi:MaterialRounded Icon=Repeat}" BackgroundColor="Transparent" TextColor="White"/>
+                    </HorizontalStackLayout>
+
+                    <Border BackgroundColor="Pink" Grid.Row="2" Margin="0,100">
+                        <Label Text="Hello World!"/>
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

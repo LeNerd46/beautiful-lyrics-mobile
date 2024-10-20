@@ -1,0 +1,13 @@
+.Active {
+    color: rgb(23, 132, 214);
+    font-size: x-large;
+}
+
+.Sung {
+    color: rgb(255, 0, 0);
+    font-size: x-small;
+}
+
+label {
+    color: white;
+}
