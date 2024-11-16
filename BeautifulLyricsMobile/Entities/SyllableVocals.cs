@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using NTextCat.Commons;
 using BeautifulLyricsMobile;
+using BeautifulLyricsMobile.Controls;
 
 namespace BeautifulLyricsAndroid.Entities
 {
@@ -102,7 +103,8 @@ namespace BeautifulLyricsAndroid.Entities
 					bool isEmphasized = IsEmphasized(syllableMetadata, isRomanized);
 					syllableMetadata.IsEmphasized = isEmphasized;
 
-					Label syllableLabel = new Label();
+					GradientLabel syllableLabel = new GradientLabel();
+					syllableLabel.MaxLines = 1;
 					syllableLabel.Shadow = new Shadow
 					{
 						Brush = Brush.White,
@@ -157,7 +159,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 							foreach (var letter in letterTexts)
 							{
-								Label letterLabel = new Label();
+								GradientLabel letterLabel = new GradientLabel();
 								letterLabel.Dispatcher.Dispatch(() => letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style);
 								letterLabel.Shadow = new Shadow
 								{
@@ -225,7 +227,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 							foreach (var letter in letterTexts)
 							{
-								Label letterLabel = new Label();
+								GradientLabel letterLabel = new GradientLabel();
 								letterLabel.Dispatcher.Dispatch(() => letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style);
 								letterLabel.Shadow = new Shadow
 								{
@@ -535,40 +537,38 @@ namespace BeautifulLyricsAndroid.Entities
 
 		private bool UpdateLiveTextVisuals(LiveText liveText, bool isEmphasized, double timeScale, double deltaTime)
 		{
-			// if (deltaTime < 0)
-			// 	return false;
-
 			double scale = liveText.Springs.Scale.Update(deltaTime);
 			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 50;
-			double glowAlpha = liveText.Springs.Glow.Update(deltaTime);
+			double glowAlpha = liveText.Springs.Glow.Update(deltaTime) * 25;
 
-			liveText.GradientProgress = (int)Math.Round(-20 + 120 * timeScale);
+			float gradientProgress = (int)Math.Round(-20 + 120 * timeScale);
 			liveText.YOffset = yOffset * (isEmphasized ? 3 : 1);
 			liveText.Scale = scale;
 
-			if (liveText.Object is Label label)
+			if (liveText.Object is GradientLabel label)
 			{
 				label.Dispatcher.Dispatch(() =>
 				{
 					label.Scale = scale;
 					label.TranslationY = yOffset * (isEmphasized ? 1.5 : 1);
+					label.GradientProgress = gradientProgress;
 
-					label.Shadow.Radius = (float)(4 + (2 * glowAlpha * (isEmphasized ? 3 : 1)));
-					label.Shadow.Opacity = (float)(glowAlpha * (isEmphasized ? 100 : 35));
+					// label.Shadow.Radius = (float)(4 + (2 * glowAlpha * (isEmphasized ? 3 : 1)));
+					// label.Shadow.Opacity = (float)(glowAlpha * (isEmphasized ? 2 : 1));
 
-					if (label.TranslationY <= 1.2)
+					/*if (label.TranslationY <= 1.2)
 						label.Shadow.Opacity = 0;
 					else
 					{
 						// label.Shadow.Opacity = (float)(scale - 0.3) * (isEmphasized ? 300 : 135);
 						label.Shadow.Opacity = Math.Min(1, (float)(scale - 0.3) * (isEmphasized ? 10 : 15));
 						label.Shadow.Radius = 4 + 2 * (float)(scale - 0.3) * (isEmphasized ? 30 : 10);
-					}
+					}*/
 				});
 			}
 
-			liveText.BlurRadius = 4 + 2 * glowAlpha * (isEmphasized ? 3 : 1);
-			liveText.ShadowOpacity = glowAlpha * (isEmphasized ? 100 : 35);
+			// liveText.BlurRadius = 4 + 2 * glowAlpha * (isEmphasized ? 3 : 1);
+			// liveText.ShadowOpacity = glowAlpha * (isEmphasized ? 100 : 35);
 
 			return liveText.Springs.Scale.Sleeping && liveText.Springs.YOffset.Sleeping && liveText.Springs.Glow.Sleeping;
 		}
@@ -597,7 +597,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 					foreach (var labelObject in Container.Children)
 					{
-						if (labelObject is Label label)
+						if (labelObject is GradientLabel label)
 						{
 							label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
 						}
@@ -609,7 +609,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 					foreach (var labelObject in Container.Children)
 					{
-						if (labelObject is Label label)
+						if (labelObject is GradientLabel label)
 						{
 							label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
 						}
@@ -627,7 +627,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 					foreach (var labelObject in Container.Children)
 					{
-						if (labelObject is Label label)
+						if (labelObject is GradientLabel label)
 						{
 							if (label.Margin.Right != 0)
 								label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundActiveLabel" : "ActiveLabel"] as Style);
@@ -652,7 +652,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 					foreach (var labelObject in Container.Children)
 					{
-						if (labelObject is Label label)
+						if (labelObject is GradientLabel label)
 						{
 							if (label.Margin.Right != 0)
 								label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);

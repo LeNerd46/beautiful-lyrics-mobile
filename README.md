@@ -17,8 +17,14 @@ Along with displaying the lyrics already made out there, this app allows you to 
 
 ### Installing
 
-* Head to the releases page and download the APK
-* Then install it, it's pretty simple
+I tried my best to build an APK, but it doesn't work at all when you install it. The only way to install it is to build and debug it yourself. It's pretty simple though, don't worry
+It currently doesn't actually connect to Spotify, I'll have to fix that later. The code is all here, and it works, but you can't actually listen to songs right now, sorry
+
+* Clone the repo
+* You'll have to create your own Spotify Developer App in order to connect to Spotify. You can do that [here](https://developer.spotify.com/dashboard/applications), select the Android and Web API
+* Replace my client ID and secret in `Platforms/Android/MainActivity.cs` and `AppShell.xaml.cs`
+* This is the annoying part, you have to get your debug fingerprint, I explain how to do that [here](https://github.com/LeNerd46/SpotifyAppRemoteBinding)
+* It should (not) work when you run it
 
 ## Help
 

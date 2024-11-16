@@ -1,6 +1,8 @@
+#if ANDROID
 using Android.Widget;
-using BeautifulLyricsMobile.Models;
 using Com.Spotify.Protocol.Types;
+#endif
+using BeautifulLyricsMobile.Models;
 using MauiIcons.Core;
 using MauiIcons.Material.Rounded;
 
@@ -25,7 +27,7 @@ public partial class HomePage : ContentPage
 
 		BindingContext = Song;
 
-		if (MainPage.IsPlaying)
+		if (!MainPage.IsPlaying)
 		{
 			pauseButton.IsEnabled = true;
 			playButton.IsEnabled = false;
@@ -35,6 +37,8 @@ public partial class HomePage : ContentPage
 
 			fullPauseButton.IsVisible = true;
 			fullPlayButton.IsVisible = false;
+
+			Song.ToggleTimer(true);
 		}
 		else
 		{
@@ -50,6 +54,7 @@ public partial class HomePage : ContentPage
 			Song.ToggleTimer(false);
 		}
 
+#if ANDROID
 		SpotifyBroadcastReceiver.SongChanged += (sender, song) =>
 		{
 			Song.Title = song.Name;
@@ -117,6 +122,7 @@ public partial class HomePage : ContentPage
 				// playIcon.IsVisible = true;
 			}
 		};
+#endif
 	}
 
 	protected override bool OnBackButtonPressed()
@@ -140,10 +146,12 @@ public partial class HomePage : ContentPage
 		isPlaying = !isPlaying;
 		Song.ToggleTimer(isPlaying);
 
+#if ANDROID
 		if (isPlaying)
 			MainPage.Remote.PlayerApi.Resume();
 		else
 			MainPage.Remote.PlayerApi.Pause();
+#endif
 	}
 
 	private void FullCardCollapse(object sender, EventArgs e)
@@ -153,12 +161,16 @@ public partial class HomePage : ContentPage
 
 	private void SkipNext(object sender, EventArgs e)
 	{
+#if ANDROID
 		MainPage.Remote.PlayerApi.SkipNext();
+#endif
 	}
 
 	private void SkipPrevious(object sender, EventArgs e)
 	{
+#if ANDROID
 		MainPage.Remote.PlayerApi.SkipPrevious();
+#endif
 	}
 
 	private void Slider_ValueChanged(object sender, ValueChangedEventArgs e)
@@ -179,11 +191,13 @@ public partial class HomePage : ContentPage
 
 	private void DeleteSong(object sender, EventArgs e)
 	{
+#if ANDROID
 		string path = Path.Combine(FileSystem.CacheDirectory, $"{MainPage.CurrentTrackId}.json");
 
 		if (File.Exists(path))
 			File.Delete(path);
 		else
 			Toast.MakeText(Platform.CurrentActivity, "No lyrics found!", ToastLength.Short).Show();
+#endif
 	}
 }

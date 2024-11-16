@@ -1,8 +1,10 @@
-using Android.Telecom;
 using BeautifulLyricsMobile.Models;
+#if ANDROID
+using Android.Telecom;
 using Com.Spotify.Protocol.Types;
 using static Com.Spotify.Protocol.Client.CallResult;
 using static Com.Spotify.Protocol.Client.Subscription;
+#endif
 
 namespace BeautifulLyricsMobile.Pages;
 
@@ -29,19 +31,25 @@ public partial class SearchPage : ContentPage
 		previouslySelectedItem = e.SelectedItemIndex;
 		#endregion
 
+#if ANDRIOD
 		if (MainPage.Remote == null)
 			return;
+#endif
 
 		SearchResult result = e.SelectedItem as SearchResult;
 
 		// Capabilities capabilities = RequestUserCapabilities().GetAwaiter().GetResult();
-		
+
 		// if (!capabilities.CanPlayOnDemand)
 		// 	return;
 
+#if ANDROID
 		MainPage.Remote.PlayerApi.Play(result.Url);
+#endif
 	}
 
+
+#if ANDROID
 	private async Task<Capabilities> RequestUserCapabilities()
 	{
 		RequestCapabilitiesCallback callback = new RequestCapabilitiesCallback();
@@ -54,8 +62,10 @@ public partial class SearchPage : ContentPage
 
 		return callback.Capabilities;
 	}
+#endif
 }
 
+#if ANDROID
 public class RequestCapabilitiesCallback : Java.Lang.Object, IResultCallback
 {
 	public Capabilities Capabilities { get; set; }
@@ -66,3 +76,4 @@ public class RequestCapabilitiesCallback : Java.Lang.Object, IResultCallback
 			Capabilities = capabilities;
 	}
 }
+#endif

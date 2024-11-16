@@ -3,11 +3,59 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:mr="clr-namespace:MR.Gestures;assembly=MR.Gestures"
              x:Class="BeautifulLyricsMobile.Pages.LyricsEditor"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
              Title="LyricsEditor" x:Name="MainContentPage">
 
     <mr:ScrollView x:Name="ScrollViewer" Down="OnScreenTouch" Up="OnScreenRelease">
         <VerticalStackLayout x:Name="LyricsContainer" Spacing="10">
+            <Border x:Name="onboardingScreen" Background="#383838" HorizontalOptions="Center" WidthRequest="325" HeightRequest="600" Margin="0,55" StrokeShape="RoundRectangle 8" StrokeThickness="0">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Radius="40" Opacity="0.6"/>
+                </Border.Shadow>
 
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="100"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Button Text="{mi:MaterialRounded Icon=Help}" Background="Transparent" TextColor="White" HorizontalOptions="End" VerticalOptions="Start" FontSize="12" WidthRequest="40" HeightRequest="40"/>
+                    <Label Text="What Level of Sync Do You Want?" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center" Margin="0,30"/>
+
+                    <StackLayout Grid.Row="1" Spacing="25" VerticalOptions="Center">
+                        <Button Text="Simple" Margin="15,0" BackgroundColor="#404040" TextColor="White" Clicked="SimpleSync"/>
+                        <Button Text="Advanced" Margin="15,0" BackgroundColor="#404040" TextColor="White" Clicked="AdvancedSync"/>
+                    </StackLayout>
+                </Grid>
+            </Border>
+
+            <Border x:Name="WordPopup" Background="#383838" HorizontalOptions="Center" WidthRequest="325" HeightRequest="600" Margin="0,55" StrokeShape="RoundRectangle 8" StrokeThickness="0" IsVisible="False" IsEnabled="False" ZIndex="1">
+                <Border.Shadow>
+                    <Shadow Brush="Black" Radius="40" Opacity="0.6"/>
+                </Border.Shadow>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="2*"/>
+                    </Grid.RowDefinitions>
+
+
+                    <HorizontalStackLayout x:Name="wordContainer" HorizontalOptions="Center" VerticalOptions="Center">
+                        <BoxView x:Name="cursor" BackgroundColor="Black" WidthRequest="2" HeightRequest="25"/>
+                    </HorizontalStackLayout>
+
+                    <VerticalStackLayout Grid.Row="1" HorizontalOptions="Center" VerticalOptions="End" Spacing="10" Margin="0,25">
+                        <HorizontalStackLayout Margin="0,25">
+                            <Button Text="{mi:MaterialRounded Icon=ArrowLeft}" BackgroundColor="#404040" TextColor="White" WidthRequest="50" HeightRequest="50" Margin="25,0" Clicked="CursorLeft"/>
+                            <Button Text="{mi:MaterialRounded Icon=ArrowRight}" BackgroundColor="#404040" TextColor="White" WidthRequest="50" HeightRequest="50" Margin="25,0" Clicked="CursorRight"/>
+                        </HorizontalStackLayout>
+
+                        <Button Text="Split" BackgroundColor="#404040" TextColor="White" HeightRequest="50" Clicked="SplitWord"/>
+                        <Button Text="Done" BackgroundColor="#404040" TextColor="White" HeightRequest="50" Clicked="FinishSplit"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
         </VerticalStackLayout>
     </mr:ScrollView>
 </ContentPage>

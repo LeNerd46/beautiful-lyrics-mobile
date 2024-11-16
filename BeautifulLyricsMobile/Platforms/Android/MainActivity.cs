@@ -26,6 +26,8 @@ namespace BeautifulLyricsMobile
 		{
 			base.OnCreate(savedInstanceState);
 
+			// while (MainPage.Spotify == null) ;
+
 			SpotifyAppRemote remote;
 			ConnectionParams connectionParams = new ConnectionParams.Builder("4d42ec7301a64d57bc1971655116a3b9").SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
 			SpotifyAppRemote.Connect(this, connectionParams, new ConnectionListener());
@@ -53,6 +55,11 @@ namespace BeautifulLyricsMobile
 				{
 					Task.Run(async () =>
 					{
+						/*while (MainPage.Remote == null)
+						{
+							await Task.Delay(1000);
+						}*/
+
 						server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
 						await server.Start();
 
@@ -100,6 +107,10 @@ namespace BeautifulLyricsMobile
 					var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
 
 					MainPage.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+
+					SpotifyAppRemote remote;
+					ConnectionParams connectionParams = new ConnectionParams.Builder("4d42ec7301a64d57bc1971655116a3b9").SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+					SpotifyAppRemote.Connect(this, connectionParams, new ConnectionListener());
 				}
 			}
 			catch (System.Exception ex)
@@ -172,7 +183,7 @@ namespace BeautifulLyricsMobile
 		}
 
 		public void OnFailure(Throwable p0)
-	{
+		{
 			Toast.MakeText(Platform.CurrentActivity, p0.Message, ToastLength.Long).Show();
 		}
 	}

@@ -22,6 +22,10 @@
             <ShellContent Title="Contribute" ContentTemplate="{DataTemplate local:ContributePage}" Route="Search" Shell.NavBarIsVisible="False"/>
         </Tab>
 
+        <Tab Title="Profile" Icon="{mi:MaterialRounded Icon=AccountCircle}">
+            <ShellContent Title="Profile" ContentTemplate="{DataTemplate local:ProfilePage}" Route="Profile" Shell.NavBarIsVisible="False"/>
+        </Tab>
+
         <TabBar.Style>
             <Style TargetType="TabBar">
                 <Setter Property="Shell.TabBarBackgroundColor" Value="#212121"/>

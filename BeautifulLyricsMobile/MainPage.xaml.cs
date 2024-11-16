@@ -2,28 +2,27 @@
 using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web;
 using System.Diagnostics;
-using Android.Widget;
 using BeautifulLyricsAndroid.Entities;
 using Newtonsoft.Json;
-using Java.Security;
 using Button = Microsoft.Maui.Controls.Button;
 using System.Text;
 using CommunityToolkit.Maui.Storage;
 using SpotifyAPI.Web.Http;
 using SkiaSharp;
-using Bumptech.Glide.Load.Resource.Bitmap;
 using Microsoft.Maui.Graphics.Platform;
 using IImage = Microsoft.Maui.Graphics.IImage;
 using BeautifulLyricsMobile.Entities;
-using static Com.Spotify.Protocol.Client.CallResult;
 using Newtonsoft.Json.Linq;
-
+using BeautifulLyricsMobile.Controls;
 
 
 #if ANDROID
 using Com.Spotify.Android.Appremote.Api;
 using Com.Spotify.Protocol.Types;
 using static Com.Spotify.Protocol.Client.Subscription;
+using static Com.Spotify.Protocol.Client.CallResult;
+using Android.Widget;
+using Java.Security;
 #endif
 
 namespace BeautifulLyricsMobile
@@ -40,7 +39,7 @@ namespace BeautifulLyricsMobile
 		internal static string CurrentTrackId { get; set; }
 		public static bool IsPlaying { get; set; }
 
-        internal static RestClient Client { get => client; set => client = value; }
+		internal static RestClient Client { get => client; set => client = value; }
 		private static RestClient client;
 
 		internal static SpotifyClient Spotify { get => spotify; set => spotify = value; }
@@ -71,6 +70,11 @@ namespace BeautifulLyricsMobile
 		private Task activeTask = null;
 		private System.Timers.Timer progressSyncTimer;
 		private CancellationTokenSource cancelToken;
+
+		private int lineIndex = 0;
+		private int previousLineIndex = -1;
+
+		private bool lyricsDone = false;
 
 		public MainPage()
 		{
@@ -153,6 +157,27 @@ namespace BeautifulLyricsMobile
 			// Task.Run(RenderLyrics);
 			SpotifyBroadcastReceiver.SongChanged += OnSongChanged;
 
+			/*Task.Run(async () =>
+			{
+				var imageBytes = Convert.FromBase64String("PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2aWV3Qm94PSIwIDAgMjExMi4wNzQgMTc5NS4zNTkiIHdpZHRoPSIyMTEwcHgiIGhlaWdodD0iMTcyOXB4IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxnIGZpbGw9IiNmZmZmZmYiIHRyYW5zZm9ybT0ibWF0cml4KDAuOTk5OTk5OTk5OTk5OTk5OSwgMCwgMCwgMC45OTk5OTk5OTk5OTk5OTk5LCAtNS42ODQzNDE4ODYwODA4MDJlLTE0LCAwKSI+CiAgICA8cGF0aCBkPSJNNiAxNzI3LjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDExMDUuMyAtMS41IDExMTAuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMzIgMS44IC01NTcgMS44IC01MjUgMCAtNTUzLjcgLTAuMSAtNTU3IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNMTE1NyAxNzI3LjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMiAtMS41IDE0Ni40IC0xLjUgMTUxLjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMiAxLjcgLTkuMSAxLjggLTc3LjUgMS44IC02OC40IDAgLTc0LjMgLTAuMSAtNzcuNSAtMS44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTEzNTIgMTcyNy4yIGMtMi40IC0xLjEgLTMuOSAtMi44IC00LjcgLTUuMiAtMS42IC00LjYgLTEuOCAtMTE0LjcgLTAuMiAtMTIwLjMgMiAtNy41IC0wLjMgLTcuMiA2MC40IC03LjIgNjAuNyAwIDU4LjQgLTAuMyA2MC40IDcuMiAxLjYgNS42IDEuNCAxMTUuNyAtMC4yIDEyMC4zIC0wLjggMi40IC0yLjMgNC4xIC00LjcgNS4yIC0zLjIgMS42IC04IDEuOCAtNTUuNSAxLjggLTQ3LjUgMCAtNTIuMyAtMC4yIC01NS41IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNNiAxNTM0LjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDUzNy4zIC0xLjUgNTQyLjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTE4LjQgMS44IC0yNzMgMS44IC0yNTQuNiAwIC0yNjkuNyAtMC4xIC0yNzMgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik01ODcgMTUzNC4yIGMtNi4xIC0zIC02LjEgLTIuOSAtNS44IC02Ny43IDAuMyAtNjUuMSAwIC02Mi40IDcuNSAtNjQuNCA1LjMgLTEuNSA5NzYuMyAtMS41IDk4MS42IDAgNy41IDIgNy4yIC0wLjcgNy41IDY0LjQgMC4zIDY0LjggMC4zIDY0LjcgLTUuOCA2Ny43IC0zLjMgMS43IC0yOSAxLjggLTQ5Mi41IDEuOCAtNDYzLjUgMCAtNDg5LjIgLTAuMSAtNDkyLjUgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik0zLjMgMTM1OCBjLTIuOSAtMS4yIC0zLjUgLTUuMSAtMy4xIC0xOS44IDAuMiAtOC4yIDAuNyAtMTIuNSAxLjYgLTEzLjQgMS44IC0xLjggMjYuNiAtMS44IDI4LjQgMCAxLjggMS44IDEuOSAzMC41IDAgMzIuNCAtMS42IDEuNiAtMjMuNSAyLjIgLTI2LjkgMC44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTk5LjMgMTM1OCBjLTIuOSAtMS4yIC0zLjUgLTUuMSAtMy4xIC0xOS44IDAuMiAtOC4yIDAuNyAtMTIuNSAxLjYgLTEzLjQgMS44IC0xLjggMjYuNiAtMS44IDI4LjQgMCAxLjggMS44IDEuOSAzMC41IDAgMzIuNCAtMS42IDEuNiAtMjMuNSAyLjIgLTI2LjkgMC44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTE5Ny4zIDEzNTggYy0yLjkgLTEuMiAtMy41IC01LjEgLTMuMSAtMTkuOCAwLjIgLTguMiAwLjcgLTEyLjUgMS42IC0xMy40IDEuOCAtMS44IDI2LjYgLTEuOCAyOC40IDAgMS44IDEuOCAxLjkgMzAuNSAwIDMyLjQgLTEuNiAxLjYgLTIzLjUgMi4yIC0yNi45IDAuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik02IDEyNzcuMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgNzgyLjMgLTEuNSA3ODcuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMjQuMyAxLjggLTM5NS41IDEuOCAtMzcxLjIgMCAtMzkyLjIgLTAuMSAtMzk1LjUgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik04MzIgMTI3Ny4yIGMtNi4xIC0zIC02LjEgLTIuOSAtNS44IC02Ny43IDAuMyAtNjUuMSAwIC02Mi40IDcuNSAtNjQuNCA1LjMgLTEuNSA0MjcuMyAtMS41IDQzMi42IDAgNy41IDIgNy4yIC0wLjcgNy41IDY0LjQgMC4zIDY0LjggMC4zIDY0LjcgLTUuOCA2Ny43IC0zLjMgMS43IC0xNS44IDEuOCAtMjE4IDEuOCAtMjAyLjIgMCAtMjE0LjcgLTAuMSAtMjE4IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNMTMwNSAxMjc3LjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDUzNy4zIC0xLjUgNTQyLjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTE4LjQgMS44IC0yNzMgMS44IC0yNTQuNiAwIC0yNjkuNyAtMC4xIC0yNzMgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik02IDEwODguMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgNDMyLjMgLTEuNSA0MzcuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMTUuOSAxLjggLTIyMC41IDEuOCAtMjA0LjYgMCAtMjE3LjIgLTAuMSAtMjIwLjUgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik00ODIgMTA4OC4yIGMtNi4xIC0zIC02LjEgLTIuOSAtNS44IC02Ny43IDAuMyAtNjUuMSAwIC02Mi40IDcuNSAtNjQuNCA1LjMgLTEuNSAyMzMuMyAtMS41IDIzOC42IDAgNy41IDIgNy4yIC0wLjcgNy41IDY0LjQgMC4zIDY0LjggMC4zIDY0LjcgLTUuOCA2Ny43IC0zLjMgMS43IC0xMS4xIDEuOCAtMTIxIDEuOCAtMTA5LjkgMCAtMTE3LjcgLTAuMSAtMTIxIC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNNzU4IDEwODguMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgNTIyLjMgLTEuNSA1MjcuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMTguMSAxLjggLTI2NS41IDEuOCAtMjQ3LjQgMCAtMjYyLjIgLTAuMSAtMjY1LjUgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik0xMzI0IDEwODguMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgNzcxLjMgLTEuNSA3NzYuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMjQgMS44IC0zOTAgMS44IC0zNjYgMCAtMzg2LjcgLTAuMSAtMzkwIC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNNiA4OTkuMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgMTEyNi4zIC0xLjUgMTEzMS42IDAgNy41IDIgNy4yIC0wLjcgNy41IDY0LjQgMC4zIDY0LjggMC4zIDY0LjcgLTUuOCA2Ny43IC0zLjMgMS43IC0zMi41IDEuOCAtNTY3LjUgMS44IC01MzUgMCAtNTY0LjIgLTAuMSAtNTY3LjUgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik02IDcxMC4yIGMtNi4xIC0zIC02LjEgLTIuOSAtNS44IC02Ny43IDAuMyAtNjUuMSAwIC02Mi40IDcuNSAtNjQuNCA1LjIgLTEuNSAxNTIuNCAtMS41IDE1Ny42IDAgNy41IDIgNy4yIC0wLjcgNy41IDY0LjQgMC4zIDY0LjggMC4zIDY0LjcgLTUuOCA2Ny43IC0zLjIgMS43IC05LjIgMS44IC04MC41IDEuOCAtNzEuMyAwIC03Ny4zIC0wLjEgLTgwLjUgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik0xOTcgNzEwLjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDgwNi4zIC0xLjUgODExLjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTI0LjkgMS44IC00MDcuNSAxLjggLTM4Mi42IDAgLTQwNC4yIC0wLjEgLTQwNy41IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNMTA0NCA3MTAuMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgNjg4LjMgLTEuNSA2OTMuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMjIgMS44IC0zNDguNSAxLjggLTMyNi41IDAgLTM0NS4yIC0wLjEgLTM0OC41IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNMTc3MCA3MTAuMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgMzI1LjMgLTEuNSAzMzAuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMTMuMyAxLjggLTE2NyAxLjggLTE1My43IDAgLTE2My43IC0wLjEgLTE2NyAtMS44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTYgNTE3LjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDMyNS4zIC0xLjUgMzMwLjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTEzLjMgMS44IC0xNjcgMS44IC0xNTMuNyAwIC0xNjMuNyAtMC4xIC0xNjcgLTEuOHoiIHN0eWxlPSIiLz4KICAgIDxwYXRoIGQ9Ik0zNzEgNTE2LjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDY0Mi4zIC0xLjUgNjQ3LjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTIwLjkgMS44IC0zMjUuNSAxLjggLTMwNC42IDAgLTMyMi4yIC0wLjEgLTMyNS41IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNMTA1MyA1MTYuMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgMjQ1LjMgLTEuNSAyNTAuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMTEuNCAxLjggLTEyNyAxLjggLTExNS42IDAgLTEyMy43IC0wLjEgLTEyNyAtMS44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTYgMzIyLjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMyAtMS41IDU1NC4zIC0xLjUgNTU5LjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTE4LjggMS44IC0yODEuNSAxLjggLTI2Mi43IDAgLTI3OC4yIC0wLjEgLTI4MS41IC0xLjh6IiBzdHlsZT0iIi8+CiAgICA8cGF0aCBkPSJNNjAxIDMyMi4yIGMtNi4xIC0zIC02LjEgLTIuOSAtNS44IC02Ny43IDAuMyAtNjUuMSAwIC02Mi40IDcuNSAtNjQuNCA1LjMgLTEuNSA2NTguMyAtMS41IDY2My42IDAgNy41IDIgNy4yIC0wLjcgNy41IDY0LjQgMC4zIDY0LjggMC4zIDY0LjcgLTUuOCA2Ny43IC0zLjMgMS43IC0yMS4zIDEuOCAtMzMzLjUgMS44IC0zMTIuMiAwIC0zMzAuMiAtMC4xIC0zMzMuNSAtMS44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTYgMTMzLjIgYy02LjEgLTMgLTYuMSAtMi45IC01LjggLTY3LjcgMC4zIC02NS4xIDAgLTYyLjQgNy41IC02NC40IDUuMiAtMS41IDIxMS40IC0xLjUgMjE2LjYgMCA3LjUgMiA3LjIgLTAuNyA3LjUgNjQuNCAwLjMgNjQuOCAwLjMgNjQuNyAtNS44IDY3LjcgLTMuMyAxLjcgLTEwLjYgMS44IC0xMTAgMS44IC05OS40IDAgLTEwNi43IC0wLjEgLTExMCAtMS44eiIgc3R5bGU9IiIvPgogICAgPHBhdGggZD0iTTI1OCAxMzMuMiBjLTYuMSAtMyAtNi4xIC0yLjkgLTUuOCAtNjcuNyAwLjMgLTY1LjEgMCAtNjIuNCA3LjUgLTY0LjQgNS4zIC0xLjUgNzM4LjMgLTEuNSA3NDMuNiAwIDcuNSAyIDcuMiAtMC43IDcuNSA2NC40IDAuMyA2NC44IDAuMyA2NC43IC01LjggNjcuNyAtMy4zIDEuNyAtMjMuMiAxLjggLTM3My41IDEuOCAtMzUwLjMgMCAtMzcwLjIgLTAuMSAtMzczLjUgLTEuOHoiIHN0eWxlPSIiLz4KICA8L2c+Cjwvc3ZnPg==");
+				MemoryStream imageDecodeStream = new MemoryStream(imageBytes);
+				await lyricsLoadingImage.Dispatcher.DispatchAsync(() => lyricsLoadingImage.Source = ImageSource.FromStream(() => imageDecodeStream));
+
+				Action<double> forward = input => gradientBackground.AnchorY = input;
+				Action<double> backward = input => gradientBackground.AnchorY = input;
+
+				while (!lyricsDone)
+				{
+					gradientBackground.Animate("forward", forward, 0, 1, length: 5000, easing: Easing.SpringIn);
+					await Task.Delay(5000);
+
+					gradientBackground.Animate("backward", backward, 1, 0, length: 5000, easing: Easing.SpringIn);
+					await Task.Delay(5000);
+				}
+
+				// LyricsContainer.RemoveAt(0);
+			});*/
+
 			newSong = true;
 			stopwatch.Reset();
 			LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Clear());
@@ -163,7 +188,9 @@ namespace BeautifulLyricsMobile
 
 		protected override bool OnBackButtonPressed()
 		{
+#if ANDROID
 			SpotifyBroadcastReceiver.SongChanged -= OnSongChanged;
+#endif
 
 			stopwatch.Stop();
 			cancelToken.Cancel();
@@ -190,7 +217,9 @@ namespace BeautifulLyricsMobile
 			try
 			{
 				while (Client == null) ;
+#if ANDROID
 				while (Remote == null) ;
+#endif
 
 				stopwatch.Start();
 
@@ -225,7 +254,7 @@ namespace BeautifulLyricsMobile
 					}
 					catch (Exception ex)
 					{
-						Toast.MakeText(Platform.CurrentActivity, ex.Message, ToastLength.Long).Show();
+						// Toast.MakeText(Platform.CurrentActivity, ex.Message, ToastLength.Long).Show();
 					}
 				});
 
@@ -233,7 +262,7 @@ namespace BeautifulLyricsMobile
 
 				string content = "";
 
-				if(File.Exists(Path.Combine(FileSystem.CacheDirectory, $"{CurrentTrackId}.json")))
+				if (File.Exists(Path.Combine(FileSystem.CacheDirectory, $"{CurrentTrackId}.json")))
 				{
 					content = File.ReadAllText(Path.Combine(FileSystem.CacheDirectory, $"{CurrentTrackId}.json"));
 					local = true;
@@ -241,6 +270,13 @@ namespace BeautifulLyricsMobile
 				else
 				{
 					RestResponse response = await Client.ExecuteAsync(new RestRequest(CurrentTrackId));
+
+					if (!response.IsSuccessful)
+					{
+						MainThread.BeginInvokeOnMainThread(() => Toast.MakeText(Platform.CurrentActivity, "Failed To Get Lyrics", ToastLength.Long).Show());
+						return;
+					}
+
 					content = response.Content;
 					local = false;
 				}
@@ -257,16 +293,36 @@ namespace BeautifulLyricsMobile
 				PlayerState player = await RequestPositionSync();
 
 				isPlaying = !player.IsPaused;
+				IsPlaying = !player.IsPaused;
 				timestamp = player.PlaybackPosition + startedSyncAt + (stopwatch.ElapsedMilliseconds - before);
 
 				progressSyncTimer?.Close();
 				progressSyncTimer = new System.Timers.Timer(10000);
 				progressSyncTimer.Elapsed += OnTimerElapsed;
-				progressSyncTimer.Start();
+				// progressSyncTimer.Start();
 
 				newSong = false;
 
 				await Update(vocalGroups, lyricsEndTime, timestamp, ((double)1 / (double)60), true);
+
+				lyricsDone = true;
+				foreach (var item in LyricsContainer.Children.Where(x => x is FlexLayout))
+				{
+					foreach (var child in ((FlexLayout)item).Children)
+					{
+						if (child is GradientLabel label)
+							label.IsVisible = true;
+						else
+						{
+							foreach (var letter in ((HorizontalStackLayout)child).Children)
+							{
+								if (letter is GradientLabel letterLabel)
+									letterLabel.IsVisible = true;
+							}
+						}
+					}
+				}
+
 				await UpdateProgress(player.PlaybackPosition, startedSyncAt, vocalGroups, player.Track.Duration);
 #endif
 
@@ -312,7 +368,7 @@ namespace BeautifulLyricsMobile
 						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
 
-						LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
+						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
 					}
 					else
 					{
@@ -369,7 +425,7 @@ namespace BeautifulLyricsMobile
 			syncProgress = true;
 		}
 
-		private async Task Update(/* Scroller */ Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, double lyricsEndTime, double timestamp, double deltaTime, bool skipped = true, bool skippedByVocal = true)
+		private async Task Update(Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, double lyricsEndTime, double timestamp, double deltaTime, bool skipped = true, bool skippedByVocal = true)
 		{
 			if (newSong)
 				return;
@@ -383,6 +439,14 @@ namespace BeautifulLyricsMobile
 
 					// if(vocal is SyllableVocals syllable && syllable.IsActive())
 					// 	ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
+
+					if (vocal is SyllableVocals syllable && syllable.IsActive())
+					{
+						if (timestamp > syllable.StartTime)
+							ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
+
+						// THis scrolls every frame, maybe find a way to make it only scroll once
+					}
 				}
 			}
 		}
@@ -537,9 +601,9 @@ namespace BeautifulLyricsMobile
 
 	public class SongInformation
 	{
-        public string Title { get; set; }
-        public string Artist { get; set; }
-        public string Album { get; set; }
-        public string Image { get; set; }
-    }
+		public string Title { get; set; }
+		public string Artist { get; set; }
+		public string Album { get; set; }
+		public string Image { get; set; }
+	}
 }

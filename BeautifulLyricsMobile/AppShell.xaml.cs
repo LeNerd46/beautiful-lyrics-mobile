@@ -1,4 +1,7 @@
-﻿using RestSharp;
+﻿#if ANDROID
+using Com.Spotify.Android.Appremote.Api;
+#endif
+using RestSharp;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
 
@@ -17,6 +20,13 @@ namespace BeautifulLyricsMobile
 			{
 				Task.Run(async () =>
 				{
+					/*#if ANDROID
+										while(MainPage.Remote == null)
+										{
+											await Task.Delay(1000);
+										}
+					#endif*/
+
 					server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
 					await server.Start();
 

@@ -4,6 +4,7 @@
              xmlns:viewmodels="clr-namespace:BeautifulLyricsMobile.Models"
              x:Class="BeautifulLyricsMobile.Pages.HomePage"
              xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+             xmlns:local="clr-namespace:BeautifulLyricsMobile.Controls"
              Title="HomePage">
     <ContentPage.BindingContext>
         <viewmodels:SongViewModel x:Name="SongViewModel"/>
@@ -20,11 +21,15 @@
         </Grid.ColumnDefinitions>
 
         <ScrollView>
-            <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="Transparent">
-                <Label.Shadow>
-                    <Shadow Brush="White" Offset="2,2" Radius="40" Opacity="0.6"/>
-                </Label.Shadow>
-            </Label>
+            <VerticalStackLayout>
+                <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="Transparent">
+                    <Label.Shadow>
+                        <Shadow Brush="White" Offset="2,2" Radius="40" Opacity="0.6"/>
+                    </Label.Shadow>
+                </Label>
+
+                <local:GradientLabel Text="Hello World!" StartColor="Lime" EndColor="#b8b8b8" FontSize="36" GradientProgress="0"/>
+            </VerticalStackLayout>
         </ScrollView>
 
         <Border x:Name="songInformationSmall" BackgroundColor="#292929" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="10,0,10,10">
@@ -49,7 +54,8 @@
 
                 <VerticalStackLayout Grid.Column="1" Margin="0,8,0,0">
                     <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="18" MaxLines="1"/>
-                    <Label Text="{Binding Artist}" TextColor="LightGray" Margin="1,0,0,0"/> <!-- idk why, but the margin was just really bothering me -->
+                    <Label Text="{Binding Artist}" TextColor="LightGray" Margin="1,0,0,0"/>
+                    <!-- idk why, but the margin was just really bothering me -->
                 </VerticalStackLayout>
 
                 <!--<mi:MauiIcon Icon="{mi:MaterialRounded Icon={Binding PlayStatus}, BindingContext={x:Reference SongViewModel}}" Grid.Column="2" VerticalOptions="Center" HorizontalOptions="Center"/>-->

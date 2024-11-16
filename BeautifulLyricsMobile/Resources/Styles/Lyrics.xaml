@@ -5,6 +5,8 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
+<!-- These are pretty much all the same, just different names. Too lazy to go through and change everything -->
+    
     <Style x:Key="IdleLyric" TargetType="FlexLayout">
         <Setter Property="Direction" Value="Row"/>
         <Setter Property="Wrap" Value="Wrap"/>
