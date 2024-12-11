@@ -11,7 +11,7 @@
 
     <TabBar>
         <Tab Title="Home" Icon="{mi:MaterialRounded Icon=Home}">
-            <ShellContent Title="Home" ContentTemplate="{DataTemplate local:HomePage}" Route="MainPage" Shell.NavBarIsVisible="False"/>
+            <ShellContent Title="Home" ContentTemplate="{DataTemplate local:HomePage}" Route="Home" Shell.NavBarIsVisible="False"/>
         </Tab>
 
         <Tab Title="Search" Icon="{mi:MaterialRounded Icon=Search}">
@@ -32,4 +32,6 @@
             </Style>
         </TabBar.Style>
     </TabBar>
+
+    <ShellContent Title="Onboarding" ContentTemplate="{DataTemplate local:OnboardingPage}" Route="Onboarding" Shell.NavBarIsVisible="False"/>
 </Shell>

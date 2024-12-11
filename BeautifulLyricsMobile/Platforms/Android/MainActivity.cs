@@ -17,7 +17,7 @@ using static Com.Spotify.Android.Appremote.Api.IConnector;
 
 namespace BeautifulLyricsMobile
 {
-	[Activity(Theme = "@style/Maui.SplashTheme", ResizeableActivity = true, MainLauncher = true, LaunchMode = LaunchMode.SingleTask, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+	[Activity(Theme = "@style/Maui.SplashTheme", ResizeableActivity = true, MainLauncher = true, LaunchMode = LaunchMode.SingleTask, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density, WindowSoftInputMode = SoftInput.AdjustResize)]
 	public class MainActivity : MauiAppCompatActivity
 	{
 		SpotifyBroadcastReceiver receiver;
@@ -30,15 +30,18 @@ namespace BeautifulLyricsMobile
 		{
 			base.OnCreate(savedInstanceState);
 
-			// while (MainPage.Spotify == null) ;
+			string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
 
-			SpotifyAppRemote remote;
-			ConnectionParams connectionParams = new ConnectionParams.Builder("4d42ec7301a64d57bc1971655116a3b9").SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
-			SpotifyAppRemote.Connect(this, connectionParams, new ConnectionListener());
+			if (!string.IsNullOrWhiteSpace(clientId))
+			{
+				SpotifyAppRemote remote;
+				ConnectionParams connectionParams = new ConnectionParams.Builder("4d42ec7301a64d57bc1971655116a3b9").SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+				SpotifyAppRemote.Connect(this, connectionParams, new ConnectionListener());
+			}
 
 			receiver = new SpotifyBroadcastReceiver();
 			filter = new IntentFilter();
-			
+
 			filter.AddAction("com.spotify.music.playbackstatechanged");
 			filter.AddAction("com.spotify.music.metadatachanged");
 			filter.AddAction("com.spotify.music.queuechanged");
@@ -53,9 +56,9 @@ namespace BeautifulLyricsMobile
 				RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
 				// Toast.MakeText(Platform.CurrentActivity, "Receiver Conntected!", ToastLength.Short).Show();
 
-				updatedToken = File.Exists(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
+				string updatedToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-				if (!updatedToken)
+				if (!string.IsNullOrWhiteSpace(updatedToken))
 				{
 					Task.Run(async () =>
 					{
@@ -77,7 +80,7 @@ namespace BeautifulLyricsMobile
 							MainPage.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
 							MainPage.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
 
-							File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, "token.txt"), MainPage.AccessToken);
+							await SecureStorage.SetAsync("token", MainPage.AccessToken);
 						};
 
 						server.ErrorReceived += async (sender, error, state) =>
@@ -95,7 +98,7 @@ namespace BeautifulLyricsMobile
 				}
 				else
 				{
-					MainPage.AccessToken = File.ReadAllText(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
+					MainPage.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
 					if (!string.IsNullOrWhiteSpace(MainPage.AccessToken))
 					{
@@ -107,13 +110,19 @@ namespace BeautifulLyricsMobile
 
 					var config = SpotifyClientConfig.CreateDefault();
 
-					var request = new ClientCredentialsRequest("4d42ec7301a64d57bc1971655116a3b9", "0423d7b832114aa086a2034e2cde0138"); // Use it if you want I guess, it's just a Spotify client
+					string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
+					string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
+
+					if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
+						return;
+
+					var request = new ClientCredentialsRequest(clientId, secret);
 					var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
 
 					MainPage.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
 
 					SpotifyAppRemote remote;
-					ConnectionParams connectionParams = new ConnectionParams.Builder("4d42ec7301a64d57bc1971655116a3b9").SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+					ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
 					SpotifyAppRemote.Connect(this, connectionParams, new ConnectionListener());
 				}
 			}

@@ -21,18 +21,16 @@ namespace BeautifulLyricsMobile
 
 			return;
 
-			updatedToken = File.Exists(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
+			string updatedToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-			if (!updatedToken)
+			if (!string.IsNullOrWhiteSpace(updatedToken))
 			{
 				Task.Run(async () =>
 				{
-					/*#if ANDROID
-										while(MainPage.Remote == null)
-										{
-											await Task.Delay(1000);
-										}
-					#endif*/
+					/*while (MainPage.Remote == null)
+					{
+						await Task.Delay(1000);
+					}*/
 
 					server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
 					await server.Start();
@@ -47,14 +45,12 @@ namespace BeautifulLyricsMobile
 						MainPage.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
 						MainPage.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
 
-						File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, "token.txt"), MainPage.AccessToken);
+						await SecureStorage.SetAsync("token", MainPage.AccessToken);
 					};
 
 					server.ErrorReceived += async (sender, error, state) =>
 					{
 						await server.Stop();
-
-						await DisplayAlert("Error", $"{error}\nState: {state}", "OK");
 					};
 
 					var request = new LoginRequest(server.BaseUri, "4d42ec7301a64d57bc1971655116a3b9", LoginRequest.ResponseType.Token)
@@ -67,7 +63,7 @@ namespace BeautifulLyricsMobile
 			}
 			else
 			{
-				MainPage.AccessToken = File.ReadAllText(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
+				MainPage.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
 				if (!string.IsNullOrWhiteSpace(MainPage.AccessToken))
 				{
@@ -79,10 +75,20 @@ namespace BeautifulLyricsMobile
 
 				var config = SpotifyClientConfig.CreateDefault();
 
-				var request = new ClientCredentialsRequest("4d42ec7301a64d57bc1971655116a3b9", "0423d7b832114aa086a2034e2cde0138"); // Use it if you want I guess, it's just a Spotify client
+				string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
+				string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
+
+				if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
+					return;
+
+				var request = new ClientCredentialsRequest(clientId, secret);
 				var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
 
 				MainPage.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+
+				// SpotifyAppRemote remote;
+				// ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+				// SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, new ConnectionListener());
 			}
 
 			InitializeComponent();

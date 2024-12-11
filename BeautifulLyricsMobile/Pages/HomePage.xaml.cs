@@ -16,6 +16,8 @@ using System.Net;
 using CommunityToolkit.Maui.Views;
 using System.Diagnostics;
 using Com.Spotify.Android.Appremote.Api;
+using Microsoft.Maui.Controls;
+using SpotifyAPI.Web.Auth;
 
 namespace BeautifulLyricsMobile.Pages;
 
