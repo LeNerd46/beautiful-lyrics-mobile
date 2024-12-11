@@ -4,8 +4,14 @@ using MauiIcons.FontAwesome;
 using MauiIcons.Material.Rounded;
 using MR.Gestures;
 using BeautifulLyricsMobile.Controls;
-using BeautifulLyricsMobile.Platforms.Android;
 using Microsoft.Maui.Controls.Compatibility.Hosting;
+using SkiaSharp.Views.Maui.Handlers;
+using Microsoft.Maui.LifecycleEvents;
+
+#if ANDROID
+using Android.Views;
+using BeautifulLyricsMobile.Platforms.Android;
+#endif
 
 namespace BeautifulLyricsMobile
 {
@@ -17,9 +23,21 @@ namespace BeautifulLyricsMobile
 			builder
 				.UseMauiApp<App>()
 				.UseMauiCommunityToolkit()
+				.UseMauiCommunityToolkitMediaElement()
 				.UseFontAwesomeMauiIcons()
 				.UseMaterialRoundedMauiIcons()
 				.ConfigureMRGestures()
+				.ConfigureLifecycleEvents(events =>
+				{
+#if ANDROID
+					events.AddAndroid(android => android.OnCreate((activity, state) =>
+					{
+						activity.Window?.AddFlags(WindowManagerFlags.LayoutNoLimits);
+						activity.Window?.ClearFlags(WindowManagerFlags.TranslucentStatus);
+						activity.Window?.SetStatusBarColor(Android.Graphics.Color.Transparent);
+					}));
+#endif
+				})
 				.ConfigureFonts(fonts =>
 				{
 					fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -32,6 +50,7 @@ namespace BeautifulLyricsMobile
 #if ANDROID
 					handlers.AddCompatibilityRenderer(typeof(GradientLabel), typeof(GradientLabelRenderer));
 #endif
+					handlers.AddHandler(typeof(BlobAnimationView), typeof(SKCanvasViewHandler));
 				});
 
 #if DEBUG

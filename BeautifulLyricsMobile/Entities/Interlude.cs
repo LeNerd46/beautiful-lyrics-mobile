@@ -1,5 +1,9 @@
-﻿using BeautifulLyricsAndroid;
+﻿#if ANDROID
+using Android.Widget;
+#endif
+using BeautifulLyricsAndroid;
 using BeautifulLyricsAndroid.Entities;
+using BeautifulLyricsMobile.CurveInterpolator;
 using Microsoft.Maui.Controls.Shapes;
 using System;
 using System.Collections.Generic;
@@ -93,6 +97,9 @@ namespace BeautifulLyricsMobile.Entities
 		private LyricState State { get; set; }
 		private bool IsSleeping { get; set; }
 
+		private readonly CurveInterpolator.CurveInterpolator ScaleSpline;
+		private readonly CurveInterpolator.CurveInterpolator OpacitySpline;
+
 		public MainAnimations MainAnimations = new MainAnimations
 		{
 			YOffsetDamping = 0.4,
@@ -120,8 +127,10 @@ namespace BeautifulLyricsMobile.Entities
 			[
 				new(0, (double)1 / (double)100),
 				new(0.9, -((double)1 / (double)60)),
+				new(1, 0)
 			]
 		};
+
 		public DotAnimations DotAnimations = new DotAnimations
 		{
 			YOffsetDamping = 0.4,
@@ -166,6 +175,8 @@ namespace BeautifulLyricsMobile.Entities
 		public readonly double DownPulse = 0.95;
 		public readonly double UpPulse = 1.05;
 
+		private CurveInterpolator.CurveInterpolator MainYOffsetSpline;
+
 		public event EventHandler<bool> ActivityChanged;
 		public event EventHandler RequestedTimeSkip;
 
@@ -194,6 +205,24 @@ namespace BeautifulLyricsMobile.Entities
 			HorizontalStackLayout container = new HorizontalStackLayout();
 			container.Dispatcher.Dispatch(() => container.Style = (Style)Application.Current.Resources["Interlude"]);
 			Container = container;
+
+			var points = MainAnimations.YOffsetRange.Select(metadata => new double[] { metadata.Key, metadata.Value }).ToArray();
+			List<Vector> vectors = [];
+
+			foreach (var point in points)
+			{
+				vectors.Add(new Vector
+				{
+					Numbers = [.. point]
+				});
+			}
+
+			scaleSpline = GetSpline(DotAnimations.ScaleRange.Select(x => x.Key).ToList(), DotAnimations.ScaleRange.Select(x => x.Value).ToList());
+			yOffsetSpline = GetSpline(DotAnimations.YOffsetRange.Select(x => x.Key).ToList(), DotAnimations.YOffsetRange.Select(x => x.Value).ToList());
+			glowSpline = GetSpline(DotAnimations.GlowRange.Select(x => x.Key).ToList(), DotAnimations.GlowRange.Select(x => x.Value).ToList());
+			opacitySpline = GetSpline(DotAnimations.OpacityRange.Select(x => x.Key).ToList(), DotAnimations.OpacityRange.Select(x => x.Value).ToList());
+
+			MainYOffsetSpline = new CurveInterpolator.CurveInterpolator([.. vectors]);
 
 			LiveText = new MainLiveText
 			{
@@ -239,10 +268,36 @@ namespace BeautifulLyricsMobile.Entities
 			scaleRange.ForEach(point => point = new { Time = point.Time / Duration, point.Value });
 			opacityRange.ForEach(point => point = new { Time = point.Time / Duration, point.Value });
 
-			scaleSpline = new Spline(DotAnimations.ScaleRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
-			yOffsetSpline = new Spline(DotAnimations.YOffsetRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
-			glowSpline = new Spline(DotAnimations.GlowRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
-			opacitySpline = new Spline(DotAnimations.OpacityRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
+			var scalePoints = scaleRange.Select(metadata => new double[] { metadata.Time, metadata.Value }).ToArray();
+			List<Vector> scaleVectors = [];
+
+			foreach (var point in scalePoints)
+			{
+				scaleVectors.Add(new Vector
+				{
+					Numbers = [.. point]
+				});
+			}
+
+			ScaleSpline = new CurveInterpolator.CurveInterpolator([.. scaleVectors]);
+
+			var opacityPoints = opacityRange.Select(metadata => new double[] { metadata.Time, metadata.Value }).ToArray();
+			List<Vector> opacityVectors = [];
+
+			foreach (var point in opacityPoints)
+			{
+				opacityVectors.Add(new Vector
+				{
+					Numbers = [.. point]
+				});
+			}
+
+			OpacitySpline = new CurveInterpolator.CurveInterpolator([.. opacityVectors]);
+
+			// scaleSpline = new Spline(DotAnimations.ScaleRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
+			// yOffsetSpline = new Spline(DotAnimations.YOffsetRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
+			// glowSpline = new Spline(DotAnimations.GlowRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
+			// opacitySpline = new Spline(DotAnimations.OpacityRange.Select(x => x.Key).ToList(), scaleRange.Select(x => x.Value).ToList());
 
 			// Go through and create all our dots
 			double dotStep = (double)0.92 / (double)3;
@@ -252,7 +307,6 @@ namespace BeautifulLyricsMobile.Entities
 			{
 				Ellipse dot = new Ellipse();
 				dot.Dispatcher.Dispatch(() => dot.Style = Application.Current.Resources.MergedDictionaries.Last()["InterludeDot"] as Style);
-				// Add style
 
 				Dots.Add(new AnimatedDot
 				{
@@ -297,7 +351,7 @@ namespace BeautifulLyricsMobile.Entities
 		private void UpdateLiveDotState(DotLiveText liveText, double timeScale, double glowTimeScale, bool forceTo)
 		{
 			double scale = scaleSpline.At(timeScale);
-			double yOffset = scaleSpline.At(timeScale);
+			double yOffset = yOffsetSpline.At(timeScale);
 			double glowAlpha = glowSpline.At(glowTimeScale);
 			double opacity = opacitySpline.At(timeScale);
 
@@ -320,7 +374,7 @@ namespace BeautifulLyricsMobile.Entities
 		private bool UpdateLiveDotVisuals(DotLiveText liveText, double deltaTime)
 		{
 			double scale = liveText.Springs.Scale.Update(deltaTime);
-			double yOffset = liveText.Springs.YOffset.Update(deltaTime);
+			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 25;
 			double glowAlpha = liveText.Springs.Glow.Update(deltaTime);
 			double opacity = liveText.Springs.Opacity.Update(deltaTime);
 
@@ -328,10 +382,12 @@ namespace BeautifulLyricsMobile.Entities
 			liveText.Object.Dispatcher.Dispatch(() =>
 			{
 				// liveText.Object.Scale = scale;
-				liveText.Object.TranslationY = scale * 4;
+				liveText.Object.TranslationY = yOffset;
 				// Glow
 				// liveText.Object.Opacity = opacity;
 				liveText.Object.Opacity = 1;
+
+				// System.Diagnostics.Debug.WriteLine($"Scale: {scale}");
 			});
 
 			return liveText.Springs.Scale.Sleeping && liveText.Springs.YOffset.Sleeping && liveText.Springs.Glow.Sleeping && liveText.Springs.Opacity.Sleeping;
@@ -340,10 +396,17 @@ namespace BeautifulLyricsMobile.Entities
 		// I'm lazy, okay
 		private void UpdateLiveMainState(MainLiveText liveText, double timeScale, bool forceTo = true)
 		{
-			double scale = scaleSpline.At(timeScale);
-			double yOffset = yOffsetSpline.At(timeScale);
-			double opacity = opacitySpline.At(timeScale);
+			// Grab easy values
+			var yOffset = MainYOffsetSpline.GetPointAt(timeScale).Numbers[1];
 
+			// Find our scale/opacity points
+			var scaleIntersections = ScaleSpline.GetIntersects(timeScale);
+			var opacityIntersections = OpacitySpline.GetIntersects(timeScale);
+
+			var scale = (scaleIntersections.Length == 0) ? 1 : scaleIntersections[^1].Numbers[1];
+			var opacity = (opacityIntersections.Length == 0) ? 1 : opacityIntersections[^1].Numbers[1];
+
+			// Apply them
 			if (forceTo)
 			{
 				liveText.Springs.Scale.Set(scale);
@@ -361,7 +424,7 @@ namespace BeautifulLyricsMobile.Entities
 		private bool UpdateLiveMainVisuals(MainLiveText liveText, double deltaTime)
 		{
 			double scale = LiveText.Springs.Scale.Update(deltaTime);
-			double yOffset = LiveText.Springs.YOffset.Update(deltaTime);
+			double yOffset = LiveText.Springs.YOffset.Update(deltaTime) * 25;
 			double opacity = LiveText.Springs.Opacity.Update(deltaTime);
 
 			liveText.Object.Dispatcher.Dispatch(() =>
@@ -376,35 +439,36 @@ namespace BeautifulLyricsMobile.Entities
 
 		public void Animate(double songTimestamp, double deltaTime, bool isImmeiate = true)
 		{
-			return;
-
-			double relativeTime = songTimestamp - StartTime;
-			double timeScale = Math.Max(0, Math.Min((double)relativeTime / (double)Duration, 1));
-
-			bool pastStart = (relativeTime >= 0);
-			bool beforeEnd = (relativeTime <= Duration);
-			bool isActive = pastStart && beforeEnd;
-
-			LyricState stateNow = isActive ? LyricState.Active : pastStart ? LyricState.Sung : LyricState.Idle;
-
-			bool stateChanged = stateNow != State;
-			bool shouldUpdateVisualState = stateChanged || isActive || isImmeiate;
-
-			if (stateChanged)
+			Task.Run(() =>
 			{
-				LyricState oldState = State;
-				State = stateNow;
+				double relativeTime = songTimestamp - StartTime;
+				double timeScale = Math.Max(0, Math.Min((double)relativeTime / (double)Duration, 1));
 
-				// if (State != LyricState.Sung)
-				// 	  EvaluateClassState();
+				bool pastStart = (relativeTime >= 0);
+				bool beforeEnd = (relativeTime <= Duration);
+				bool isActive = pastStart && beforeEnd;
 
-				// ActivityChangedSignal stuff
+				LyricState stateNow = isActive ? LyricState.Active : pastStart ? LyricState.Sung : LyricState.Idle;
+
+				bool stateChanged = stateNow != State;
+				bool shouldUpdateVisualState = stateChanged || isActive || isImmeiate;
+
+				if (stateChanged)
+				{
+					LyricState oldState = State;
+					State = stateNow;
+
+					// if (State != LyricState.Sung)
+					// 	  EvaluateClassState();
+
+					// ActivityChangedSignal stuff
+				}
 
 				if (shouldUpdateVisualState)
 					IsSleeping = false;
 
 				bool isMoving = !IsSleeping; // What an odd way to do this
-				if (shouldUpdateVisualState || isMoving) 
+				if (shouldUpdateVisualState || isMoving)
 				{
 					bool isSleeping = true;
 
@@ -415,27 +479,27 @@ namespace BeautifulLyricsMobile.Entities
 						if (shouldUpdateVisualState)
 							UpdateLiveDotState(dot.LiveText, dotTimeScale, dotTimeScale, isImmeiate);
 
-						if(isMoving)
+						if (isMoving)
 						{
 							bool dotIsSleeping = UpdateLiveDotVisuals(dot.LiveText, deltaTime);
 
 							if (!dotIsSleeping)
-								IsSleeping = false;
+								isSleeping = false;
 						}
 					}
 
 					if (shouldUpdateVisualState)
 						UpdateLiveMainState(LiveText, timeScale, isImmeiate);
 
-					if(isMoving)
+					if (isMoving)
 					{
 						bool mainIsSleeping = UpdateLiveMainVisuals(LiveText, deltaTime);
 
-						if(!mainIsSleeping)
+						if (!mainIsSleeping)
 							isSleeping = false;
 					}
 
-					if(isSleeping)
+					if (isSleeping)
 					{
 						IsSleeping = true;
 
@@ -443,7 +507,15 @@ namespace BeautifulLyricsMobile.Entities
 						// 	  EvaluateClassState();
 					}
 				}
-			}
+			}).ContinueWith(t =>
+			{
+				if(t.IsFaulted)
+				{
+#if ANDROID
+					Toast.MakeText(Platform.CurrentActivity, t.Exception.Message, ToastLength.Long).Show();
+#endif
+				}
+			});
 		}
 
 		public void ForceState(bool state)

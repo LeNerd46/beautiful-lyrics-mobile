@@ -14,16 +14,14 @@ using IImage = Microsoft.Maui.Graphics.IImage;
 using BeautifulLyricsMobile.Entities;
 using Newtonsoft.Json.Linq;
 using BeautifulLyricsMobile.Controls;
+using System.Collections.ObjectModel;
 
-
-#if ANDROID
 using Com.Spotify.Android.Appremote.Api;
 using Com.Spotify.Protocol.Types;
 using static Com.Spotify.Protocol.Client.Subscription;
 using static Com.Spotify.Protocol.Client.CallResult;
 using Android.Widget;
 using Java.Security;
-#endif
 
 namespace BeautifulLyricsMobile
 {
@@ -34,7 +32,7 @@ namespace BeautifulLyricsMobile
 	public partial class MainPage : ContentPage
 	{
 #if ANDROID
-		internal static SpotifyAppRemote Remote { get; set; }
+		public static SpotifyAppRemote Remote { get; set; }
 #endif
 		internal static string CurrentTrackId { get; set; }
 		public static bool IsPlaying { get; set; }
@@ -54,6 +52,7 @@ namespace BeautifulLyricsMobile
 		private bool updatedToken = true;
 
 		private static Stopwatch stopwatch = new Stopwatch();
+		private LyricsScroller scroller;
 
 		private string type = "None";
 		double lyricsEndTime = -1;
@@ -66,10 +65,14 @@ namespace BeautifulLyricsMobile
 
 		private bool newSong = false;
 		private bool local = false;
+		private bool skipped = false;
+		private long newTimestamp = -1;
+		private long resetOffset = 0;
 
 		private Task activeTask = null;
 		private System.Timers.Timer progressSyncTimer;
 		private CancellationTokenSource cancelToken;
+		private CancellationTokenSource backgroundCancel;
 
 		private int lineIndex = 0;
 		private int previousLineIndex = -1;
@@ -78,67 +81,7 @@ namespace BeautifulLyricsMobile
 
 		public MainPage()
 		{
-			/*updatedToken = File.Exists(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
-
-			if (!updatedToken)
-			{
-				Task.Run(async () =>
-				{
-					server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
-					await server.Start();
-
-					server.ImplictGrantReceived += async (sender, response) =>
-					{
-						await server.Stop();
-
-						accessToken = response.AccessToken;
-						spotify = new SpotifyClient(response.AccessToken);
-
-						client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-						client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
-
-						File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, "token.txt"), AccessToken);
-					};
-
-					server.ErrorReceived += async (sender, error, state) =>
-					{
-						await server.Stop();
-
-						await DisplayAlert("Error", $"{error}\nState: {state}", "OK");
-					};
-
-					var request = new LoginRequest(server.BaseUri, "4d42ec7301a64d57bc1971655116a3b9", LoginRequest.ResponseType.Token)
-					{
-						Scope = new List<string> { Scopes.UserReadPrivate }
-					};
-
-					await Launcher.OpenAsync(request.ToUri());
-				});
-			}
-			else
-			{
-				accessToken = File.ReadAllText(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
-
-				if (!string.IsNullOrWhiteSpace(accessToken))
-				{
-					client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-					client.AddDefaultHeader("Authorization", $"Bearer {AccessToken}");
-				}
-				else
-					Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
-
-				var config = SpotifyClientConfig.CreateDefault();
-
-				var request = new ClientCredentialsRequest("4d42ec7301a64d57bc1971655116a3b9", "0423d7b832114aa086a2034e2cde0138");
-				var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
-
-				spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-			}*/
-
 			InitializeComponent();
-
-			// activeTask = Task.Run(RenderLyrics);
-
 #if ANDROID
 			/*SpotifyBroadcastReceiver.SongChanged += async (sender, e) =>
 			{
@@ -155,7 +98,8 @@ namespace BeautifulLyricsMobile
 			};*/
 
 			// Task.Run(RenderLyrics);
-			SpotifyBroadcastReceiver.SongChanged += OnSongChanged;
+			// SpotifyBroadcastReceiver.SongChanged += OnSongChanged;
+			SpotifyBroadcastReceiver.PlaybackChanged += OnPlaybackChanged;
 
 			/*Task.Run(async () =>
 			{
@@ -182,18 +126,48 @@ namespace BeautifulLyricsMobile
 			stopwatch.Reset();
 			LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Clear());
 			cancelToken = new CancellationTokenSource();
+			backgroundCancel = new CancellationTokenSource();
+			scroller = new LyricsScroller(ScrollViewer, LyricsContainer);
+
 			Task.Run(RenderLyrics, cancelToken.Token);
 #endif
 		}
 
+		private async void OnPlaybackChanged(object sender, PlaybackChangedEventArgs e)
+		{
+			if(e.IsPlaying != isPlaying)
+			{
+				isPlaying = e.IsPlaying;
+
+				if (isPlaying)
+					stopwatch.Start();
+				else
+					stopwatch.Stop();
+			}
+			else
+			{
+				lineIndex = 0;
+				previousLineIndex = -1;
+				timestamp = TimeSpan.FromMilliseconds(e.Position).TotalSeconds;
+				newTimestamp = e.Position;
+
+				skipped = true;
+			}
+
+			// await Update(vocalGroups, lyricsEndTime, e.Position, 0, true, false);
+		}
+
 		protected override bool OnBackButtonPressed()
 		{
+			cancelToken.Cancel();
+			cancelToken.Dispose();
 #if ANDROID
-			SpotifyBroadcastReceiver.SongChanged -= OnSongChanged;
+			// SpotifyBroadcastReceiver.SongChanged -= OnSongChanged;
+			SpotifyBroadcastReceiver.PlaybackChanged -= OnPlaybackChanged;
 #endif
 
 			stopwatch.Stop();
-			cancelToken.Cancel();
+			// LyricsContainer.Clear();
 
 			return base.OnBackButtonPressed();
 		}
@@ -223,8 +197,10 @@ namespace BeautifulLyricsMobile
 
 				stopwatch.Start();
 
+				SKBitmap image = null;
+
 				// Background
-				Task.Run(async () =>
+				await Task.Run(async () =>
 				{
 					FullTrack track = await Spotify.Tracks.Get(CurrentTrackId);
 					using HttpClient download = new HttpClient();
@@ -233,32 +209,20 @@ namespace BeautifulLyricsMobile
 					{
 						var imageStream = await download.GetStreamAsync(track.Album.Images[0].Url);
 
-						SKBitmap skImage = SKBitmap.Decode(imageStream);
-						SKSurface surface = SKSurface.Create(new SKImageInfo(track.Album.Images[0].Width * 3, track.Album.Images[0].Height * 3));
-						SKCanvas canvas = surface.Canvas;
-
-						SKImageFilter filter = SKImageFilter.CreateBlur(50, 50);
-
-						SKPaint paint = new SKPaint
-						{
-							ImageFilter = filter
-						};
-
-						canvas.Scale(3);
-						canvas.DrawBitmap(skImage, new SKPoint(0, 0), paint);
-
-						using var thingImage = surface.Snapshot();
-						using var data = thingImage.Encode(SKEncodedImageFormat.Jpeg, 100);
-
-						await MainContentPage.Dispatcher.DispatchAsync(async () => MainContentPage.BackgroundImageSource = ImageSource.FromStream(() => data.AsStream()));
+						image = SKBitmap.Decode(imageStream);
 					}
 					catch (Exception ex)
 					{
 						// Toast.MakeText(Platform.CurrentActivity, ex.Message, ToastLength.Long).Show();
 					}
 				});
-
-				// await setBackgroundTask;
+				gridThing.Dispatcher.Dispatch(() => gridThing.Add(new BlobAnimationView(image, backgroundCancel)
+				{
+					HorizontalOptions = LayoutOptions.FillAndExpand,
+					VerticalOptions = LayoutOptions.FillAndExpand,
+					InputTransparent = true,
+					ZIndex = -1
+				}));
 
 				string content = "";
 
@@ -288,9 +252,8 @@ namespace BeautifulLyricsMobile
 				double[] syncTimings = [0.05, 0.1, 0.15, 0.75];
 				double canSyncNonLocalTimestamp = isPlaying ? syncTimings.Length : 0;
 
-				long before = stopwatch.ElapsedMilliseconds;
-
 				PlayerState player = await RequestPositionSync();
+				long before = stopwatch.ElapsedMilliseconds;
 
 				isPlaying = !player.IsPaused;
 				IsPlaying = !player.IsPaused;
@@ -363,12 +326,12 @@ namespace BeautifulLyricsMobile
 					{
 						// lines.Add(interlude);
 
-						FlexLayout vocalGroupContainer = new FlexLayout();
+						FlexLayout vocalGroupContainer = [];
 
 						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
 
-						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
+						LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
 					}
 					else
 					{
@@ -417,6 +380,8 @@ namespace BeautifulLyricsMobile
 						}
 					}
 				}
+
+
 			}
 		}
 
@@ -430,22 +395,36 @@ namespace BeautifulLyricsMobile
 			if (newSong)
 				return;
 
+			double timestampToUse = timestamp;
+
+			if (skipped)
+			{
+				timestampToUse = newTimestamp;
+				this.skipped = false;
+			}
+
 			foreach (var vocalGroup in vocalGroups.Values)
 			{
 				foreach (var vocal in vocalGroup)
 				{
 					// timestampLabel.Dispatcher.Dispatch(() => timestampLabel.Text = $"Time: {timestamp}\nDelta Time: {deltaTime}");
-					vocal.Animate(timestamp, deltaTime, skipped);
+					vocal.Animate(timestampToUse, deltaTime, skipped);
 
 					// if(vocal is SyllableVocals syllable && syllable.IsActive())
 					// 	ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
 
 					if (vocal is SyllableVocals syllable && syllable.IsActive())
 					{
-						if (timestamp > syllable.StartTime)
+						int index = LyricsContainer.IndexOf(syllable.Container.Parent as IView);
+
+						if (timestamp > syllable.StartTime && index != previousLineIndex)
+						{
+							// LyricsContainer.Dispatcher.Dispatch(async () => await scroller.ScrollAsync());
 							ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
 
-						// THis scrolls every frame, maybe find a way to make it only scroll once
+							previousLineIndex = lineIndex;
+							lineIndex = index;
+						}
 					}
 				}
 			}
@@ -461,75 +440,67 @@ namespace BeautifulLyricsMobile
 				return;
 
 #if ANDROID
-			bool proceed = false;
 			double deltaTime = -1;
 			long position = initialPosition;
 			long updatedAt;
 
-			if (syncProgress)
+			position = initialPosition;
+			updatedAt = stopwatch.ElapsedMilliseconds;
+			// deltaTime = (updatedAt - lastUpdatedAt) / 1000;
+			// deltaTime = (updatedAt - lastUpdatedAt).TotalMilliseconds / 1000;
+			deltaTime = (stopwatch.Elapsed - TimeSpan.FromMilliseconds(lastUpdatedAt)).TotalSeconds;
+
+			double newTimestamp = 0;
+			double fireDeltaTime = deltaTime;
+
+			if (skipped)
 			{
-				PlayerState player = await RequestPositionSync();
-				position = player.PlaybackPosition;
-
-				updatedAt = stopwatch.ElapsedMilliseconds;
-				// deltaTime = (updatedAt - lastUpdatedAt) / 1000;
-				// deltaTime = (updatedAt - lastUpdatedAt).TotalMilliseconds / 1000;
-				deltaTime = (stopwatch.Elapsed - TimeSpan.FromMilliseconds(lastUpdatedAt)).TotalSeconds;
-
-				proceed = player.Track is Track;
-				syncProgress = false;
-			}
-			else
-			{
-				position = initialPosition;
-				updatedAt = stopwatch.ElapsedMilliseconds;
-				// deltaTime = (updatedAt - lastUpdatedAt) / 1000;
-				// deltaTime = (updatedAt - lastUpdatedAt).TotalMilliseconds / 1000;
-				deltaTime = (stopwatch.Elapsed - TimeSpan.FromMilliseconds(lastUpdatedAt)).TotalSeconds;
-
-				proceed = true;
+				position = this.newTimestamp;
+				resetOffset = stopwatch.ElapsedMilliseconds - 2500;
 			}
 
-			if (proceed)
+			double syncedTimestamp = (position / 1000) + (startedSyncAt == 0 ? 0 : (updatedAt - startedSyncAt) / 1000) - (resetOffset / 1000);
+
+			if (syncedTimestamp >= lyricsEndTime)
+				return;
+
+			// startedSyncAt = -1; idk why I did this
+			// position = -1;
+
+			if (isPlaying)
 			{
-				double newTimestamp = 0;
-				double fireDeltaTime = deltaTime;
-
-				double syncedTimestamp = (position / 1000) + (startedSyncAt == 0 ? 0 : (updatedAt - startedSyncAt) / 1000);
-
-				if (syncedTimestamp >= lyricsEndTime)
-					return;
-
-				// startedSyncAt = -1; idk why I did this
-				// position = -1;
-
-				if (isPlaying)
+				if (syncedTimestamp == 0 || Math.Abs(syncedTimestamp - timestamp) < 0.075)
 				{
-					if (syncedTimestamp == 0 || Math.Abs(syncedTimestamp - timestamp) < 0.075)
-					{
-						newTimestamp = timestamp + deltaTime;
-						fireDeltaTime = deltaTime;
-					}
-					else
-						newTimestamp = syncedTimestamp;
+					newTimestamp = timestamp + deltaTime;
+					fireDeltaTime = deltaTime;
 				}
-				else if (syncedTimestamp != 0 && Math.Abs(syncedTimestamp - timestamp) > 0.05)
-				{
+				else
 					newTimestamp = syncedTimestamp;
-					fireDeltaTime = 0;
-				}
+			}
+			else if (syncedTimestamp != 0 && Math.Abs(syncedTimestamp - timestamp) > 0.05)
+			{
+				newTimestamp = syncedTimestamp;
+				fireDeltaTime = 0;
+			}
 
-				if (newTimestamp != 0)
-				{
-					timestamp = newTimestamp;
-					await Update(vocalGroups, lyricsEndTime, timestamp, deltaTime, false, false);
-				}
+			if (newTimestamp != 0 && isPlaying)
+			{
+				timestamp = newTimestamp;
+				await Update(vocalGroups, lyricsEndTime, timestamp, deltaTime, skipped, false);
 			}
 
 			lastUpdatedAt = updatedAt;
 
-			await Defer(async () => await UpdateProgress(initialPosition, startedSyncAt, vocalGroups, lyricsEndTime));
+			await Defer(async () => await UpdateProgress(position, startedSyncAt, vocalGroups, lyricsEndTime));
 #endif
+		}
+
+		protected override void OnDisappearing()
+		{
+			base.OnDisappearing();
+
+			if (backgroundCancel != null && !backgroundCancel.IsCancellationRequested)
+				backgroundCancel.Cancel();
 		}
 
 #if ANDROID

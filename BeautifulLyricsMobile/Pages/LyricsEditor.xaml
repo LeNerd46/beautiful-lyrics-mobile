@@ -40,7 +40,6 @@
                         <RowDefinition Height="2*"/>
                     </Grid.RowDefinitions>
 
-
                     <HorizontalStackLayout x:Name="wordContainer" HorizontalOptions="Center" VerticalOptions="Center">
                         <BoxView x:Name="cursor" BackgroundColor="Black" WidthRequest="2" HeightRequest="25"/>
                     </HorizontalStackLayout>
@@ -52,6 +51,7 @@
                         </HorizontalStackLayout>
 
                         <Button Text="Split" BackgroundColor="#404040" TextColor="White" HeightRequest="50" Clicked="SplitWord"/>
+                        <Button Text="Cancel" BackgroundColor="#404040" TextColor="White" HeightRequest="50" Clicked="CancelSplit"/>
                         <Button Text="Done" BackgroundColor="#404040" TextColor="White" HeightRequest="50" Clicked="FinishSplit"/>
                     </VerticalStackLayout>
                 </Grid>

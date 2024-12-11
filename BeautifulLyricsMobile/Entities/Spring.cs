@@ -95,7 +95,7 @@ namespace BeautifulLyricsAndroid.Entities
 			this.Position = newPosition;
 			this.Velocity = newVelocity;
 
-			this.Sleeping = (Math.Abs(final - newPosition) <= (double)0.1);
+			this.Sleeping = (Math.Abs(final - newPosition) <= (double)0.2);
 
 			return newPosition;
 		}

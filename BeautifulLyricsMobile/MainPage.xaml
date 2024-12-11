@@ -2,31 +2,23 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BeautifulLyricsMobile.MainPage"
-             x:Name="MainContentPage">
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Name="MainContentPage"
+             Shell.NavBarIsVisible="False">
 
+    <!--<ContentPage.Behaviors>
+        <toolkit:StatusBarBehavior StatusBarColor="Transparent" StatusBarStyle="DarkContent"/>
+    </ContentPage.Behaviors>-->
     <!--<ContentPage.Resources>
         <StyleSheet Source="Resources/Styles/styles.css" />
     </ContentPage.Resources>-->
 
-    <ScrollView x:Name="ScrollViewer">
-        <VerticalStackLayout x:Name="LyricsContainer" Spacing="10">
-
-            <!--<AbsoluteLayout>
-                <Image x:Name="lyricsLoadingImage" Aspect="AspectFill" Opacity="80"/>
-
-                <BoxView x:Name="gradientBackground">
-                    <BoxView.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                            <GradientStop Color="#000000" Offset="0" x:Name="gradientStop1"/>
-                            <GradientStop Color="#FFFFFF" Offset="0.5" x:Name="gradientStop2"/>
-                            <GradientStop Color="#000000" Offset="1" x:Name="gradientStop3"/>
-                        </LinearGradientBrush>
-                    </BoxView.Background>
-                </BoxView>
-            </AbsoluteLayout>-->
-
-            <Label x:Name="timestampLabel"/>
-        </VerticalStackLayout>
-    </ScrollView>
+    <Grid x:Name="gridThing">
+        <ScrollView x:Name="ScrollViewer">
+            <VerticalStackLayout x:Name="LyricsContainer" Spacing="10">
+                <Label x:Name="timestampLabel"/>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 
 </ContentPage>

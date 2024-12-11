@@ -5,8 +5,6 @@ VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BeautifulLyricsMobile", "BeautifulLyricsMobile\BeautifulLyricsMobile.csproj", "{DCFF3535-157D-476F-9430-817B64F73962}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeautifulLyricsBackend", "BeautifulLyricsBackend\BeautifulLyricsBackend.csproj", "{B3E9EEF5-E363-49FD-8873-15DFF6C54FDB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,10 +17,6 @@ Global
 		{DCFF3535-157D-476F-9430-817B64F73962}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DCFF3535-157D-476F-9430-817B64F73962}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DCFF3535-157D-476F-9430-817B64F73962}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{B3E9EEF5-E363-49FD-8873-15DFF6C54FDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B3E9EEF5-E363-49FD-8873-15DFF6C54FDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B3E9EEF5-E363-49FD-8873-15DFF6C54FDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B3E9EEF5-E363-49FD-8873-15DFF6C54FDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

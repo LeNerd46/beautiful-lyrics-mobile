@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using NTextCat.Commons;
 using BeautifulLyricsMobile;
 using BeautifulLyricsMobile.Controls;
+using BeautifulLyricsMobile.Models;
 
 namespace BeautifulLyricsAndroid.Entities
 {
@@ -38,6 +39,7 @@ namespace BeautifulLyricsAndroid.Entities
 			// container.Dispatcher.Dispatch(() => container.Style = Application.Current.Resources.MergedDictionaries.Last()["IdleLyric"] as Style);
 			// Container = container;
 			Container = lineContainer;
+			List<View> views = [];
 
 			Active = false;
 			IsBackground = isBackground;
@@ -108,8 +110,25 @@ namespace BeautifulLyricsAndroid.Entities
 					syllableLabel.Shadow = new Shadow
 					{
 						Brush = Brush.White,
-						Opacity = 0
+						Opacity = 0,
+						Radius = 0
 					};
+					// syllableLabel.Shadow.SetBinding(Shadow.OpacityProperty, static (GradientLabel label) => label.ShadowOpacity);
+					// syllableLabel.Shadow.SetBinding(Shadow.RadiusProperty, static (GradientLabel label) => label.ShadowRadius);
+					// syllableLabel.Shadow.BindingContext = syllableLabel;
+
+					/*ShadowOpacityModel viewModel = new ShadowOpacityModel
+					{
+						SHadowOpacity = 0
+					};
+
+					syllableLabel.Shadow.BindingContext = viewModel;
+					syllableLabel.Shadow.SetBinding(Shadow.OpacityProperty, new Binding
+					{
+						Path = "ShadowOpacity",
+						Source = viewModel,
+						Mode = BindingMode.TwoWay
+					});*/
 
 					List<AnimatedLetter> letters = [];
 					HorizontalStackLayout emphasisGroup = [];
@@ -125,7 +144,8 @@ namespace BeautifulLyricsAndroid.Entities
 								syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
 								wordGroup.Add(syllableLabel);
-								lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Children.Add(wordGroup)).Wait();
+								views.Add(wordGroup);
+								// lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Children.Add(wordGroup)); // .Wait()
 								// visualElements.Add(wordGroup);
 								// lineContainer.Children.Add(wordGroup);
 
@@ -137,7 +157,8 @@ namespace BeautifulLyricsAndroid.Entities
 								syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
 								// lineContainer.Dispatcher.Dispatch(() => lineContainer.Children.Add(syllableLabel));
-								lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Children.Add(syllableLabel)).Wait();
+								views.Add(syllableLabel);
+								// lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Children.Add(syllableLabel)); // .Wait();
 								// visualElements.Add(syllableLabel);
 							}
 						}
@@ -164,8 +185,12 @@ namespace BeautifulLyricsAndroid.Entities
 								letterLabel.Shadow = new Shadow
 								{
 									Brush = Brush.White,
-									Opacity = 0
+									Opacity = 0,
+									Radius = 0
 								};
+								// letterLabel.Shadow.SetBinding(Shadow.OpacityProperty, static (GradientLabel label) => label.ShadowOpacity);
+								// letterLabel.Shadow.SetBinding(Shadow.RadiusProperty, static (GradientLabel label) => label.ShadowRadius);
+								// letterLabel.Shadow.BindingContext = letterLabel;
 
 								letterLabel.Text = letter;
 								emphasisGroup.Add(letterLabel);
@@ -190,11 +215,13 @@ namespace BeautifulLyricsAndroid.Entities
 							if (wordGroup != null)
 							{
 								wordGroup.Add(emphasisGroup);
-								lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Children.Add(wordGroup)).Wait();
+								views.Add(wordGroup);
+								// lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Children.Add(wordGroup)); // .Wait();
 								// visualElements.Add(wordGroup);
 							}
 							else
-								lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Add(emphasisGroup)).Wait();
+								views.Add(emphasisGroup);
+								// lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Add(emphasisGroup)); //.Wait();
 							// visualElements.Add(emphasisGroup);
 						}
 					}
@@ -232,8 +259,12 @@ namespace BeautifulLyricsAndroid.Entities
 								letterLabel.Shadow = new Shadow
 								{
 									Brush = Brush.White,
-									Opacity = 0
+									Opacity = 0,
+									Radius = 0
 								};
+								// letterLabel.Shadow.SetBinding(Shadow.OpacityProperty, static (GradientLabel label) => label.ShadowOpacity);
+								// letterLabel.Shadow.SetBinding(Shadow.RadiusProperty, static (GradientLabel label) => label.ShadowRadius);
+								// letterLabel.Shadow.BindingContext = letterLabel;
 
 								letterLabel.Text = letter;
 								emphasisGroup.Add(letterLabel);
@@ -349,6 +380,8 @@ namespace BeautifulLyricsAndroid.Entities
 				}
 			}
 
+			views.ForEach(Container.Add);
+
 			lineContainer.BatchCommit();
 
 			SetToGeneralState(false);
@@ -361,7 +394,7 @@ namespace BeautifulLyricsAndroid.Entities
 			Scale = new Spring(0, 0.6f, 0.7f),
 			YOffset = new Spring(0, 0.4f, 1.25f),
 			// YOffset = new Spring(0, 1.25, 0.7),
-			Glow = new Spring(0, 1, 0.5f)
+			Glow = new Spring(0, 0.5, 1)
 		};
 
 		private bool IsEmphasized(SyllableMetadata metadata, bool isRomanized) => metadata.EndTime - metadata.StartTime >= 1 && (isRomanized ? metadata.RomanizedText.Length <= 12 : metadata.Text.Length <= 12);
@@ -434,7 +467,7 @@ namespace BeautifulLyricsAndroid.Entities
 			new(0, (double)1 / (double)100),
 			// new(0, (double)4 / (double)5),
 			// new(0.7, (double)1.5), // Lowest
-			new(0.9, -((double)1 / (double)60)), 
+			new(0.9f, -((double)1 / (double)60)), 
 			// new(0.7, -((double)1 / (double)5)), 
 			// new(0, (double)-1), // Highest
 			new (1, 0)
@@ -443,8 +476,8 @@ namespace BeautifulLyricsAndroid.Entities
 		private readonly List<KeyValuePair<double, double>> glowRange =
 		[
 			new(0, 0),
-			new(0.15f, 1),
-			new(0.6f, 1),
+			new((double)0.15, 1),
+			new((double)0.6, 1),
 			new(1, 0)
 		];
 
@@ -539,7 +572,7 @@ namespace BeautifulLyricsAndroid.Entities
 		{
 			double scale = liveText.Springs.Scale.Update(deltaTime);
 			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 50;
-			double glowAlpha = liveText.Springs.Glow.Update(deltaTime) * 25;
+			double glowAlpha = liveText.Springs.Glow.Update(deltaTime) * 50;
 
 			float gradientProgress = (int)Math.Round(-20 + 120 * timeScale);
 			liveText.YOffset = yOffset * (isEmphasized ? 3 : 1);
@@ -554,16 +587,17 @@ namespace BeautifulLyricsAndroid.Entities
 					label.GradientProgress = gradientProgress;
 
 					// label.Shadow.Radius = (float)(4 + (2 * glowAlpha * (isEmphasized ? 3 : 1)));
-					// label.Shadow.Opacity = (float)(glowAlpha * (isEmphasized ? 2 : 1));
+					// label.Shadow.Opacity = (float)(glowAlpha * (isEmphasized ? 100 : 35));
+					// label.Shadow.Handler?.UpdateValue(nameof(Shadow.RadiusProperty));
+					// label.Shadow.Handler?.UpdateValue(nameof(Shadow.OpacityProperty));
+					// 
+					// label.InvalidateMeasure();
 
-					/*if (label.TranslationY <= 1.2)
-						label.Shadow.Opacity = 0;
-					else
-					{
-						// label.Shadow.Opacity = (float)(scale - 0.3) * (isEmphasized ? 300 : 135);
-						label.Shadow.Opacity = Math.Min(1, (float)(scale - 0.3) * (isEmphasized ? 10 : 15));
-						label.Shadow.Radius = 4 + 2 * (float)(scale - 0.3) * (isEmphasized ? 30 : 10);
-					}*/
+					// label.Shadow.Radius = (float)(4 + (2 * yOffset * (isEmphasized ? 3 : 1)));
+					// label.Shadow.Opacity = (float)(yOffset * (isEmphasized ? 100 : 35));
+					// label.ShadowRadius = (float)(4 + (2 * yOffset * (isEmphasized ? 3 : 1)));
+					// label.ShadowOpacity = (float)(yOffset * (isEmphasized ? 100 : 35));
+					// label.InvalidateMeasure();
 				});
 			}
 

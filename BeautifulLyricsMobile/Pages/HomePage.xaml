@@ -5,12 +5,20 @@
              x:Class="BeautifulLyricsMobile.Pages.HomePage"
              xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
              xmlns:local="clr-namespace:BeautifulLyricsMobile.Controls"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:media="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
+             Unloaded="ContentPage_Unloaded"
              Title="HomePage">
+
+    <!--<ContentPage.Behaviors>
+        <toolkit:StatusBarBehavior StatusBarColor="Transparent" StatusBarStyle="LightContent"/>
+    </ContentPage.Behaviors>-->
+
     <ContentPage.BindingContext>
         <viewmodels:SongViewModel x:Name="SongViewModel"/>
     </ContentPage.BindingContext>
 
-    <Grid>
+    <Grid x:Name="gridBoy">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="70"/>
@@ -22,13 +30,19 @@
 
         <ScrollView>
             <VerticalStackLayout>
-                <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="Transparent">
+                <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="White">
                     <Label.Shadow>
-                        <Shadow Brush="White" Offset="2,2" Radius="40" Opacity="0.6"/>
+                        <Shadow Brush="White" Radius="20" Opacity="1"/>
                     </Label.Shadow>
                 </Label>
 
-                <local:GradientLabel Text="Hello World!" StartColor="Lime" EndColor="#b8b8b8" FontSize="36" GradientProgress="0"/>
+                <local:GradientLabel Text="Hello World!" StartColor="Lime" EndColor="#b8b8b8" FontSize="36" GradientProgress="34"/>
+
+                <Button Text="Colors!" Clicked="GetColors"/>
+
+                <VerticalStackLayout x:Name="colorContainer">
+
+                </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
 
@@ -80,8 +94,9 @@
                     <Button Text="{mi:MaterialRounded Icon=Lyrics}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="LyricsView"/>
                 </HorizontalStackLayout>
 
-                <Border Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="20" HorizontalOptions="Center">
-                    <Image Source="{Binding Image}"/>
+                <media:MediaElement x:Name="albumCoverPlayer" Grid.Row="1" Margin="20" HorizontalOptions="Center" ShouldAutoPlay="True" ShouldShowPlaybackControls="False" ShouldLoopPlayback="True" Aspect="AspectFit"/>
+                <Border x:Name="coverImageBorder" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="20" HorizontalOptions="Center">
+                    <Image x:Name="albumCoverImage" Source="{Binding Image}"/>
                 </Border>
 
                 <VerticalStackLayout Grid.Row="2" Margin="30,15,0,0" Spacing="5">

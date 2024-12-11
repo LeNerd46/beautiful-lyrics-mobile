@@ -32,5 +32,21 @@ namespace BeautifulLyricsMobile.Controls
 			get => (float)GetValue(ProgressProperty);
 			set => SetValue(ProgressProperty, value);
 		}
+
+		public static readonly BindableProperty ShadowRadiusProperty = BindableProperty.Create(nameof(ShadowRadius), typeof(float), typeof(GradientLabel), 10f);
+
+		public float ShadowRadius
+		{
+			get => (float)GetValue(ShadowRadiusProperty);
+			set => SetValue(ShadowRadiusProperty, value);
+		}
+
+		public static readonly BindableProperty ShadowOpacityProperty = BindableProperty.Create(nameof(ShadowOpacity), typeof(float), typeof(GradientLabel), 0f);
+
+		public float ShadowOpacity
+		{
+			get => (float)GetValue(ShadowOpacityProperty);
+			set => SetValue(ShadowOpacityProperty, value);
+		}
 	}
 }

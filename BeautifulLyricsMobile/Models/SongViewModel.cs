@@ -16,6 +16,7 @@ namespace BeautifulLyricsMobile.Models
 		private string _artist;
 		private string _album;
 		private string _image;
+		private string _animatedImage;
 
 		private MaterialRoundedIcons _playStatus;
 
@@ -58,6 +59,16 @@ namespace BeautifulLyricsMobile.Models
 			set
 			{
 				_image = value;
+				OnPropertyChanged();
+			}
+		}
+
+		public string AnimatedImage
+		{
+			get => _animatedImage;
+			set
+			{
+				_animatedImage = value;
 				OnPropertyChanged();
 			}
 		}

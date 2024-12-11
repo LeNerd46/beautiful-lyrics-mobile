@@ -1,19 +1,23 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.Content.PM;
+using Android.Content.Res;
 using Android.OS;
+using Android.Views;
 using Android.Widget;
+using AndroidX.Core.View;
 using Com.Spotify.Android.Appremote.Api;
 using Com.Spotify.Protocol.Types;
 using Java.Lang;
 using RestSharp;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
+using static BeautifulLyricsMobile.Pages.HomePage;
 using static Com.Spotify.Android.Appremote.Api.IConnector;
 
 namespace BeautifulLyricsMobile
 {
-	[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+	[Activity(Theme = "@style/Maui.SplashTheme", ResizeableActivity = true, MainLauncher = true, LaunchMode = LaunchMode.SingleTask, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 	public class MainActivity : MauiAppCompatActivity
 	{
 		SpotifyBroadcastReceiver receiver;
@@ -34,7 +38,7 @@ namespace BeautifulLyricsMobile
 
 			receiver = new SpotifyBroadcastReceiver();
 			filter = new IntentFilter();
-
+			
 			filter.AddAction("com.spotify.music.playbackstatechanged");
 			filter.AddAction("com.spotify.music.metadatachanged");
 			filter.AddAction("com.spotify.music.queuechanged");
@@ -127,9 +131,23 @@ namespace BeautifulLyricsMobile
 
 		protected override void OnStop()
 		{
-			base.OnStop();
-
 			SpotifyAppRemote.Disconnect(MainPage.Remote);
+
+			base.OnStop();
+		}
+	}
+
+	public class ConnectionListener : Java.Lang.Object, IConnector.IConnectionListener
+	{
+		public void OnConnected(SpotifyAppRemote? p0)
+		{
+			MainPage.Remote = p0;
+			Toast.MakeText(Platform.CurrentActivity, "Spotify Connected!", ToastLength.Short).Show();
+		}
+
+		public void OnFailure(Java.Lang.Throwable p0)
+		{
+			Toast.MakeText(Platform.CurrentActivity, p0.Message, ToastLength.Long).Show();
 		}
 	}
 
@@ -171,20 +189,6 @@ namespace BeautifulLyricsMobile
 				// else
 				// 	Toast.MakeText(Platform.CurrentActivity, "Not Is Playing", ToastLength.Short).Show();
 			}
-		}
-	}
-
-	public class ConnectionListener : Java.Lang.Object, IConnector.IConnectionListener
-	{
-		public void OnConnected(SpotifyAppRemote? p0)
-		{
-			MainPage.Remote = p0;
-			Toast.MakeText(Platform.CurrentActivity, "Spotify Connected!", ToastLength.Short).Show();
-		}
-
-		public void OnFailure(Throwable p0)
-		{
-			Toast.MakeText(Platform.CurrentActivity, p0.Message, ToastLength.Long).Show();
 		}
 	}
 }

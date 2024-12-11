@@ -1,5 +1,8 @@
 ﻿#if ANDROID
+using Android.Widget;
 using Com.Spotify.Android.Appremote.Api;
+using Java.Lang;
+
 #endif
 using RestSharp;
 using SpotifyAPI.Web;
@@ -14,6 +17,10 @@ namespace BeautifulLyricsMobile
 
 		public AppShell()
 		{
+			InitializeComponent();
+
+			return;
+
 			updatedToken = File.Exists(Path.Combine(FileSystem.AppDataDirectory, "token.txt"));
 
 			if (!updatedToken)
