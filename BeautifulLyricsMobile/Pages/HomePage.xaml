@@ -40,6 +40,25 @@
 
                 <Button Text="Colors!" Clicked="GetColors"/>
 
+                <VerticalStackLayout Margin="0,50,0,0" HorizontalOptions="Center" Spacing="15">
+                    <Label Text="Need a new client ID"/>
+                    <HorizontalStackLayout>
+                        <Entry x:Name="clientIdEntry" Placeholder="New Client ID" WidthRequest="150"/>
+                        <Button Text="Confirm" Clicked="NewId"/>
+                    </HorizontalStackLayout>
+                    
+                    <Label Text="Need a new client secret"/>
+                    <HorizontalStackLayout>
+                        <Entry x:Name="clientSecretEntry" Placeholder="New Client Secret" WidthRequest="150"/>
+                        <Button Text="Confirm" Clicked="NewSecret"/>
+                    </HorizontalStackLayout>
+
+                    <HorizontalStackLayout >
+                        <Label Text="Show Interludes" VerticalTextAlignment="Center"/>
+                        <Switch x:Name="interludeToggle" IsToggled="True" Toggled="Switch_Toggled"/>
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
                 <VerticalStackLayout x:Name="colorContainer">
 
                 </VerticalStackLayout>

@@ -68,6 +68,8 @@ public partial class HomePage : ContentPage
 			Song.ToggleTimer(false);
 		}
 
+		interludeToggle.IsToggled = Preferences.Get("showInterludes", true);
+
 #if ANDROID
 		SpotifyBroadcastReceiver.SongChanged += (sender, song) =>
 		{
@@ -502,5 +504,20 @@ public partial class HomePage : ContentPage
 			System.Diagnostics.Debug.WriteLine(ex.Message);
 			return ex.Message;
 		}
+	}
+
+	private async void NewId(object sender, EventArgs e)
+	{
+		await SecureStorage.SetAsync("spotifyId", clientIdEntry.Text);
+	}
+
+	private async void NewSecret(object sender, EventArgs e)
+	{
+		await SecureStorage.SetAsync("spotifySecret", clientSecretEntry.Text);
+	}
+
+	private void Switch_Toggled(object sender, ToggledEventArgs e)
+	{
+		Preferences.Set("showInterludes", e.Value);
 	}
 }

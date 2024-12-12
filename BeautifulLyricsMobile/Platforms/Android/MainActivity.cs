@@ -35,7 +35,7 @@ namespace BeautifulLyricsMobile
 			if (!string.IsNullOrWhiteSpace(clientId))
 			{
 				SpotifyAppRemote remote;
-				ConnectionParams connectionParams = new ConnectionParams.Builder("4d42ec7301a64d57bc1971655116a3b9").SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+				ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
 				SpotifyAppRemote.Connect(this, connectionParams, new ConnectionListener());
 			}
 
@@ -56,9 +56,11 @@ namespace BeautifulLyricsMobile
 				RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
 				// Toast.MakeText(Platform.CurrentActivity, "Receiver Conntected!", ToastLength.Short).Show();
 
+				string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
+				string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
 				string updatedToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-				if (!string.IsNullOrWhiteSpace(updatedToken))
+				if (string.IsNullOrWhiteSpace(updatedToken))
 				{
 					Task.Run(async () =>
 					{
@@ -88,7 +90,7 @@ namespace BeautifulLyricsMobile
 							await server.Stop();
 						};
 
-						var request = new LoginRequest(server.BaseUri, "4d42ec7301a64d57bc1971655116a3b9", LoginRequest.ResponseType.Token)
+						var request = new LoginRequest(server.BaseUri, clientId, LoginRequest.ResponseType.Token)
 						{
 							Scope = new List<string> { Scopes.UserReadPrivate }
 						};
@@ -109,9 +111,6 @@ namespace BeautifulLyricsMobile
 					// 	Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
 
 					var config = SpotifyClientConfig.CreateDefault();
-
-					string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
-					string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
 
 					if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
 						return;
