@@ -242,7 +242,7 @@ namespace BeautifulLyricsMobile.Controls
 			// canvas.DrawBitmap(image, blob.CropRect, new SKRect(0, 0, image.Width, image.Height));
 			canvas.DrawBitmap(image, 0, 0);
 
-			return SKShader.CreateBitmap(SKBitmap.FromImage(surface.Snapshot()), SKShaderTileMode.Mirror, SKShaderTileMode.Mirror, matrix);
+			return SKShader.CreateBitmap(SKBitmap.FromImage(surface.Snapshot()), SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, matrix);
 
 			// return SKShader.CreateBitmap(image, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, matrix);
 		}

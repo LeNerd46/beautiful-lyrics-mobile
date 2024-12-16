@@ -126,11 +126,6 @@ namespace BeautifulLyricsMobile.Models
 			Shell.Current.GoToAsync("//Home");
 		}
 
-		private async void HelpScreen()
-		{
-			await Launcher.OpenAsync("https://github.com/LeNerd46/beautiful-lyrics-mobile/blob/main/setup.md");
-		}
-
 		public async void NextItem()
 		{
 			int count = Position + 1;
@@ -174,7 +169,7 @@ namespace BeautifulLyricsMobile.Models
 		public bool SpotifyClientPage { get; set; }
 		public Command HelpCommand => new Command(async () =>
 		{
-			await Launcher.OpenAsync("https://github.com/LeNerd46/beautiful-lyrics-mobile");
+			await Launcher.OpenAsync("https://github.com/LeNerd46/beautiful-lyrics-mobile/blob/main/setup.md");
 		});
 	}
 }

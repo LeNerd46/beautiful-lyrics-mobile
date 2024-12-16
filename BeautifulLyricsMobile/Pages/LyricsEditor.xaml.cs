@@ -460,7 +460,7 @@ public partial class LyricsEditor : ContentPage
 			{
 				try
 				{
-					File.WriteAllText(System.IO.Path.Combine(FileSystem.CacheDirectory, $"{MainPage.CurrentTrackId}.json"), JsonConvert.SerializeObject(new SyllableSyncedLyrics
+					File.WriteAllText(System.IO.Path.Combine(FileSystem.AppDataDirectory, $"{MainPage.CurrentTrackId}.json"), JsonConvert.SerializeObject(new SyllableSyncedLyrics
 					{
 						StartTime = startTime,
 						EndTime = seconds,
