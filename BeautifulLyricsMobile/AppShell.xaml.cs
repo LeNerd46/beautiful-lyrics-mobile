@@ -1,5 +1,6 @@
 ﻿#if ANDROID
 using Android.Widget;
+using BeautifulLyricsMobile.Pages;
 using Com.Spotify.Android.Appremote.Api;
 using Java.Lang;
 
@@ -27,7 +28,7 @@ namespace BeautifulLyricsMobile
 			{
 				Task.Run(async () =>
 				{
-					/*while (MainPage.Remote == null)
+					/*while (LyricsView.Remote == null)
 					{
 						await Task.Delay(1000);
 					}*/
@@ -39,13 +40,13 @@ namespace BeautifulLyricsMobile
 					{
 						await server.Stop();
 
-						MainPage.AccessToken = response.AccessToken;
-						MainPage.Spotify = new SpotifyClient(response.AccessToken);
+						LyricsView.AccessToken = response.AccessToken;
+						LyricsView.Spotify = new SpotifyClient(response.AccessToken);
 
-						MainPage.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-						MainPage.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
+						LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+						LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
 
-						await SecureStorage.SetAsync("token", MainPage.AccessToken);
+						await SecureStorage.SetAsync("token", LyricsView.AccessToken);
 					};
 
 					server.ErrorReceived += async (sender, error, state) =>
@@ -63,12 +64,12 @@ namespace BeautifulLyricsMobile
 			}
 			else
 			{
-				MainPage.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
+				LyricsView.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-				if (!string.IsNullOrWhiteSpace(MainPage.AccessToken))
+				if (!string.IsNullOrWhiteSpace(LyricsView.AccessToken))
 				{
-					MainPage.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-					MainPage.Client.AddDefaultHeader("Authorization", $"Bearer {MainPage.AccessToken}");
+					LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+					LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {LyricsView.AccessToken}");
 				}
 				// else
 				// 	Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
@@ -84,7 +85,7 @@ namespace BeautifulLyricsMobile
 				var request = new ClientCredentialsRequest(clientId, secret);
 				var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
 
-				MainPage.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+				LyricsView.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
 
 				// SpotifyAppRemote remote;
 				// ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();

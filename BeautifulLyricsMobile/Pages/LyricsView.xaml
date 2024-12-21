@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BeautifulLyricsMobile.Pages.LyricsView"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:viewmodels="clr-namespace:BeautifulLyricsMobile.Models"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons">
+
+    <ContentView.BindingContext>
+        <viewmodels:SongViewModel x:Name="SongViewModel"/>
+    </ContentView.BindingContext>
+
+    <Grid x:Name="gridThing">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="300"/>
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="nowPlayingLyrics" VerticalOptions="End" Margin="0,0,0,10" IsVisible="False">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ImageButton Source="{Binding Image}" WidthRequest="50" HeightRequest="50" HorizontalOptions="End" Margin="10,0" Clicked="SwitchToPlayerView"/>
+
+            <VerticalStackLayout Grid.Column="1">
+                <Label Text="{Binding Title}" FontSize="20" MaxLines="1" MaximumWidthRequest="220" HorizontalOptions="Start"/>
+                <Label Text="{Binding Artist}" TextColor="LightGray"/>
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center" Margin="30,0" Spacing="10">
+                <ImageButton Source="{mi:FontAwesome Icon=Heart}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
+            </HorizontalStackLayout>
+        </Grid>
+
+        <ScrollView x:Name="ScrollViewer" Grid.Row="1" Grid.RowSpan="2" IsVisible="False">
+            <VerticalStackLayout x:Name="LyricsContainer" Spacing="10">
+                <Label x:Name="timestampLabel"/>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <VerticalStackLayout x:Name="nowPlayingFull" Grid.RowSpan="3" ZIndex="1" Spacing="20" Padding="20" HorizontalOptions="Center" VerticalOptions="CenterAndExpand">
+            <Border StrokeThickness="0" Padding="0">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="0"/>
+                </Border.StrokeShape>
+                <Image Source="{Binding Image}" Aspect="AspectFill" WidthRequest="300" HeightRequest="300"/>
+            </Border>
+
+            <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+                <Label Text="{Binding Title}" FontSize="Title" FontAttributes="Bold" TextColor="White" HorizontalTextAlignment="Center"/>
+                <Label Text="{Binding Artist}" FontSize="Subtitle" TextColor="LightGray" HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="4" HorizontalOptions="FillAndExpand">
+                <Grid HorizontalOptions="FillAndExpand">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Text="{Binding TimestampString}" FontSize="Caption" TextColor="LightGray" HorizontalTextAlignment="End"/>
+                    <Slider Minimum="0" Maximum="{Binding Duration}" Value="{Binding Timestamp}" Grid.Column="1" WidthRequest="300"/>
+                    <Label Text="{Binding DurationString}" FontSize="Caption" TextColor="LightGray" HorizontalTextAlignment="Start" Grid.Column="2"/>
+                </Grid>
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="40">
+                <ImageButton Source="{mi:MaterialRounded Icon=SkipPrevious}" WidthRequest="40" HeightRequest="40" BackgroundColor="Transparent" Clicked="SkipPrevious"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=Pause}" WidthRequest="60" HeightRequest="60" BackgroundColor="Transparent" x:Name="pausePlayButton" Clicked="OnPausePlay"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=SkipNext}" WidthRequest="40" HeightRequest="40" BackgroundColor="Transparent" Clicked="SkipNext"/>
+            </HorizontalStackLayout>
+
+            <!-- Volume and such go here -->
+
+            <!-- Additional icons -->
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="20">
+                <ImageButton Source="{mi:MaterialRounded Icon=Lyrics}" WidthRequest="30" HeightRequest="30" Clicked="SwitchToLyricsView"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=AddCircleOutline}" WidthRequest="30" HeightRequest="30"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </Grid>
+</ContentView>

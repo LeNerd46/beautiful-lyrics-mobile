@@ -6,6 +6,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Core.View;
+using BeautifulLyricsMobile.Pages;
 using Com.Spotify.Android.Appremote.Api;
 using Com.Spotify.Protocol.Types;
 using Java.Lang;
@@ -68,7 +69,7 @@ namespace BeautifulLyricsMobile
                 RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
                 // Toast.MakeText(Platform.CurrentActivity, "Receiver Conntected!", ToastLength.Short).Show();
 
-                // while (MainPage.Remote == null) ;
+                // while (LyricsView.Remote == null) ;
 
                 string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
                 string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
@@ -82,7 +83,7 @@ namespace BeautifulLyricsMobile
                 {
                     Task.Run(async () =>
                     {
-                        /*while (MainPage.Remote == null)
+                        /*while (LyricsView.Remote == null)
 						{
 							await Task.Delay(1000);
 						}*/
@@ -94,13 +95,13 @@ namespace BeautifulLyricsMobile
                         {
                             await server.Stop();
 
-                            MainPage.AccessToken = response.AccessToken;
-                            MainPage.Spotify = new SpotifyClient(response.AccessToken);
+                            LyricsView.AccessToken = response.AccessToken;
+                            LyricsView.Spotify = new SpotifyClient(response.AccessToken);
 
-                            MainPage.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-                            MainPage.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
+                            LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+                            LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
 
-                            await SecureStorage.SetAsync("token", MainPage.AccessToken);
+                            await SecureStorage.SetAsync("token", LyricsView.AccessToken);
                         };
 
                         server.ErrorReceived += async (sender, error, state) =>
@@ -118,12 +119,12 @@ namespace BeautifulLyricsMobile
                 }
                 else
                 {
-                    MainPage.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
+                    LyricsView.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-                    if (!string.IsNullOrWhiteSpace(MainPage.AccessToken))
+                    if (!string.IsNullOrWhiteSpace(LyricsView.AccessToken))
                     {
-                        MainPage.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-                        MainPage.Client.AddDefaultHeader("Authorization", $"Bearer {MainPage.AccessToken}");
+                        LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+                        LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {LyricsView.AccessToken}");
                     }
                     // else
                     // 	Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
@@ -136,7 +137,7 @@ namespace BeautifulLyricsMobile
                     var request = new ClientCredentialsRequest(clientId, secret);
                     var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
 
-                    MainPage.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+                    LyricsView.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
                 }
             }
             catch (System.Exception ex)
@@ -153,65 +154,72 @@ namespace BeautifulLyricsMobile
 
         protected override void OnStop()
         {
-            SpotifyAppRemote.Disconnect(MainPage.Remote);
+            SpotifyAppRemote.Disconnect(LyricsView.Remote);
 
             base.OnStop();
         }
     }
 
-    public class ConnectionListener : Java.Lang.Object, IConnector.IConnectionListener
-    {
-        public void OnConnected(SpotifyAppRemote? p0)
-        {
-            MainPage.Remote = p0;
-            Toast.MakeText(Platform.CurrentActivity, "Spotify Connected!", ToastLength.Short).Show();
-            SecureStorage.SetAsync("first", "false");
-        }
+	public class ConnectionListener : Java.Lang.Object, IConnector.IConnectionListener
+	{
+		public void OnConnected(SpotifyAppRemote? p0)
+		{
+			LyricsView.Remote = p0;
+			Toast.MakeText(Platform.CurrentActivity, "Spotify Connected!", ToastLength.Short).Show();
+			SecureStorage.SetAsync("first", "false");
+			SpotifyBroadcastReceiver.InvokeSpotifyConnected(p0);
+		}
 
-        public void OnFailure(Java.Lang.Throwable p0)
-        {
-            Toast.MakeText(Platform.CurrentActivity, p0.Message, ToastLength.Long).Show();
-        }
-    }
+		public void OnFailure(Java.Lang.Throwable p0)
+		{
+			Toast.MakeText(Platform.CurrentActivity, p0.Message, ToastLength.Long).Show();
+		}
+	}
 
-    public class SpotifyBroadcastReceiver : BroadcastReceiver
-    {
-        public static event SongChanged SongChanged;
-        public static event PlaybackChanged PlaybackChanged;
+	public class SpotifyBroadcastReceiver : BroadcastReceiver
+	{
+		public static event SongChanged SongChanged;
+		public static event PlaybackChanged PlaybackChanged;
+		public static event SpotifyConnected SpotifyConnected;
 
-        public override void OnReceive(Android.Content.Context? context, Intent? intent)
-        {
-            long timeSentInMs = intent.GetLongExtra("timeSent", 0L);
+		public static void InvokeSpotifyConnected(SpotifyAppRemote remote)
+		{
+			SpotifyConnected?.Invoke(null, new SpotifyConnectedEventArgs(remote));
+		}
 
-            if (intent.Action == "com.spotify.music.metadatachanged")
-            {
-                string id = intent.GetStringExtra("id");
-                string realId = id.Split(':')[2];
-                MainPage.CurrentTrackId = realId;
+		public override void OnReceive(Android.Content.Context? context, Intent? intent)
+		{
+			long timeSentInMs = intent.GetLongExtra("timeSent", 0L);
 
-                string title = intent.GetStringExtra("track");
-                string artist = intent.GetStringExtra("artist");
-                string album = intent.GetStringExtra("album");
-                int length = intent.GetIntExtra("length", 0);
+			if (intent.Action == "com.spotify.music.metadatachanged")
+			{
+				string id = intent.GetStringExtra("id");
+				string realId = id.Split(':')[2];
+				LyricsView.CurrentTrackId = realId;
 
-                SongChanged?.Invoke(this, new SongChangedEventArgs(realId, title, artist, album, length));
+				string title = intent.GetStringExtra("track");
+				string artist = intent.GetStringExtra("artist");
+				string album = intent.GetStringExtra("album");
+				int length = intent.GetIntExtra("length", 0);
 
-                // Toast.MakeText(Platform.CurrentActivity, $"Now Playing: {title}", ToastLength.Short).Show();
-            }
-            else if (intent.Action == "com.spotify.music.playbackstatechanged")
-            {
-                bool isPlaying = intent.GetBooleanExtra("playing", false);
-                int position = intent.GetIntExtra("playbackPosition", 0);
+				SongChanged?.Invoke(this, new SongChangedEventArgs(realId, title, artist, album, length));
 
-                MainPage.IsPlaying = isPlaying;
+				// Toast.MakeText(Platform.CurrentActivity, $"Now Playing: {title}", ToastLength.Short).Show();
+			}
+			else if (intent.Action == "com.spotify.music.playbackstatechanged")
+			{
+				bool isPlaying = intent.GetBooleanExtra("playing", false);
+				int position = intent.GetIntExtra("playbackPosition", 0);
 
-                PlaybackChanged?.Invoke(this, new PlaybackChangedEventArgs(isPlaying, position));
+				LyricsView.IsPlaying = isPlaying;
 
-                // if (isPlaying)
-                // 	Toast.MakeText(Platform.CurrentActivity, "Is Playing", ToastLength.Short).Show();
-                // else
-                // 	Toast.MakeText(Platform.CurrentActivity, "Not Is Playing", ToastLength.Short).Show();
-            }
-        }
-    }
+				PlaybackChanged?.Invoke(this, new PlaybackChangedEventArgs(isPlaying, position));
+
+				// if (isPlaying)
+				// 	Toast.MakeText(Platform.CurrentActivity, "Is Playing", ToastLength.Short).Show();
+				// else
+				// 	Toast.MakeText(Platform.CurrentActivity, "Not Is Playing", ToastLength.Short).Show();
+			}
+		}
+	}
 }

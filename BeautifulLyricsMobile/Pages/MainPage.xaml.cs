@@ -22,15 +22,18 @@ using static Com.Spotify.Protocol.Client.Subscription;
 using static Com.Spotify.Protocol.Client.CallResult;
 using Android.Widget;
 using Java.Security;
+using BeautifulLyricsMobile.Models;
+using MauiIcons.Material.Rounded;
+using MauiIcons.Core;
 
 namespace BeautifulLyricsMobile
 {
-	public delegate void SongChanged(object sender, SongChangedEventArgs e);
-	public delegate void PlaybackChanged(object sender, PlaybackChangedEventArgs e);
-	public delegate void TimeStepped(object sender, TimeSteppedEventArgs e);
+	// public delegate void SongChanged(object sender, SongChangedEventArgs e);
+	// public delegate void PlaybackChanged(object sender, PlaybackChangedEventArgs e);
+	// public delegate void TimeStepped(object sender, TimeSteppedEventArgs e);
 
-	public partial class MainPage : ContentPage
-	{
+	public partial class MainPage : ContentView
+	{/*
 #if ANDROID
 		public static SpotifyAppRemote Remote { get; set; }
 #endif
@@ -79,16 +82,30 @@ namespace BeautifulLyricsMobile
 
 		private bool lyricsDone = false;
 
+		public SongViewModel Song { get; set; }
+		private List<Layout> lines = [];
+
 		public MainPage()
 		{
 			InitializeComponent();
+			_ = new MauiIcon();
 #if ANDROID
 
 			SpotifyBroadcastReceiver.PlaybackChanged += OnPlaybackChanged;
+			SpotifyBroadcastReceiver.SongChanged += OnSongChanged;
+
+			Song = new SongViewModel
+			{
+				Title = "Title",
+				Artist = "Artist",
+				Image = "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg"
+			};
+
+			BindingContext = Song;
 
 			newSong = true;
 			stopwatch.Reset();
-			LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Clear());
+			// LyricsContainer.Dispatcher.Dispatch(LyricsContainer.Children.Clear);
 			cancelToken = new CancellationTokenSource();
 			backgroundCancel = new CancellationTokenSource();
 			scroller = new LyricsScroller(ScrollViewer, LyricsContainer);
@@ -97,16 +114,43 @@ namespace BeautifulLyricsMobile
 #endif
 		}
 
+		protected async void OnAppearing()
+		{
+			PlayerState player = await RequestPositionSync();
+
+			if (player != null)
+			{
+				Song.Title = player.Track.Name;
+				Song.Artist = player.Track.Artist.Name;
+				Song.Album = player.Track.Album.Name;
+				Song.Duration = player.Track.Duration;
+				Song.Timestamp = player.PlaybackPosition;
+				isPlaying = !player.IsPaused;
+
+				Song.Image = $"https://i.scdn.co/image/{player.Track.ImageUri.Raw.Split(':')[2]}";
+			}
+		}
+
 		private async void OnPlaybackChanged(object sender, PlaybackChangedEventArgs e)
 		{
 			if (e.IsPlaying != isPlaying)
 			{
 				isPlaying = e.IsPlaying;
 
-				if (isPlaying)
-					stopwatch.Start();
-				else
+				if (!isPlaying)
+				{
 					stopwatch.Stop();
+
+					Song.ToggleTimer(false);
+					pausePlayButton.Icon(MaterialRoundedIcons.PlayArrow);
+				}
+				else
+				{
+					stopwatch.Start();
+
+					Song.ToggleTimer(true);
+					pausePlayButton.Icon(MaterialRoundedIcons.Pause);
+				}
 			}
 			else
 			{
@@ -136,18 +180,41 @@ namespace BeautifulLyricsMobile
 			return base.OnBackButtonPressed();
 		}
 
-		private void OnSongChanged(object sender, SongChangedEventArgs e)
+		private async void OnSongChanged(object sender, SongChangedEventArgs e)
 		{
-			newSong = true;
+			//newSong = true;
 			CurrentTrackId = e.Id;
+			Song.Title = e.Name;
+			Song.Artist = e.Artist;
+			Song.Duration = e.Length;
+
+			PlayerState playerThing = await RequestPositionSync();
+
+			Song.Timestamp = playerThing.PlaybackPosition;
+
+			if (playerThing != null)
+			{
+				Song.Image = $"https://i.scdn.co/image/{playerThing.Track.ImageUri.Raw.Split(':')[2]}";
+
+				if (playerThing.IsPaused)
+				{
+					Song.ToggleTimer(false);
+					pausePlayButton.Icon(MaterialRoundedIcons.PlayArrow);
+				}
+				else
+				{
+					Song.ToggleTimer(true);
+					pausePlayButton.Icon(MaterialRoundedIcons.Pause);
+				}
+			}
 
 			cancelToken.Cancel();
-
 			stopwatch.Reset();
-			LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Clear());
+
+			LyricsContainer.Dispatcher.Dispatch(LyricsContainer.Children.Clear);
 
 			// RenderLyrics().GetAwaiter().GetResult();
-			Task.Run(RenderLyrics, cancelToken.Token);
+			Task.Run(RenderLyrics);
 		}
 
 		public async Task RenderLyrics()
@@ -158,6 +225,8 @@ namespace BeautifulLyricsMobile
 #if ANDROID
 				while (Remote == null) ;
 #endif
+
+				Shell.SetTabBarIsVisible(this, false);
 
 				stopwatch.Start();
 
@@ -180,19 +249,29 @@ namespace BeautifulLyricsMobile
 						// Toast.MakeText(Platform.CurrentActivity, ex.Message, ToastLength.Long).Show();
 					}
 				});
-				gridThing.Dispatcher.Dispatch(() => gridThing.Add(new BlobAnimationView(image, backgroundCancel)
+
+				gridThing.Dispatcher.Dispatch(() =>
 				{
-					HorizontalOptions = LayoutOptions.FillAndExpand,
-					VerticalOptions = LayoutOptions.FillAndExpand,
-					InputTransparent = true,
-					ZIndex = -1
-				}));
+					if (gridThing.Children.Any(x => x is BlobAnimationView))
+						gridThing.Remove(gridThing.Children.First(x => x is BlobAnimationView));
+
+					BlobAnimationView blobs = new BlobAnimationView(image, backgroundCancel)
+					{
+						HorizontalOptions = LayoutOptions.FillAndExpand,
+						VerticalOptions = LayoutOptions.FillAndExpand,
+						InputTransparent = true,
+						ZIndex = -1
+					};
+
+					gridThing.Add(blobs);
+					gridThing.SetRowSpan(blobs, 3);
+				});
 
 				string content = "";
 
-				if (File.Exists(Path.Combine(FileSystem.CacheDirectory, $"{CurrentTrackId}.json")))
+				if (File.Exists(Path.Combine(FileSystem.AppDataDirectory, $"{CurrentTrackId}.json")))
 				{
-					content = File.ReadAllText(Path.Combine(FileSystem.CacheDirectory, $"{CurrentTrackId}.json"));
+					content = File.ReadAllText(Path.Combine(FileSystem.AppDataDirectory, $"{CurrentTrackId}.json"));
 					local = true;
 				}
 				else
@@ -296,7 +375,8 @@ namespace BeautifulLyricsMobile
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
 
 						if (Preferences.Get("showInterludes", true))
-							LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
+							lines.Add(vocalGroupContainer);
+						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
 					}
 					else
 					{
@@ -316,8 +396,10 @@ namespace BeautifulLyricsMobile
 							FlexLayout vocalGroupContainer = new FlexLayout();
 							vocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[styleName] as Style;
 
-							topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
-							LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(topGroup));
+							// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
+							topGroup.Children.Add(vocalGroupContainer);
+							// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(topGroup));
+							lines.Add(topGroup);
 
 							List<SyllableVocals> vocals = [];
 							double startTime = set.Lead.StartTime;
@@ -327,7 +409,8 @@ namespace BeautifulLyricsMobile
 							{
 								FlexLayout backgroundVocalGroupContainer = new FlexLayout();
 								backgroundVocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[$"Background{styleName}"] as Style;
-								topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
+								// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
+								topGroup.Children.Add(backgroundVocalGroupContainer);
 
 								foreach (var backgroundVocal in set.Background)
 								{
@@ -346,7 +429,7 @@ namespace BeautifulLyricsMobile
 					}
 				}
 
-
+				LyricsContainer.Dispatcher.Dispatch(() => lines.ForEach(LyricsContainer.Add));
 			}
 		}
 
@@ -378,7 +461,7 @@ namespace BeautifulLyricsMobile
 					// if(vocal is SyllableVocals syllable && syllable.IsActive())
 					// 	ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
 
-					if (vocal is SyllableVocals syllable && syllable.IsActive())
+					if (vocal is SyllableVocals syllable && syllable.IsActive() && deltaTime > 0)
 					{
 						int index = LyricsContainer.IndexOf(syllable.Container.Parent as IView);
 
@@ -491,9 +574,55 @@ namespace BeautifulLyricsMobile
 			// await Task.Delay(16).ContinueWith(_ => callback());
 			await Task.Delay(5).ContinueWith(_ => callback());
 		}
+
+		private void OnPausePlay(object sender, EventArgs e)
+		{
+			if (isPlaying)
+			{
+#if ANDROID
+				Remote.PlayerApi?.Pause();
+#endif
+			}
+			else
+			{
+#if ANDROID
+				Remote.PlayerApi?.Resume();
+#endif
+			}
+		}
+
+		private void SkipPrevious(object sender, EventArgs e)
+		{
+#if ANDROID
+			Remote.PlayerApi?.SkipPrevious();
+#endif
+		}
+
+		private void SkipNext(object sender, EventArgs e)
+		{
+#if ANDROID
+			Remote.PlayerApi?.SkipNext();
+#endif
+		}
+
+		private void SwitchToPlayerView(object sender, EventArgs e)
+		{
+			nowPlayingLyrics.IsVisible = false;
+			nowPlayingFull.IsVisible = true;
+
+			ScrollViewer.IsVisible = false;
+		}
+
+		private void SwitchToLyricsView(object sender, EventArgs e)
+		{
+			nowPlayingLyrics.IsVisible = true;
+			nowPlayingFull.IsVisible = false;
+
+			ScrollViewer.IsVisible = true;
+		}*/
 	}
 
-	public class SongChangedEventArgs(string id, string name, string artist, string album, int length) : EventArgs
+	/*public class SongChangedEventArgs(string id, string name, string artist, string album, int length) : EventArgs
 	{
 		public string Id { get; set; } = id;
 
@@ -541,5 +670,5 @@ namespace BeautifulLyricsMobile
 		public string Artist { get; set; }
 		public string Album { get; set; }
 		public string Image { get; set; }
-	}
+	}*/
 }

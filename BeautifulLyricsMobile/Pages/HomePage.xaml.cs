@@ -18,6 +18,10 @@ using System.Diagnostics;
 using Com.Spotify.Android.Appremote.Api;
 using Microsoft.Maui.Controls;
 using SpotifyAPI.Web.Auth;
+using Com.Spotify.Protocol.Client;
+using Android.Runtime;
+using static Com.Spotify.Protocol.Client.CallResult;
+using System.Collections.ObjectModel;
 
 namespace BeautifulLyricsMobile.Pages;
 
@@ -41,7 +45,7 @@ public partial class HomePage : ContentPage
 
 		BindingContext = Song;
 
-		if (!MainPage.IsPlaying)
+		if (!LyricsView.IsPlaying)
 		{
 			pauseButton.IsEnabled = true;
 			playButton.IsEnabled = false;
@@ -49,8 +53,8 @@ public partial class HomePage : ContentPage
 			pauseButton.IsVisible = true;
 			playButton.IsVisible = false;
 
-			fullPauseButton.IsVisible = true;
-			fullPlayButton.IsVisible = false;
+			// fullPauseButton.IsVisible = true;
+			// fullPlayButton.IsVisible = false;
 
 			Song.ToggleTimer(true);
 		}
@@ -62,8 +66,8 @@ public partial class HomePage : ContentPage
 			pauseButton.IsVisible = false;
 			playButton.IsVisible = true;
 
-			fullPauseButton.IsVisible = false;
-			fullPlayButton.IsVisible = true;
+			// fullPauseButton.IsVisible = false;
+			// fullPlayButton.IsVisible = true;
 
 			Song.ToggleTimer(false);
 		}
@@ -73,6 +77,8 @@ public partial class HomePage : ContentPage
 #if ANDROID
 		SpotifyBroadcastReceiver.SongChanged += (sender, song) =>
 		{
+			lyricsView.OnAppearing(song);
+
 			Song.Title = song.Name;
 			Song.Artist = song.Artist;
 			Song.Album = song.Album;
@@ -81,7 +87,7 @@ public partial class HomePage : ContentPage
 
 			var imageTask = Task.Run(async () =>
 			{
-				while (MainPage.Remote == null)
+				while (LyricsView.Remote == null)
 					await Task.Delay(10);
 
 				try
@@ -121,18 +127,18 @@ public partial class HomePage : ContentPage
 					if (stream == null)
 					{
 						// There is no animated cover art
-						PlayerState playerThing = await MainPage.RequestPositionSync();
+						PlayerState playerThing = await LyricsView.RequestPositionSync();
 
 						if (playerThing != null)
 						{
 							Song.Image = $"https://i.scdn.co/image/{playerThing.Track.ImageUri.Raw.Split(':')[2]}";
 							Song.Timestamp = playerThing.PlaybackPosition;
 
-							albumCoverPlayer.Dispatcher.Dispatch(() =>
+							/*albumCoverPlayer.Dispatcher.Dispatch(() =>
 							{
 								albumCoverPlayer.IsVisible = false;
 								coverImageBorder.IsVisible = true;
-							});
+							});*/
 
 							// Toast.MakeText(Platform.CurrentActivity, "No Animated Cover!", ToastLength.Long).Show();
 						}
@@ -151,13 +157,13 @@ public partial class HomePage : ContentPage
 
 						// Song.AnimatedImage = $"https://4ff9-75-231-80-212.ngrok-free.app//api/apple/album/{albumUrl.Split('/')[^1].Split('?')[0]}";
 						Song.AnimatedImage = path;
-						albumCoverPlayer.Dispatcher.Dispatch(() =>
+						/*albumCoverPlayer.Dispatcher.Dispatch(() =>
 						{
 							albumCoverPlayer.Source = MediaSource.FromFile(path);
 
 							albumCoverPlayer.IsVisible = true;
 							coverImageBorder.IsVisible = false;
-						});
+						});*/
 
 						/*try
 						{
@@ -220,7 +226,7 @@ public partial class HomePage : ContentPage
 				{
 					// Toast.MakeText(Platform.CurrentActivity, "Failed to Search", ToastLength.Long).Show();
 
-					PlayerState playerThing = await MainPage.RequestPositionSync();
+					PlayerState playerThing = await LyricsView.RequestPositionSync();
 
 					if (playerThing != null)
 					{
@@ -229,7 +235,7 @@ public partial class HomePage : ContentPage
 					}
 				}
 
-				PlayerState player = await MainPage.RequestPositionSync();
+				PlayerState player = await LyricsView.RequestPositionSync();
 
 				if (player != null)
 				{
@@ -246,7 +252,7 @@ public partial class HomePage : ContentPage
 				Song.PlayStatus = MaterialRoundedIcons.Pause;
 				Song.Timestamp = player.Position;
 
-				if (!fullSongCard.IsVisible)
+				/*if (!fullSongCard.IsVisible)
 				{
 					pauseButton.IsVisible = true;
 					playButton.IsVisible = false;
@@ -257,7 +263,7 @@ public partial class HomePage : ContentPage
 				{
 					fullPauseButton.IsVisible = true;
 					fullPlayButton.IsVisible = false;
-				}
+				}*/
 
 				// pauseIcon.IsVisible = true;
 				// playIcon.IsVisible = false;
@@ -266,7 +272,7 @@ public partial class HomePage : ContentPage
 			{
 				Song.PlayStatus = MaterialRoundedIcons.PlayArrow;
 
-				if (!fullSongCard.IsVisible)
+				/*if (!fullSongCard.IsVisible)
 				{
 					pauseButton.IsVisible = false;
 					playButton.IsVisible = true;
@@ -277,29 +283,73 @@ public partial class HomePage : ContentPage
 				{
 					fullPauseButton.IsVisible = false;
 					fullPlayButton.IsVisible = true;
-				}
+				}*/
 
 				// pauseIcon.IsVisible = false;
 				// playIcon.IsVisible = true;
 			}
+		};
+
+		SpotifyBroadcastReceiver.SpotifyConnected += async (sender, remote) =>
+		{
+			ListItems items = await GetRecommendedItems();
+			ListItemCallback callback = new ListItemCallback();
+			// ListItemCallback callback1 = new ListItemCallback();
+			// ListItemCallback callback2 = new ListItemCallback();
+			remote.Remote.ContentApi.GetChildrenOfItem(items.Items[0], 10, 0).SetResultCallback(callback);
+			// remote.Remote.ContentApi.GetChildrenOfItem(items.Items[1], 10, 0).SetResultCallback(callback1);
+			// remote.Remote.ContentApi.GetChildrenOfItem(items.Items[2], 10, 0).SetResultCallback(callback2);
+
+			while (callback.Items == null)
+				await Task.Delay(10);
+
+			List<PlayableItem> readableItems = [];
+
+			foreach(var item in callback.Items.Items)
+			{
+				readableItems.Add(new PlayableItem
+				{
+					Title = item.Title,
+					Image = item.ImageUri.Raw
+				});
+			}
+
+			Song.GridRecommendedItems = new ObservableCollection<PlayableItem>(readableItems);
 		};
 #endif
 	}
 
 	protected override bool OnBackButtonPressed()
 	{
-		if (fullSongCard.IsVisible)
+		if (lyricsView.IsVisible)
 		{
-			fullSongCard.IsVisible = false;
+			// lyricsView.IsVisible = false;
+			// lyricsView.Dispatcher.Dispatch(() =>
+			// {
+			// 	lyricsView.TranslateTo(0, 1000, 1000, Easing.SpringOut);
+			// });
+
+			lyricsView.IsVisible = false;
+
+			Shell.SetTabBarIsVisible(this, true);
 			return true;
 		}
+
+		// lyricsView.OnBackButtonPressed();
 
 		return base.OnBackButtonPressed();
 	}
 
 	private void TapGestureRecognizer_Tapped(object sender, TappedEventArgs e)
 	{
-		fullSongCard.IsVisible = true;
+		// lyricsView.Dispatcher.Dispatch(() =>
+		// {
+		// 	lyricsView.TranslateTo(0, 0, 1000, Easing.SpringOut);
+		// });
+
+		lyricsView.IsVisible = true;
+
+		Shell.SetTabBarIsVisible(this, false);
 	}
 
 	private void TogglePause(object sender, EventArgs e)
@@ -309,40 +359,40 @@ public partial class HomePage : ContentPage
 
 #if ANDROID
 		if (isPlaying)
-			MainPage.Remote.PlayerApi.Resume();
+			LyricsView.Remote.PlayerApi.Resume();
 		else
-			MainPage.Remote.PlayerApi.Pause();
+			LyricsView.Remote.PlayerApi.Pause();
 #endif
 	}
 
 	private void FullCardCollapse(object sender, EventArgs e)
 	{
-		fullSongCard.IsVisible = false;
+		lyricsView.IsVisible = false;
 	}
 
 	private void SkipNext(object sender, EventArgs e)
 	{
 #if ANDROID
-		MainPage.Remote.PlayerApi.SkipNext();
+		LyricsView.Remote.PlayerApi.SkipNext();
 #endif
 	}
 
 	private void SkipPrevious(object sender, EventArgs e)
 	{
 #if ANDROID
-		MainPage.Remote.PlayerApi.SkipPrevious();
+		LyricsView.Remote.PlayerApi.SkipPrevious();
 #endif
 	}
 
 	private void Slider_ValueChanged(object sender, ValueChangedEventArgs e)
 	{
-		// if (MainPage.Remote != null && Math.Abs(e.NewValue - e.OldValue) > 1000)
-		// 	MainPage.Remote.PlayerApi.SeekTo((long)e.NewValue);
+		// if (LyricsView.Remote != null && Math.Abs(e.NewValue - e.OldValue) > 1000)
+		// 	LyricsView.Remote.PlayerApi.SeekTo((long)e.NewValue);
 	}
 
-	private async void LyricsView(object sender, EventArgs e)
+	private async void NavigateToLyricsView(object sender, EventArgs e)
 	{
-		await Navigation.PushAsync(new MainPage());
+		await Navigation.PushAsync(new SearchPage());
 	}
 
 	private async void AddLyrics(object sender, EventArgs e)
@@ -353,7 +403,7 @@ public partial class HomePage : ContentPage
 	private void DeleteSong(object sender, EventArgs e)
 	{
 #if ANDROID
-		string path = Path.Combine(FileSystem.CacheDirectory, $"{MainPage.CurrentTrackId}.json");
+		string path = Path.Combine(FileSystem.AppDataDirectory, $"{LyricsView.CurrentTrackId}.json");
 
 		if (File.Exists(path))
 			File.Delete(path);
@@ -372,7 +422,7 @@ public partial class HomePage : ContentPage
 
 		var task = Task.Run(async () =>
 		{
-			FullTrack track = await MainPage.Spotify.Tracks.Get(MainPage.CurrentTrackId);
+			FullTrack track = await LyricsView.Spotify.Tracks.Get(LyricsView.CurrentTrackId);
 			using HttpClient download = new HttpClient();
 
 			try
@@ -442,16 +492,44 @@ public partial class HomePage : ContentPage
 		});
 	}
 
+	protected override void OnAppearing()
+	{
+		base.OnAppearing();
+	}
+
+	public static async Task<ListItems> GetRecommendedItems()
+	{
+		ListItemCallback callback = new ListItemCallback();
+		LyricsView.Remote.ContentApi?.GetRecommendedContentItems("DEFAULT").SetResultCallback(callback);
+
+		while (callback.Items == null)
+		{
+			await Task.Delay(10);
+		}
+
+		return callback.Items;
+	}
+
+	public class ListItemCallback : Java.Lang.Object, IResultCallback
+	{
+		public ListItems Items { get; set; }
+
+		public void OnResult(Java.Lang.Object? p0)
+		{
+			if (p0 is ListItems items)
+				Items = items;
+		}
+	}
+
 	private void ContentPage_Unloaded(object sender, EventArgs e)
 	{
-		albumCoverPlayer.Handler?.DisconnectHandler();
+		// albumCoverPlayer.Handler?.DisconnectHandler();
 	}
 
 	private string FixMoovAtom(Stream input)
 	{
 		try
 		{
-
 			string tempFilePath = Path.GetTempFileName();
 			using FileStream output = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write);
 			byte[] buffer = new byte[8];

@@ -51,7 +51,7 @@ public partial class LyricsEditor : ContentPage
 
 		Task.Run(async () =>
 		{
-			FullTrack track = await MainPage.Spotify.Tracks.Get(MainPage.CurrentTrackId);
+			FullTrack track = await LyricsView.Spotify.Tracks.Get(LyricsView.CurrentTrackId);
 
 			LyricsSave.Title = track.Name;
 			LyricsSave.Artist = track.Artists[0].Name;
@@ -64,7 +64,7 @@ public partial class LyricsEditor : ContentPage
 		// Background
 		Task.Run(async () =>
 		{
-			FullTrack track = await MainPage.Spotify.Tracks.Get(MainPage.CurrentTrackId);
+			FullTrack track = await LyricsView.Spotify.Tracks.Get(LyricsView.CurrentTrackId);
 			using HttpClient download = new HttpClient();
 
 			try
@@ -108,7 +108,7 @@ public partial class LyricsEditor : ContentPage
 
 	private async Task RenderLyrics()
 	{
-		var response = await MainPage.Client.ExecuteAsync(new RestRequest(MainPage.CurrentTrackId));
+		var response = await LyricsView.Client.ExecuteAsync(new RestRequest(LyricsView.CurrentTrackId));
 
 		if (!response.IsSuccessful)
 			return;
@@ -159,15 +159,15 @@ public partial class LyricsEditor : ContentPage
 
 		stopwatch = new Stopwatch();
 #if ANDROID
-		MainPage.Remote.PlayerApi.Resume();
-		MainPage.Remote.PlayerApi.SkipPrevious();
+		LyricsView.Remote.PlayerApi.Resume();
+		LyricsView.Remote.PlayerApi.SkipPrevious();
 #endif
 		stopwatch.Start();
 	}
 
 	private async Task RenderLyricsAdvanced()
 	{
-		var response = await MainPage.Client.ExecuteAsync(new RestRequest(MainPage.CurrentTrackId));
+		var response = await LyricsView.Client.ExecuteAsync(new RestRequest(LyricsView.CurrentTrackId));
 
 		if (!response.IsSuccessful)
 		{
@@ -460,7 +460,7 @@ public partial class LyricsEditor : ContentPage
 			{
 				try
 				{
-					File.WriteAllText(System.IO.Path.Combine(FileSystem.AppDataDirectory, $"{MainPage.CurrentTrackId}.json"), JsonConvert.SerializeObject(new SyllableSyncedLyrics
+					File.WriteAllText(System.IO.Path.Combine(FileSystem.AppDataDirectory, $"{LyricsView.CurrentTrackId}.json"), JsonConvert.SerializeObject(new SyllableSyncedLyrics
 					{
 						StartTime = startTime,
 						EndTime = seconds,

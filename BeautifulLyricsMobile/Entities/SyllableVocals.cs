@@ -140,7 +140,7 @@ namespace BeautifulLyricsAndroid.Entities
 						{
 							if (wordGroup != null)
 							{
-								syllableLabel.Dispatcher.Dispatch(() => syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
+								syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
 								syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
 								wordGroup.Add(syllableLabel);
@@ -153,7 +153,7 @@ namespace BeautifulLyricsAndroid.Entities
 							}
 							else
 							{
-								syllableLabel.Dispatcher.Dispatch(() => syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
+								syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
 								syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
 								// lineContainer.Dispatcher.Dispatch(() => lineContainer.Children.Add(syllableLabel));
@@ -166,7 +166,7 @@ namespace BeautifulLyricsAndroid.Entities
 						{
 							// Determine whether or not our content is a set of letters or a single text
 							List<string> letterTexts = [];
-							emphasisGroup.Dispatcher.Dispatch(() => emphasisGroup.Style = Application.Current.Resources.MergedDictionaries.Last()["EmphasisGroupYesMargin"] as Style);
+							emphasisGroup.Style = Application.Current.Resources.MergedDictionaries.Last()["EmphasisGroupYesMargin"] as Style;
 
 							foreach (var letter in isRomanized ? syllableMetadata.RomanizedText.ToCharArray() : syllableMetadata.Text.ToCharArray())
 							{
@@ -181,7 +181,7 @@ namespace BeautifulLyricsAndroid.Entities
 							foreach (var letter in letterTexts)
 							{
 								GradientLabel letterLabel = new GradientLabel();
-								letterLabel.Dispatcher.Dispatch(() => letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style);
+								letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
 								letterLabel.Shadow = new Shadow
 								{
 									Brush = Brush.White,
@@ -221,7 +221,7 @@ namespace BeautifulLyricsAndroid.Entities
 							}
 							else
 								views.Add(emphasisGroup);
-								// lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Add(emphasisGroup)); //.Wait();
+							// lineContainer.Dispatcher.DispatchAsync(async () => lineContainer.Add(emphasisGroup)); //.Wait();
 							// visualElements.Add(emphasisGroup);
 						}
 					}
@@ -232,7 +232,7 @@ namespace BeautifulLyricsAndroid.Entities
 
 							wordGroup ??= [];
 
-							syllableLabel.Dispatcher.Dispatch(() => syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style);
+							syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
 							syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
 							wordGroup.Add(syllableLabel);
@@ -255,7 +255,7 @@ namespace BeautifulLyricsAndroid.Entities
 							foreach (var letter in letterTexts)
 							{
 								GradientLabel letterLabel = new GradientLabel();
-								letterLabel.Dispatcher.Dispatch(() => letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style);
+								letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
 								letterLabel.Shadow = new Shadow
 								{
 									Brush = Brush.White,
@@ -574,6 +574,8 @@ namespace BeautifulLyricsAndroid.Entities
 			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 50;
 			double glowAlpha = liveText.Springs.Glow.Update(deltaTime) * 50;
 
+			if (Math.Abs(scale) > 1000) return true;
+
 			float gradientProgress = (int)Math.Round(-20 + 120 * timeScale);
 			liveText.YOffset = yOffset * (isEmphasized ? 3 : 1);
 			liveText.Scale = scale;
@@ -689,9 +691,17 @@ namespace BeautifulLyricsAndroid.Entities
 						if (labelObject is GradientLabel label)
 						{
 							if (label.Margin.Right != 0)
-								label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
+								label.Dispatcher.Dispatch(() =>
+								{
+									label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
+									label.StartColor = new Color(224, 224, 224);
+								});
 							else
-								label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungEmphasizedLabel" : "SungEmphasizedLabel"] as Style);
+								label.Dispatcher.Dispatch(() =>
+								{
+									label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungEmphasizedLabel" : "SungEmphasizedLabel"] as Style;
+									label.StartColor = new Color(224, 224, 224);
+								});
 
 							/*label.StyleClass ??= [];
 
@@ -700,12 +710,20 @@ namespace BeautifulLyricsAndroid.Entities
 						}
 						else if (labelObject is HorizontalStackLayout layout)
 						{
-							foreach (var newLabel in layout.Children.OfType<Label>())
+							foreach (var newLabel in layout.Children.OfType<GradientLabel>())
 							{
 								if (newLabel.Margin.Right != 0)
-									newLabel.Dispatcher.Dispatch(() => newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
+									newLabel.Dispatcher.Dispatch(() =>
+									{
+										newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
+										newLabel.StartColor = new Color(224, 224, 224);
+									});
 								else
-									newLabel.Dispatcher.Dispatch(() => newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungEmphasizedLabel" : "SungEmphasizedLabel"] as Style);
+									newLabel.Dispatcher.Dispatch(() =>
+									{
+										newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungEmphasizedLabel" : "SungEmphasizedLabel"] as Style;
+										newLabel.StartColor = new Color(224, 224, 224);
+									});
 							}
 						}
 					}

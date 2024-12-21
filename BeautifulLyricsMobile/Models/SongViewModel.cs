@@ -2,6 +2,7 @@
 using MauiIcons.Material.Rounded;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -128,6 +129,8 @@ namespace BeautifulLyricsMobile.Models
 			}
 		}
 
+		public ObservableCollection<PlayableItem> GridRecommendedItems = [];
+
 		private Timer _timer;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -139,7 +142,7 @@ namespace BeautifulLyricsMobile.Models
 
         public SongViewModel()
         {
-			_timer = new Timer(UpdateProgress, null, 0, 100);
+			_timer = new Timer(UpdateProgress, null, 0, 1000);
         }
 
 		private void UpdateProgress(object state)
@@ -148,11 +151,19 @@ namespace BeautifulLyricsMobile.Models
 			TimestampString = TimeSpan.FromMilliseconds(Timestamp).ToString("mm\\:ss");
 		}
 
-		private int updateAmount = 100;
+		private int updateAmount = 1000;
 
 		public void ToggleTimer(bool state)
 		{
-			updateAmount = state ? 100 : 0;
+			updateAmount = state ? 1000 : 0;
 		}
     }
+
+	public class PlayableItem
+	{
+		public string Image { get; set; }
+		public string Title { get; set; }
+
+		public string Subtitle { get; set; }
+	}
 }

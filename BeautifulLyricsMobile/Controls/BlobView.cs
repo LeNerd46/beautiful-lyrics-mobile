@@ -1,13 +1,7 @@
-﻿using NTextCat.Commons;
-using SkiaSharp;
+﻿using SkiaSharp;
 using SkiaSharp.Views.Maui;
 using SkiaSharp.Views.Maui.Controls;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautifulLyricsMobile.Controls
 {
@@ -66,8 +60,8 @@ namespace BeautifulLyricsMobile.Controls
 				Radius = 500,
 				Scale = 1.2f,
 				Rotation = (float)(0.3f * Math.PI * 2f),
-				CropRect = new SKRect(0, 0, image.Width, image.Height / 2),
-				Opposite = false
+				CropRect = new SKRect(0, 0, image.Width, image.Height),
+				Opposite = true
 			});
 			
 			// Top right
@@ -78,7 +72,7 @@ namespace BeautifulLyricsMobile.Controls
 				Radius = 750,
 				Scale = 1.2f,
 				Rotation = (float)(0.3f * Math.PI * 2f),
-				CropRect = new SKRect(0, image.Height / 3, image.Width, image.Height / 3 * 2),
+				CropRect = new SKRect(0, 0, image.Width, image.Height),
 				Opposite = true
 			});
 
@@ -102,8 +96,8 @@ namespace BeautifulLyricsMobile.Controls
 				Radius = 1200,
 				Scale = 1.2f,
 				Rotation = (float)(0.6f * Math.PI * 2f),
-				CropRect = new SKRect(0, 0, image.Width, image.Height / 3 * 2),
-				Opposite = true
+				CropRect = new SKRect(0, 0, image.Width, image.Height),
+				Opposite = false
 			});
 
 			renderWidth = image.Width;
@@ -135,7 +129,7 @@ namespace BeautifulLyricsMobile.Controls
 					using var surface = SKSurface.Create(info);
 					var canvas = surface.Canvas;
 
-					float time = (float)stopwatch.Elapsed.TotalMinutes;
+					float time = (float)stopwatch.Elapsed.TotalMinutes * 2;
 
 					int i = 0;
 					foreach (var blob in blobs)
@@ -145,7 +139,7 @@ namespace BeautifulLyricsMobile.Controls
 							Style = SKPaintStyle.StrokeAndFill,
 							Shader = CreateBlobFeatherShader(blob, DistortImage(image, blob, time)),
 							IsAntialias = true,
-							BlendMode = SKBlendMode.Saturation
+							BlendMode = SKBlendMode.SrcOver
 						};
 
 						var path = CreateBlobPath(blob, time, i);
@@ -213,8 +207,8 @@ namespace BeautifulLyricsMobile.Controls
 				float angle = (float)((Math.PI / 180) * (angleStep * i));
 				float offset = (MathF.Sin(angle * 3 + time * 2 + index) * blob.Radius / 5) * 0.05f;
 
-				float x = blob.CenterX + (blob.Radius + offset) * MathF.Cos(angle);
-				float y = blob.CenterY + (blob.Radius + offset) * MathF.Sin(angle);
+				float x = blob.CenterX + (blob.Radius + offset) * MathF.Cos(angle) * 3;
+				float y = blob.CenterY + (blob.Radius + offset) * MathF.Sin(angle) * 3;
 
 				if (i == 0)
 					path.MoveTo(x, y);
@@ -231,10 +225,11 @@ namespace BeautifulLyricsMobile.Controls
 			// var matrix = SKMatrix.CreateSkew(0.3f * MathF.Sin(time), 0.1f * MathF.Cos(time));
 			// matrix = SKMatrix.Concat(matrix, SKMatrix.CreateTranslation(50 * MathF.Cos(time), 30 * MathF.Sin(time)));
 
+			// var matrix = SKMatrix.CreateRotation((blob.Rotation * (blob.Opposite ? -1 : 1)) + time);
 			var matrix = SKMatrix.CreateRotation((blob.Rotation + time) * (blob.Opposite ? -1 : 1));
-			// matrix = SKMatrix.Concat(matrix, SKMatrix.CreateScale(blob.Scale, blob.Scale));
-			// matrix = SKMatrix.Concat(matrix, SKMatrix.CreateTranslation(blob.CenterX, blob.CenterY));
-			// matrix = SKMatrix.Concat(matrix, SKMatrix.CreateSkew(0.3f * MathF.Sin(time), 0.1f * MathF.Cos(time)));
+			matrix = SKMatrix.Concat(matrix, SKMatrix.CreateScale(1.5f, 0.5f));
+			matrix = SKMatrix.Concat(matrix, SKMatrix.CreateTranslation(blob.CenterX, blob.CenterY));
+			matrix = SKMatrix.Concat(matrix, SKMatrix.CreateSkew(0.8f * MathF.Sin(time), 0.5f * MathF.Cos(time)));
 			// matrix = SKMatrix.Concat(matrix, SKMatrix.CreateTranslation(50 * MathF.Cos(time), 30 * MathF.Sin(time)));
 
 			using var surface = SKSurface.Create(new SKImageInfo((int)blob.CropRect.Width, (int)blob.CropRect.Height));
@@ -242,7 +237,7 @@ namespace BeautifulLyricsMobile.Controls
 			// canvas.DrawBitmap(image, blob.CropRect, new SKRect(0, 0, image.Width, image.Height));
 			canvas.DrawBitmap(image, 0, 0);
 
-			return SKShader.CreateBitmap(SKBitmap.FromImage(surface.Snapshot()), SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, matrix);
+			return SKShader.CreateBitmap(SKBitmap.FromImage(surface.Snapshot()), SKShaderTileMode.Mirror, SKShaderTileMode.Repeat, matrix);
 
 			// return SKShader.CreateBitmap(image, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, matrix);
 		}

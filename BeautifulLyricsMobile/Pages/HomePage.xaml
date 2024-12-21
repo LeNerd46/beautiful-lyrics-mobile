@@ -7,6 +7,7 @@
              xmlns:local="clr-namespace:BeautifulLyricsMobile.Controls"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:media="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
+             xmlns:pages="clr-namespace:BeautifulLyricsMobile.Pages"
              Unloaded="ContentPage_Unloaded"
              Title="HomePage">
 
@@ -30,17 +31,20 @@
 
         <ScrollView>
             <VerticalStackLayout>
-                <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="White">
-                    <Label.Shadow>
-                        <Shadow Brush="White" Radius="20" Opacity="1"/>
-                    </Label.Shadow>
-                </Label>
+                <CollectionView ItemsSource="{Binding GridRecommendedItems}" ItemsLayout="VerticalGrid, 2">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <HorizontalStackLayout>
+                                <Image Source="{Binding Image}"/>
+                                <Label Text="{Binding Title}" TextColor="White"/>
+                            </HorizontalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
 
-                <local:GradientLabel Text="Hello World!" StartColor="Lime" EndColor="#b8b8b8" FontSize="36" GradientProgress="34"/>
-
-                <Button Text="Colors!" Clicked="GetColors"/>
-
-                <VerticalStackLayout Margin="0,50,0,0" HorizontalOptions="Center" Spacing="15">
+                <!--<Button Text="Colors!" Clicked="GetColors"/>-->
+                
+                <VerticalStackLayout Margin="0,50,0,0" HorizontalOptions="Center" Spacing="15" IsVisible="Collapse">
                     <Label Text="Need a new client ID"/>
                     <HorizontalStackLayout>
                         <Entry x:Name="clientIdEntry" Placeholder="New Client ID" WidthRequest="150"/>
@@ -99,7 +103,9 @@
             </Grid>
         </Border>
 
-        <Border x:Name="fullSongCard" BackgroundColor="#292929" Grid.RowSpan="2" StrokeThickness="0" IsVisible="False">
+        <pages:LyricsView x:Name="lyricsView" ZIndex="1" IsVisible="False" Grid.RowSpan="2" TranslationY="0"/>
+
+        <!--<Border x:Name="fullSongCard" BackgroundColor="#292929" Grid.RowSpan="2" StrokeThickness="0" IsVisible="False">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="50"/>
@@ -110,7 +116,7 @@
                 <HorizontalStackLayout Spacing="120">
                     <Button Text="{mi:MaterialRounded Icon=KeyboardControlKey}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Rotation="180" Clicked="FullCardCollapse"/>
                     <Button Text="{mi:MaterialRounded Icon=AddCircleOutline}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="AddLyrics"/>
-                    <Button Text="{mi:MaterialRounded Icon=Lyrics}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="LyricsView"/>
+                    <Button Text="{mi:MaterialRounded Icon=Lyrics}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="NavigateToLyricsView"/>
                 </HorizontalStackLayout>
 
                 <media:MediaElement x:Name="albumCoverPlayer" Grid.Row="1" Margin="20" HorizontalOptions="Center" ShouldAutoPlay="True" ShouldShowPlaybackControls="False" ShouldLoopPlayback="True" Aspect="AspectFit"/>
@@ -145,6 +151,6 @@
                     </Border>
                 </VerticalStackLayout>
             </Grid>
-        </Border>
+        </Border>-->
     </Grid>
 </ContentPage>

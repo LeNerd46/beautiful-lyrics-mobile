@@ -44,7 +44,7 @@ public partial class SearchPage : ContentPage
 		// 	return;
 
 #if ANDROID
-		MainPage.Remote.PlayerApi.Play(result.Url);
+		LyricsView.Remote.PlayerApi.Play(result.Url);
 #endif
 	}
 
@@ -53,7 +53,7 @@ public partial class SearchPage : ContentPage
 	private async Task<Capabilities> RequestUserCapabilities()
 	{
 		RequestCapabilitiesCallback callback = new RequestCapabilitiesCallback();
-		MainPage.Remote.UserApi?.Capabilities?.SetResultCallback(callback);
+		LyricsView.Remote.UserApi?.Capabilities?.SetResultCallback(callback);
 
 		while(callback.Capabilities is null)
 		{

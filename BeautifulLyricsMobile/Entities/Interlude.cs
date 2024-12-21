@@ -378,6 +378,9 @@ namespace BeautifulLyricsMobile.Entities
 			double glowAlpha = liveText.Springs.Glow.Update(deltaTime);
 			double opacity = liveText.Springs.Opacity.Update(deltaTime);
 
+			if (yOffset > 10)
+				return liveText.Springs.Scale.Sleeping && liveText.Springs.YOffset.Sleeping && liveText.Springs.Glow.Sleeping && liveText.Springs.Opacity.Sleeping;
+
 			// Update visuals
 			liveText.Object.Dispatcher.Dispatch(() =>
 			{
