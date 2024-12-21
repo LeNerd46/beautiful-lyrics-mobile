@@ -79,7 +79,7 @@
 
             <!-- Additional icons -->
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="20">
-                <ImageButton Source="{mi:MaterialRounded Icon=Lyrics}" WidthRequest="30" HeightRequest="30" Clicked="SwitchToLyricsView"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=Lyrics}" WidthRequest="30" HeightRequest="30" Clicked="SwitchToLyricsView" x:Name="lyricsButton"/>
                 <ImageButton Source="{mi:MaterialRounded Icon=AddCircleOutline}" WidthRequest="30" HeightRequest="30"/>
             </HorizontalStackLayout>
         </VerticalStackLayout>

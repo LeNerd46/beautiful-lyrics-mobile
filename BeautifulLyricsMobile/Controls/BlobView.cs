@@ -158,7 +158,7 @@ namespace BeautifulLyricsMobile.Controls
 					canvas.DrawImage(snapshot, 0, 0, blurPaint);
 					surface.Snapshot().ReadPixels(info, bitmap.GetPixels(), bitmap.RowBytes);
 
-					if(cancel.IsCancellationRequested)
+					if (cancel.IsCancellationRequested)
 						return;
 
 					MainThread.BeginInvokeOnMainThread(() =>

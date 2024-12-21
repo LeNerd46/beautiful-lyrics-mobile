@@ -36,7 +36,7 @@ public partial class HomePage : ContentPage
 		InitializeComponent();
 		_ = new MauiIcon();
 
-		Song = new SongViewModel
+        Song = new SongViewModel
 		{
 			Image = "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg",
 			AnimatedImage = "https://static.videezy.com/system/resources/previews/000/037/474/original/circle_loading.mp4",
@@ -75,7 +75,7 @@ public partial class HomePage : ContentPage
 		interludeToggle.IsToggled = Preferences.Get("showInterludes", true);
 
 #if ANDROID
-		SpotifyBroadcastReceiver.SongChanged += (sender, song) =>
+		SpotifyBroadcastReceiver.SongChanged += async (sender, song) =>
 		{
 			lyricsView.OnAppearing(song);
 
@@ -85,7 +85,7 @@ public partial class HomePage : ContentPage
 
 			Song.Duration = song.Length;
 
-			var imageTask = Task.Run(async () =>
+			await Task.Run(async () =>
 			{
 				while (LyricsView.Remote == null)
 					await Task.Delay(10);
