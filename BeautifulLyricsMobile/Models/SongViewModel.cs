@@ -129,7 +129,9 @@ namespace BeautifulLyricsMobile.Models
 			}
 		}
 
-		public ObservableCollection<PlayableItem> GridRecommendedItems = [];
+		public ObservableCollection<PlayableItem> GridRecommendedItems { get; set; } = [];
+		public ObservableCollection<PlayableItem> JumpBackInItems { get; set; } = [];
+		public ObservableCollection<PlayableItem> RecentlyPlayedItems { get; set; } = [];
 
 		private Timer _timer;
 

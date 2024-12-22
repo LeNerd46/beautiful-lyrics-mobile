@@ -21,6 +21,7 @@
 
     <Grid x:Name="gridBoy">
         <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="70"/>
         </Grid.RowDefinitions>
@@ -29,28 +30,74 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <ScrollView>
-            <VerticalStackLayout>
-                <CollectionView ItemsSource="{Binding GridRecommendedItems}" ItemsLayout="VerticalGrid, 2">
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="30" Margin="10,0">
+                <Label Text="Good Evening" FontAttributes="Bold" FontSize="Title" VerticalTextAlignment="End"/>
+                <CollectionView ItemsSource="{Binding GridRecommendedItems}">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="2" VerticalItemSpacing="3" HorizontalItemSpacing="3"/>
+                    </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <HorizontalStackLayout>
-                                <Image Source="{Binding Image}"/>
-                                <Label Text="{Binding Title}" TextColor="White"/>
-                            </HorizontalStackLayout>
+                            <Border BackgroundColor="#292929" StrokeThickness="0" Margin="5,3" HeightRequest="60">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10"/>
+                                </Border.StrokeShape>
+
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer/>
+                                </Border.GestureRecognizers>
+
+                                <HorizontalStackLayout Spacing="10">
+                                    <Image Source="{Binding Image}"/>
+                                    <Label Text="{Binding Title}" TextColor="White" MaximumWidthRequest="110" MaxLines="2" VerticalTextAlignment="Center" FontAttributes="Bold"/>
+                                </HorizontalStackLayout>
+                            </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
-                <!--<Button Text="Colors!" Clicked="GetColors"/>-->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Jump Back In" FontSize="Title" FontAttributes="Bold"/>
+                    <CollectionView ItemsSource="{Binding JumpBackInItems}" ItemsLayout="HorizontalList">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout MaximumWidthRequest="200" Margin="5,0" Spacing="2">
+                                    <Image Source="{Binding Image}" WidthRequest="180" HeightRequest="180" HorizontalOptions="Start"/>
+
+                                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" MaxLines="1" MaximumWidthRequest="180" HorizontalOptions="Start"/>
+                                    <Label Text="{Binding Subtitle}" TextColor="LightGray" MaxLines="2"/>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
                 
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Recently Played" FontSize="Title" FontAttributes="Bold"/>
+                    <CollectionView ItemsSource="{Binding RecentlyPlayedItems}" ItemsLayout="HorizontalList">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout MaximumWidthRequest="200" Margin="5,0" Spacing="2">
+                                    <Image Source="{Binding Image}" WidthRequest="180" HeightRequest="180" HorizontalOptions="Start"/>
+
+                                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" MaxLines="1" MaximumWidthRequest="180" HorizontalOptions="Start"/>
+                                    <Label Text="{Binding Subtitle}" TextColor="LightGray" MaxLines="2"/>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!--<Button Text="Colors!" Clicked="GetColors"/>-->
+
                 <VerticalStackLayout Margin="0,50,0,0" HorizontalOptions="Center" Spacing="15" IsVisible="Collapse">
                     <Label Text="Need a new client ID"/>
                     <HorizontalStackLayout>
                         <Entry x:Name="clientIdEntry" Placeholder="New Client ID" WidthRequest="150"/>
                         <Button Text="Confirm" Clicked="NewId"/>
                     </HorizontalStackLayout>
-                    
+
                     <Label Text="Need a new client secret"/>
                     <HorizontalStackLayout>
                         <Entry x:Name="clientSecretEntry" Placeholder="New Client Secret" WidthRequest="150"/>
@@ -69,7 +116,7 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Border x:Name="songInformationSmall" BackgroundColor="#292929" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="10,0,10,10">
+        <Border x:Name="songInformationSmall" BackgroundColor="#292929" Grid.Row="2" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="10,0,10,10">
             <Border.GestureRecognizers>
                 <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped"/>
             </Border.GestureRecognizers>
@@ -103,7 +150,7 @@
             </Grid>
         </Border>
 
-        <pages:LyricsView x:Name="lyricsView" ZIndex="1" IsVisible="False" Grid.RowSpan="2" TranslationY="0"/>
+        <pages:LyricsView x:Name="lyricsView" ZIndex="1" IsVisible="False" Grid.RowSpan="3" TranslationY="0"/>
 
         <!--<Border x:Name="fullSongCard" BackgroundColor="#292929" Grid.RowSpan="2" StrokeThickness="0" IsVisible="False">
             <Grid>
