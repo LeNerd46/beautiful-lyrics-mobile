@@ -1,4 +1,6 @@
-﻿using MauiIcons.Core;
+﻿using Android.Widget;
+using BeautifulLyricsMobile.Pages;
+using MauiIcons.Core;
 using MauiIcons.Material.Rounded;
 using System;
 using System.Collections.Generic;
@@ -133,7 +135,31 @@ namespace BeautifulLyricsMobile.Models
 		public ObservableCollection<PlayableItem> JumpBackInItems { get; set; } = [];
 		public ObservableCollection<PlayableItem> RecentlyPlayedItems { get; set; } = [];
 
-		private Timer _timer;
+		private string _grettingMessage;
+
+		public string GreetingMessage
+        {
+            get => _grettingMessage;
+            set
+            {
+                _grettingMessage = value;
+                OnPropertyChanged();
+            }
+        }
+
+		private string _funTitle;
+
+		public string FunTitle
+        {
+            get => _funTitle;
+            set
+            {
+                _funTitle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private Timer _timer;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -159,13 +185,36 @@ namespace BeautifulLyricsMobile.Models
 		{
 			updateAmount = state ? 1000 : 0;
 		}
+
     }
 
 	public class PlayableItem
 	{
-		public string Image { get; set; }
-		public string Title { get; set; }
+        public string Id { get; set; }
+        public string Type { get; set; }
 
+        public string Image { get; set; }
+		public string Title { get; set; }
 		public string Subtitle { get; set; }
+
+		public PlayableItem Item { get; set; }
+
+        public PlayableItem()
+        {
+			Item = this;
+
+
+            ItemSelectedCommand = new Command<PlayableItem>(async (item) =>
+            {
+                if(item.Type == "artist")
+                {
+
+                }
+                else
+                    await Shell.Current.GoToAsync($"//SongCollection?id={item.Id}&type={item.Type}");
+            });
+        }
+
+        public Command<PlayableItem> ItemSelectedCommand { get; set; }
 	}
 }

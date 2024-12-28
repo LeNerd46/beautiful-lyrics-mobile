@@ -299,7 +299,25 @@ public partial class HomePage : ContentPage
 
             ListItems items = await GetRecommendedItems();
 
-            int albumIndex = items.Items.IndexOf(items.Items.First(x => x.Title.ToLower() == "jump back in"));
+            Song.GreetingMessage = items.Items[0].Title;
+            int albumIndex = 0;
+
+            if (items.Items.Any(x => x.Title.ToLower() == "jump back in"))
+            {
+                albumIndex = items.Items.IndexOf(items.Items.First(x => x.Title.ToLower() == "jump back in"));
+                Song.FunTitle = "Jump Back In";
+            }
+            else if(items.Items.Any(x => x.Title.ToLower() == "recommended for today"))
+            {
+                albumIndex = items.Items.IndexOf(items.Items.First(x => x.Title.ToLower() == "recommended for today"));
+                Song.FunTitle = "Recommended For Today";
+            }
+            else
+            {
+                albumIndex = 2;
+                Song.FunTitle = items.Items[2].Title;
+            }
+
             int recentIndex = items.Items.IndexOf(items.Items.First(x => x.Title.ToLower() == "recents"));
 
             ListItemCallback callback = new ListItemCallback();
@@ -314,8 +332,12 @@ public partial class HomePage : ContentPage
 
             foreach (var item in callback.Items.Items)
             {
+                string type = item.Uri.Split(':')[1];
+
                 Song.GridRecommendedItems.Add(new PlayableItem
                 {
+                    Id = item.Id.Split(':')[2],
+                    Type = type,
                     Title = item.Title,
                     Image = item.ImageUri.Raw
                 });
@@ -323,8 +345,12 @@ public partial class HomePage : ContentPage
 
             foreach (var item in callback2.Items.Items)
             {
+                string type = item.Uri.Split(':')[1];
+
                 Song.JumpBackInItems.Add(new PlayableItem
                 {
+                    Id = item.Id.Split(':')[2],
+                    Type = type,
                     Title = item.Title,
                     Image = item.ImageUri.Raw,
                     Subtitle = item.Subtitle
@@ -334,14 +360,17 @@ public partial class HomePage : ContentPage
             foreach (var item in callback3.Items.Items)
             {
                 string imageUrl = "";
+                string type = item.Uri.Split(':')[1];
 
-                if(item.ImageUri.Raw.StartsWith("https"))
+                if (item.ImageUri.Raw.StartsWith('h'))
                     imageUrl = item.ImageUri.Raw;
                 else
                     imageUrl = $"https://i.scdn.co/image/{item.ImageUri.Raw.Split(':')[2]}";
 
                 Song.RecentlyPlayedItems.Add(new PlayableItem
                 {
+                    Id = item.Id.Split(':')[2],
+                    Type = type,
                     Title = item.Title,
                     Image = imageUrl,
                     Subtitle = item.Subtitle

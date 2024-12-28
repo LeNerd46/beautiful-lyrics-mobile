@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="BeautifulLyricsMobile.Pages.SongCollectionPage"
+             xmlns:local="clr-namespace:BeautifulLyricsMobile.Models"
+             Title="SongCollectionPage" Shell.NavBarIsVisible="False"
+             Loaded="OnPageLoaded">
+
+    <ContentPage.BindingContext>
+        <local:SongCollectionModel x:Name="SongCollectionModel"/>
+    </ContentPage.BindingContext>
+
+    <ScrollView>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="300"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <VerticalStackLayout Grid.Row="1" Spacing="5">
+                <Image Source="{Binding CoverArt}" HorizontalOptions="Center" WidthRequest="200" HeightRequest="200"/>
+                <Label Text="{Binding Title}" FontSize="Title" FontAttributes="Bold" Margin="15,10,0,0"/>
+                <Label Text="{Binding Artist}" HorizontalTextAlignment="Start" FontAttributes="Bold" Margin="15,0,0,0"/>
+                <Label Text="{Binding Info}" HorizontalTextAlignment="Start" TextColor="LightGray" Margin="15,0,0,0"/>
+            </VerticalStackLayout>
+
+            <CollectionView ItemsSource="{Binding Items}" Grid.Row="2" Margin="15,20,0,0">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="1" VerticalItemSpacing="15"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding PlaySongCommand}"/>
+                            </Grid.GestureRecognizers>
+                            
+                            <VerticalStackLayout Grid.Column="1">
+                                <Label Text="{Binding Title}" FontSize="Header"/>
+                                <Label Text="{Binding Artist}" TextColor="DarkGray"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </ScrollView>
+</ContentPage>

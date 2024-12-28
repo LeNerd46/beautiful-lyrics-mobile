@@ -294,10 +294,14 @@ public partial class LyricsView : ContentView
             if (string.IsNullOrWhiteSpace(content))
             {
                 hasLyrics = false;
+                lyricsButton.IsEnabled = false;
                 return;
             }
             else
+            {
                 hasLyrics = true;
+                lyricsButton.IsEnabled = true;
+            }
 
             LoadLyrics(content);
 
@@ -572,7 +576,7 @@ public partial class LyricsView : ContentView
         // callback?.Invoke();
 
         // await Task.Delay(16).ContinueWith(_ => callback());
-        await Task.Delay(5).ContinueWith(_ => callback());
+        await Task.Delay(32).ContinueWith(_ => callback());
     }
 
     private void OnPausePlay(object sender, EventArgs e)

@@ -34,4 +34,8 @@
     </TabBar>
 
     <ShellContent Title="Onboarding" ContentTemplate="{DataTemplate local:OnboardingPage}" Route="Onboarding" Shell.NavBarIsVisible="False"/>
+
+    <FlyoutItem Title="SongCollection">
+        <ShellContent Route="SongCollection" ContentTemplate="{DataTemplate local:SongCollectionPage}"/>
+    </FlyoutItem>
 </Shell>

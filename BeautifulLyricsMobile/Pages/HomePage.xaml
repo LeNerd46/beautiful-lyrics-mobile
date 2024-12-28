@@ -32,7 +32,7 @@
 
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="30" Margin="10,0">
-                <Label Text="Good Evening" FontAttributes="Bold" FontSize="Title" VerticalTextAlignment="End"/>
+                <Label Text="{Binding GreetingMessage}" FontAttributes="Bold" FontSize="Title" VerticalTextAlignment="End"/>
                 <CollectionView ItemsSource="{Binding GridRecommendedItems}">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" Span="2" VerticalItemSpacing="3" HorizontalItemSpacing="3"/>
@@ -58,7 +58,7 @@
                 </CollectionView>
 
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Jump Back In" FontSize="Title" FontAttributes="Bold"/>
+                    <Label Text="{Binding FunTitle}" FontSize="Title" FontAttributes="Bold"/>
                     <CollectionView ItemsSource="{Binding JumpBackInItems}" ItemsLayout="HorizontalList">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
@@ -83,6 +83,10 @@
 
                                     <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" MaxLines="1" MaximumWidthRequest="180" HorizontalOptions="Start"/>
                                     <Label Text="{Binding Subtitle}" TextColor="LightGray" MaxLines="2"/>
+
+                                    <VerticalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ItemSelectedCommand}" CommandParameter="{Binding Item}"/>
+                                    </VerticalStackLayout.GestureRecognizers>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
