@@ -301,6 +301,7 @@ public partial class HomePage : ContentPage
 
             Song.GreetingMessage = items.Items[0].Title;
             int albumIndex = 0;
+            int recentIndex = 0;
 
             if (items.Items.Any(x => x.Title.ToLower() == "jump back in"))
             {
@@ -318,16 +319,27 @@ public partial class HomePage : ContentPage
                 Song.FunTitle = items.Items[2].Title;
             }
 
-            int recentIndex = items.Items.IndexOf(items.Items.First(x => x.Title.ToLower() == "recents"));
+            if(items.Items.Any(x => x.Title.ToLower() == "recents"))
+            {
+                recentIndex = items.Items.IndexOf(items.Items.First(x => x.Title.ToLower() == "recents"));
+                Song.RecentsTitle = "Recently Played";
+            }
+            else
+            {
+                recentIndex = 3;
+                Song.RecentsTitle = items.Items[3].Title;
+            }
+
 
             ListItemCallback callback = new ListItemCallback();
             ListItemCallback callback2 = new ListItemCallback();
             ListItemCallback callback3 = new ListItemCallback();
+
             remote.Remote.ContentApi.GetChildrenOfItem(items.Items[0], 8, 0).SetResultCallback(callback);
             remote.Remote.ContentApi.GetChildrenOfItem(items.Items[albumIndex], 10, 0).SetResultCallback(callback2);
             remote.Remote.ContentApi.GetChildrenOfItem(items.Items[recentIndex], 15, 0).SetResultCallback(callback3);
 
-            while (callback.Items == null)
+            while (callback.Items == null || callback2.Items == null || callback3.Items == null)
                 await Task.Delay(10);
 
             foreach (var item in callback.Items.Items)

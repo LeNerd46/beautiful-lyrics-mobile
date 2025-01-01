@@ -7,18 +7,18 @@
              Title="SearchPage">
 
     <ContentPage.BindingContext>
-        <viewmodels:SearchViewModel/>
+        <viewmodels:SearchViewModel x:Name="searchModel"/>
     </ContentPage.BindingContext>
 
     <VerticalStackLayout>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="50"/>
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="20"/>
             </Grid.RowDefinitions>
 
-            <SearchBar x:Name="searchBar" Placeholder="What do you want to listen to?" HorizontalOptions="Center" WidthRequest="300" Keyboard="Chat" SearchCommand="{Binding Search}" SearchCommandParameter="{Binding Text, Source={x:Reference searchBar}}"/>
+            <SearchBar x:Name="searchBar" Placeholder="What do you want to listen to?" HorizontalOptions="Center" VerticalOptions="End" WidthRequest="300" Keyboard="Chat" SearchCommand="{Binding Search}" SearchCommandParameter="{Binding Text, Source={x:Reference searchBar}}" TextChanged="OnTextChanged"/>
 
             <ListView x:Name="searchResults" Grid.Row="1" ItemsSource="{Binding SearchResults}" Margin="0,20" HasUnevenRows="True" ItemSelected="searchResults_ItemSelected">
                 <ListView.ItemTemplate>

@@ -321,7 +321,7 @@ namespace BeautifulLyricsMobile.Entities
 					}
 				});
 
-				Container.Add(dot);
+				Container.Children.Add(dot);
 				startTime += dotStep;
 			}
 

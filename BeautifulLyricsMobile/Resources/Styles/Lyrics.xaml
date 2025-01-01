@@ -5,8 +5,72 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-<!-- These are pretty much all the same, just different names. Too lazy to go through and change everything -->
-    
+    <!-- These are pretty much all the same, just different names. Too lazy to go through and change everything -->
+
+    <Style x:Key="LyricGroup" TargetType="FlexLayout">
+        <Setter Property="Direction" Value="Row"/>
+        <Setter Property="Wrap" Value="Wrap"/>
+        <Setter Property="JustifyContent" Value="Start"/>
+        <Setter Property="MinimumHeightRequest" Value="50"/>
+        <Setter Property="MinimumWidthRequest" Value="150"/>
+        <Setter Property="Margin" Value="15,0"/>
+    </Style>
+
+    <Style x:Key="LyricGroupOppositeAligned" TargetType="FlexLayout">
+        <Setter Property="Direction" Value="Row"/>
+        <Setter Property="Wrap" Value="Wrap"/>
+        <Setter Property="JustifyContent" Value="End"/>
+        <Setter Property="MinimumHeightRequest" Value="50"/>
+        <Setter Property="Margin" Value="15,0"/>
+        <Setter Property="MinimumWidthRequest" Value="150"/>
+    </Style>
+
+    <Style x:Key="LyricLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="White"/>
+        <Setter Property="FontSize" Value="26"/>
+        <Setter Property="FontFamily" Value="LyricsMedium"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+        <Setter Property="MinimumHeightRequest" Value="50"/>
+        <Setter Property="Margin" Value="0,0,2.3,0"/>
+    </Style>
+
+    <Style x:Key="LyricEmphasizedLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="White"/>
+        <Setter Property="FontSize" Value="26"/>
+        <Setter Property="FontFamily" Value="LyricsMedium"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+        <Setter Property="MinimumHeightRequest" Value="50"/>
+    </Style>
+
+    <Style x:Key="BackgroundLyricEmphasizedLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="White"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontFamily" Value="LyricsMedium"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+    </Style>
+
+    <Style x:Key="BackgroundLyricLabel" TargetType="Label">
+        <Setter Property="TextColor" Value="White"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontFamily" Value="LyricsMedium"/>
+        <Setter Property="LineBreakMode" Value="WordWrap"/>
+        <Setter Property="Margin" Value="0,0,2.3,0"/>
+    </Style>
+
+    <Style x:Key="Interlude" TargetType="HorizontalStackLayout">
+        <Setter Property="MinimumHeightRequest" Value="50"/>
+        <Setter Property="MinimumWidthRequest" Value="50"/>
+        <Setter Property="Margin" Value="5,0"/>
+    </Style>
+
+    <Style x:Key="InterludeDot" TargetType="Ellipse">
+        <Setter Property="WidthRequest" Value="20"/>
+        <Setter Property="HeightRequest" Value="20"/>
+        <Setter Property="BackgroundColor" Value="White"/>
+    </Style>
+
+    <!-- OLD -->
+
     <Style x:Key="IdleLyric" TargetType="FlexLayout">
         <Setter Property="Direction" Value="Row"/>
         <Setter Property="Wrap" Value="Wrap"/>
@@ -24,7 +88,7 @@
         <Setter Property="Margin" Value="15,0"/>
         <Setter Property="MinimumWidthRequest" Value="150"/>
     </Style>
-    
+
     <Style x:Key="BackgroundIdleLyric" TargetType="FlexLayout">
         <Setter Property="Direction" Value="Row"/>
         <Setter Property="Wrap" Value="Wrap"/>
@@ -166,15 +230,4 @@
         <Setter Property="Margin" Value="0,0,2,0"/>
     </Style>
 
-    <Style x:Key="Interlude" TargetType="HorizontalStackLayout">
-        <Setter Property="MinimumHeightRequest" Value="50"/>
-        <Setter Property="MinimumWidthRequest" Value="50"/>
-    </Style>
-
-    <Style x:Key="InterludeDot" TargetType="Ellipse">
-        <Setter Property="WidthRequest" Value="20"/>
-        <Setter Property="HeightRequest" Value="20"/>
-        <Setter Property="BackgroundColor" Value="White"/>
-    </Style>
-    
 </ResourceDictionary>

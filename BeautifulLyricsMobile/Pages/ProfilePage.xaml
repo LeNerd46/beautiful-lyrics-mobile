@@ -2,18 +2,16 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BeautifulLyricsMobile.Pages.ProfilePage"
-             Title="ProfilePage">
+             Title="ProfilePage"
+             Loaded="OnPageLoaded">
 
-    <CollectionView x:Name="collection">
-        <CollectionView.ItemTemplate>
-            <DataTemplate>
-                <Label Text="Hello World!">
-                    <Label.Shadow>
-                        <Shadow Opacity="{Binding .}"/>
-                    </Label.Shadow>
-                </Label>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-    </CollectionView>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        
+    </Grid>
 
 </ContentPage>

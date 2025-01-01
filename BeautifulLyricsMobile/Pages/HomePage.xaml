@@ -33,7 +33,7 @@
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="30" Margin="10,0">
                 <Label Text="{Binding GreetingMessage}" FontAttributes="Bold" FontSize="Title" VerticalTextAlignment="End"/>
-                <CollectionView ItemsSource="{Binding GridRecommendedItems}">
+                <!--<CollectionView ItemsSource="{Binding GridRecommendedItems}" ItemSizingStrategy="MeasureFirstItem">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" Span="2" VerticalItemSpacing="3" HorizontalItemSpacing="3"/>
                     </CollectionView.ItemsLayout>
@@ -55,7 +55,7 @@
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
-                </CollectionView>
+                </CollectionView>-->
 
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding FunTitle}" FontSize="Title" FontAttributes="Bold"/>
@@ -67,14 +67,18 @@
 
                                     <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" MaxLines="1" MaximumWidthRequest="180" HorizontalOptions="Start"/>
                                     <Label Text="{Binding Subtitle}" TextColor="LightGray" MaxLines="2"/>
+
+                                    <VerticalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ItemSelectedCommand}" CommandParameter="{Binding Item}"/>
+                                    </VerticalStackLayout.GestureRecognizers>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
                 </VerticalStackLayout>
-                
+
                 <VerticalStackLayout Spacing="10">
-                    <Label Text="Recently Played" FontSize="Title" FontAttributes="Bold"/>
+                    <Label Text="{Binding RecentsTitle}" FontSize="Title" FontAttributes="Bold"/>
                     <CollectionView ItemsSource="{Binding RecentlyPlayedItems}" ItemsLayout="HorizontalList">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
@@ -155,53 +159,5 @@
         </Border>
 
         <pages:LyricsView x:Name="lyricsView" ZIndex="1" IsVisible="False" Grid.RowSpan="3" TranslationY="0"/>
-
-        <!--<Border x:Name="fullSongCard" BackgroundColor="#292929" Grid.RowSpan="2" StrokeThickness="0" IsVisible="False">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="250"/>
-                </Grid.RowDefinitions>
-
-                <HorizontalStackLayout Spacing="120">
-                    <Button Text="{mi:MaterialRounded Icon=KeyboardControlKey}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Rotation="180" Clicked="FullCardCollapse"/>
-                    <Button Text="{mi:MaterialRounded Icon=AddCircleOutline}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="AddLyrics"/>
-                    <Button Text="{mi:MaterialRounded Icon=Lyrics}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="NavigateToLyricsView"/>
-                </HorizontalStackLayout>
-
-                <media:MediaElement x:Name="albumCoverPlayer" Grid.Row="1" Margin="20" HorizontalOptions="Center" ShouldAutoPlay="True" ShouldShowPlaybackControls="False" ShouldLoopPlayback="True" Aspect="AspectFit"/>
-                <Border x:Name="coverImageBorder" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="20" HorizontalOptions="Center">
-                    <Image x:Name="albumCoverImage" Source="{Binding Image}"/>
-                </Border>
-
-                <VerticalStackLayout Grid.Row="2" Margin="30,15,0,0" Spacing="5">
-                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" FontSize="Title" MaxLines="1"/>
-                    <Label Text="{Binding Artist}" TextColor="LightGray" FontSize="Subtitle"/>
-
-                    <Slider WidthRequest="375" HorizontalOptions="Start" Margin="-10,20,0,0" Maximum="{Binding Duration}" Value="{Binding Timestamp}" ValueChanged="Slider_ValueChanged"/>
-
-                    <HorizontalStackLayout Spacing="300">
-                        <Label Text="{Binding TimestampString}" TextColor="LightGray" FontSize="Caption"/>
-                        <Label Text="{Binding DurationString}" TextColor="LightGray" FontSize="Caption" Margin="0,0,0,0"/>
-                    </HorizontalStackLayout>
-
-                    <Button Text="Delete Song" Clicked="DeleteSong"/>
-
-                    <HorizontalStackLayout Margin="20,-5,0,0" Spacing="15">
-                        <Button Text="{mi:MaterialRounded Icon=Shuffle}" Margin="-5,0,0,0" Padding="0,7,0,0" BackgroundColor="Transparent" TextColor="White"/>
-                        <Button Text="{mi:MaterialRounded Icon=SkipPrevious}" Padding="0,0,-50,0" BackgroundColor="Transparent" TextColor="White" Clicked="SkipPrevious"/>
-                        <Button x:Name="fullPlayButton" Text="{mi:MaterialRounded Icon=PlayCircle, IconSize=55}" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause" IsVisible="False"/>
-                        <Button x:Name="fullPauseButton" Text="{mi:MaterialRounded Icon=PauseCircle, IconSize=55}" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause"/>
-                        <Button Text="{mi:MaterialRounded Icon=SkipNext}" Padding="-50,0,0,0" BackgroundColor="Transparent" TextColor="White" Clicked="SkipNext"/>
-                        <Button Text="{mi:MaterialRounded Icon=Repeat}" BackgroundColor="Transparent" TextColor="White"/>
-                    </HorizontalStackLayout>
-
-                    <Border BackgroundColor="Pink" Grid.Row="2" Margin="0,100">
-                        <Label Text="Hello World!"/>
-                    </Border>
-                </VerticalStackLayout>
-            </Grid>
-        </Border>-->
     </Grid>
 </ContentPage>

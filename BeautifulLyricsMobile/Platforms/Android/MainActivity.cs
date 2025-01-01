@@ -18,147 +18,150 @@ using static Com.Spotify.Android.Appremote.Api.IConnector;
 
 namespace BeautifulLyricsMobile
 {
-    [Activity(Theme = "@style/Maui.SplashTheme", ResizeableActivity = true, MainLauncher = true, LaunchMode = LaunchMode.SingleTask, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density, WindowSoftInputMode = SoftInput.AdjustResize)]
-    public class MainActivity : MauiAppCompatActivity
-    {
-        SpotifyBroadcastReceiver receiver;
-        IntentFilter filter;
+	[Activity(Theme = "@style/Maui.SplashTheme", ResizeableActivity = true, MainLauncher = true, LaunchMode = LaunchMode.SingleTask, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density, WindowSoftInputMode = SoftInput.AdjustResize)]
+	public class MainActivity : MauiAppCompatActivity
+	{
+		SpotifyBroadcastReceiver receiver;
+		IntentFilter filter;
 
-        private EmbedIOAuthServer server;
-        private bool updatedToken = false;
+		private EmbedIOAuthServer server;
+		private bool updatedToken = false;
 
-        protected override void OnCreate(Bundle? savedInstanceState)
-        {
-            base.OnCreate(savedInstanceState);
+		protected override void OnCreate(Bundle? savedInstanceState)
+		{
+			base.OnCreate(savedInstanceState);
 
-            string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
-            string firstTime = SecureStorage.GetAsync("first").GetAwaiter().GetResult();
+			string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
+			string firstTime = SecureStorage.GetAsync("first").GetAwaiter().GetResult();
 
-            if (!string.IsNullOrWhiteSpace(clientId))
-            {
-                if (string.IsNullOrWhiteSpace(firstTime) || firstTime != "false")
-                {
-                    var spotifyIntent = PackageManager.GetLaunchIntentForPackage("com.spotify.music");
+			if (!string.IsNullOrWhiteSpace(clientId))
+			{
+				if (string.IsNullOrWhiteSpace(firstTime) || firstTime != "false")
+				{
+					var spotifyIntent = PackageManager.GetLaunchIntentForPackage("com.spotify.music");
 
-                    if (spotifyIntent != null)
-                    {
-                        spotifyIntent.AddFlags(Android.Content.ActivityFlags.NewTask);
-                        StartActivity(spotifyIntent);
-                    }
-                }
+					if (spotifyIntent != null)
+					{
+						spotifyIntent.AddFlags(Android.Content.ActivityFlags.NewTask);
+						StartActivity(spotifyIntent);
+					}
+				}
 
-                SpotifyAppRemote remote;
-                ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
-                SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, new ConnectionListener());
-            }
+				SpotifyAppRemote remote;
+				ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+				SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, new ConnectionListener());
+			}
 
-            receiver = new SpotifyBroadcastReceiver();
-            filter = new IntentFilter();
+			receiver = new SpotifyBroadcastReceiver();
+			filter = new IntentFilter();
 
-            filter.AddAction("com.spotify.music.playbackstatechanged");
-            filter.AddAction("com.spotify.music.metadatachanged");
-            filter.AddAction("com.spotify.music.queuechanged");
-        }
+			filter.AddAction("com.spotify.music.playbackstatechanged");
+			filter.AddAction("com.spotify.music.metadatachanged");
+			filter.AddAction("com.spotify.music.queuechanged");
+		}
 
-        protected override void OnResume()
-        {
-            base.OnResume();
+		protected override void OnResume()
+		{
+			base.OnResume();
 
-            try
-            {
-                RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
-                // Toast.MakeText(Platform.CurrentActivity, "Receiver Conntected!", ToastLength.Short).Show();
+			try
+			{
+				RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
+				// Toast.MakeText(Platform.CurrentActivity, "Receiver Conntected!", ToastLength.Short).Show();
 
-                // while (LyricsView.Remote == null) ;
+				// while (LyricsView.Remote == null) ;
 
-                string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
-                string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
-                string updatedToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
+				string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
+				string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
+				string updatedToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-                SpotifyAppRemote remote;
-                ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
-                SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, new ConnectionListener());
+				if (LyricsView.Remote == null)
+				{
+					SpotifyAppRemote remote;
+					ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+					SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, new ConnectionListener());
+				}
 
-                if (string.IsNullOrWhiteSpace(updatedToken))
-                {
-                    Task.Run(async () =>
-                    {
-                        /*while (LyricsView.Remote == null)
+				if (string.IsNullOrWhiteSpace(updatedToken))
+				{
+					Task.Run(async () =>
+					{
+						/*while (LyricsView.Remote == null)
 						{
 							await Task.Delay(1000);
 						}*/
 
-                        server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
-                        await server.Start();
+						server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
+						await server.Start();
 
-                        server.ImplictGrantReceived += async (sender, response) =>
-                        {
-                            await server.Stop();
+						server.ImplictGrantReceived += async (sender, response) =>
+						{
+							await server.Stop();
 
-                            LyricsView.AccessToken = response.AccessToken;
-                            LyricsView.Spotify = new SpotifyClient(response.AccessToken);
+							LyricsView.AccessToken = response.AccessToken;
+							LyricsView.Spotify = new SpotifyClient(response.AccessToken);
 
-                            LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-                            LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
+							LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+							LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
 
-                            await SecureStorage.SetAsync("token", LyricsView.AccessToken);
-                        };
+							await SecureStorage.SetAsync("token", LyricsView.AccessToken);
+						};
 
-                        server.ErrorReceived += async (sender, error, state) =>
-                        {
-                            await server.Stop();
-                        };
+						server.ErrorReceived += async (sender, error, state) =>
+						{
+							await server.Stop();
+						};
 
-                        var request = new LoginRequest(server.BaseUri, clientId, LoginRequest.ResponseType.Token)
-                        {
-                            Scope = new List<string> { Scopes.UserReadPrivate }
-                        };
+						var request = new LoginRequest(server.BaseUri, clientId, LoginRequest.ResponseType.Token)
+						{
+							Scope = new List<string> { Scopes.UserReadPrivate }
+						};
 
-                        await Launcher.OpenAsync(request.ToUri());
-                    });
-                }
-                else
-                {
-                    LyricsView.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
+						await Launcher.OpenAsync(request.ToUri());
+					});
+				}
+				else
+				{
+					LyricsView.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-                    if (!string.IsNullOrWhiteSpace(LyricsView.AccessToken))
-                    {
-                        LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-                        LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {LyricsView.AccessToken}");
-                    }
-                    // else
-                    // 	Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
+					if (!string.IsNullOrWhiteSpace(LyricsView.AccessToken))
+					{
+						LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+						LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {LyricsView.AccessToken}");
+					}
+					// else
+					// 	Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
 
-                    var config = SpotifyClientConfig.CreateDefault();
+					var config = SpotifyClientConfig.CreateDefault();
 
-                    if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
-                        return;
+					if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
+						return;
 
-                    var request = new ClientCredentialsRequest(clientId, secret);
-                    var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
+					var request = new ClientCredentialsRequest(clientId, secret);
+					var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
 
-                    LyricsView.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Toast.MakeText(Platform.CurrentActivity, ex.Message, ToastLength.Short).Show();
-            }
-        }
+					LyricsView.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
+				}
+			}
+			catch (System.Exception ex)
+			{
+				Toast.MakeText(Platform.CurrentActivity, ex.Message, ToastLength.Short).Show();
+			}
+		}
 
-        protected override void OnPause()
-        {
-            UnregisterReceiver(receiver);
-            base.OnPause();
-        }
+		protected override void OnPause()
+		{
+			UnregisterReceiver(receiver);
+			base.OnPause();
+		}
 
-        protected override void OnStop()
-        {
-            SpotifyAppRemote.Disconnect(LyricsView.Remote);
+		protected override void OnStop()
+		{
+			SpotifyAppRemote.Disconnect(LyricsView.Remote);
 
-            base.OnStop();
-        }
-    }
+			base.OnStop();
+		}
+	}
 
 	public class ConnectionListener : Java.Lang.Object, IConnector.IConnectionListener
 	{

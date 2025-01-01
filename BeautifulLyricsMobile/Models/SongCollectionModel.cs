@@ -1,4 +1,5 @@
-﻿using BeautifulLyricsMobile.Pages;
+﻿using AndroidX.Annotations;
+using BeautifulLyricsMobile.Pages;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,10 @@ using System.Threading.Tasks;
 
 namespace BeautifulLyricsMobile.Models
 {
-    public class SongCollectionModel
+    public class SongCollectionModel : INotifyPropertyChanged
     {
         public ObservableCollection<SongMetadata> Items { get; set; } = [];
+        public string Url { get; set; }
 
         private string _title;
         private string _artist;
@@ -60,7 +62,17 @@ namespace BeautifulLyricsMobile.Models
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public Command PlayCollectionCommand { get; set; }
+
+		public SongCollectionModel()
+		{
+            PlayCollectionCommand = new Command(() =>
+            {
+                LyricsView.Remote?.PlayerApi?.Play(Url);
+            });
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
@@ -75,14 +87,18 @@ namespace BeautifulLyricsMobile.Models
         public string Title { get; set; }
         public string Artist { get; set; }
         public string Album { get; set; }
-        
-        public Command PlaySongCommand { get; set; }
+
+		public string CollectionUrl { get; set; }
+		public int Index { get; set; }
+
+		public Command PlaySongCommand { get; set; }
 
         public SongMetadata()
         {
             PlaySongCommand = new Command(() =>
             {
-                LyricsView.Remote?.PlayerApi?.Play(Url);
+                // LyricsView.Remote?.PlayerApi?.Play(CollectionUrl);
+                LyricsView.Remote?.PlayerApi?.SkipToIndex(CollectionUrl, Index);
             });
         }
     }

@@ -159,6 +159,18 @@ namespace BeautifulLyricsMobile.Models
             }
         }
 
+		private string _recentsTitle;
+
+		public string RecentsTitle
+		{
+			get => _recentsTitle;
+			set
+			{
+				_recentsTitle = value;
+				OnPropertyChanged();
+			}
+		}
+
         private Timer _timer;
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -185,7 +197,6 @@ namespace BeautifulLyricsMobile.Models
 		{
 			updateAmount = state ? 1000 : 0;
 		}
-
     }
 
 	public class PlayableItem
@@ -210,8 +221,10 @@ namespace BeautifulLyricsMobile.Models
                 {
 
                 }
-                else
-                    await Shell.Current.GoToAsync($"//SongCollection?id={item.Id}&type={item.Type}");
+                else if(item.Type == "album")
+                    await Shell.Current.GoToAsync($"//AlbumPage?id={item.Id}");
+				else
+                    await Shell.Current.GoToAsync($"//PlaylistPage?id={item.Id}");
             });
         }
 
