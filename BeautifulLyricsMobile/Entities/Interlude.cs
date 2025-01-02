@@ -303,30 +303,39 @@ namespace BeautifulLyricsMobile.Entities
 			double dotStep = (double)0.92 / (double)3;
 			double startTime = 0;
 
-			for (int i = 0; i < 3; i++)
+			try
 			{
-				Ellipse dot = new Ellipse();
-				dot.Dispatcher.Dispatch(() => dot.Style = Application.Current.Resources.MergedDictionaries.Last()["InterludeDot"] as Style);
 
-				Dots.Add(new AnimatedDot
+				for (int i = 0; i < 3; i++)
 				{
-					Start = startTime,
-					Duration = dotStep,
-					GlowDuration = (1 - startTime),
+					Ellipse dot = new Ellipse();
+					dot.Dispatcher.Dispatch(() => dot.Style = Application.Current.Resources.MergedDictionaries.Last()["InterludeDot"] as Style);
 
-					LiveText = new DotLiveText
+					Dots.Add(new AnimatedDot
 					{
-						Object = dot,
-						Springs = CreateDotSprings()
-					}
-				});
+						Start = startTime,
+						Duration = dotStep,
+						GlowDuration = (1 - startTime),
 
-				Container.Children.Add(dot);
-				startTime += dotStep;
+						LiveText = new DotLiveText
+						{
+							Object = dot,
+							Springs = CreateDotSprings()
+						}
+					});
+
+					Container.Children.Add(dot);
+					startTime += dotStep;
+				}
+
+				SetToGeneralState(false);
+				lineContainer.Add(container);
+			}
+			catch
+			{
+				// Stupid
 			}
 
-			SetToGeneralState(false);
-			lineContainer.Add(container);
 		}
 
 		private Spline GetSpline(List<double> times, List<double> values) => new Spline(times, values);
@@ -512,7 +521,7 @@ namespace BeautifulLyricsMobile.Entities
 				}
 			}).ContinueWith(t =>
 			{
-				if(t.IsFaulted)
+				if (t.IsFaulted)
 				{
 #if ANDROID
 					Toast.MakeText(Platform.CurrentActivity, t.Exception.Message, ToastLength.Long).Show();

@@ -48,5 +48,13 @@ namespace BeautifulLyricsMobile.Controls
 			get => (float)GetValue(ShadowOpacityProperty);
 			set => SetValue(ShadowOpacityProperty, value);
 		}
+
+		private float _previousOpacity;
+
+		public float PreviousOpacity { get => _previousOpacity; set => _previousOpacity = value; }
+
+		private float _previousRadius;
+
+		public float PreviousRadius { get => _previousRadius; set => _previousRadius = value; }
 	}
 }

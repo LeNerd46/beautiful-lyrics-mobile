@@ -26,12 +26,39 @@ namespace BeautifulLyricsMobile.Platforms.Android
 		{
 			base.OnElementChanged(e);
 			SetColors();
+			UpdateShadow();
 		}
 
 		protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			base.OnElementPropertyChanged(sender, e);
 			SetColors();
+			UpdateShadow();
+		}
+
+		private void UpdateShadow()
+		{
+			GradientLabel label = Element as GradientLabel;
+
+			if (Control == null)
+				return;
+
+			float radius = label.ShadowRadius;
+			float opacity = label.ShadowOpacity;
+
+			if (radius <= 0 || opacity <= 0)
+				return;
+
+			// if (opacity <= label.PreviousOpacity || radius <= label.PreviousRadius)
+			// 	return;
+			// 
+			// label.PreviousOpacity = opacity;
+			// label.PreviousRadius = radius;
+
+			var color = Colors.White.ToAndroid();
+			color.A = (byte)(opacity * 255);
+
+			Control.SetShadowLayer(radius, 0f, 0f, color);
 		}
 
 		private void SetColors()

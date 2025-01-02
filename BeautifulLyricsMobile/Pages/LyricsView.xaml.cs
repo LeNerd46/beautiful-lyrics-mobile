@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using BeautifulLyricsMobile.Models;
 using BeautifulLyricsMobile.Controls;
+using System.Collections.Concurrent;
 
 namespace BeautifulLyricsMobile.Pages;
 
@@ -77,7 +78,7 @@ public partial class LyricsView : ContentView
 	private bool hasLyrics = true;
 
 	public SongViewModel Song { get; set; }
-	private List<Layout> lines = [];
+	private ConcurrentBag<Layout> lines = [];
 
 	public LyricsView()
 	{
@@ -215,12 +216,12 @@ public partial class LyricsView : ContentView
 		}
 
 		stopwatch.Reset();
-		await LyricsContainer.Dispatcher.DispatchAsync(LyricsContainer.Children.Clear);
+		// await LyricsContainer.Dispatcher.DispatchAsync(LyricsContainer.Children.Clear);
 		vocalGroups = [];
 		vocalGroupStartTimes = [];
 		lines = [];
 		lastUpdatedAt = stopwatch.ElapsedMilliseconds;
-		cancelToken.Dispose();
+		cancelToken?.Dispose();
 		cancelToken = new CancellationTokenSource();
 
 		// RenderLyrics().GetAwaiter().GetResult();
@@ -351,87 +352,119 @@ public partial class LyricsView : ContentView
 
 		if (type == "Syllable")
 		{
-			SyllableSyncedLyrics providerLyrics = JsonConvert.DeserializeObject<SyllableSyncedLyrics>(content);
-
-			TransformedLyrics transformedLyrics = LyricUtilities.TransformLyrics(new ProviderLyrics
+			try
 			{
-				SyllableLyrics = providerLyrics
-			});
 
-			SyllableSyncedLyrics lyrics = transformedLyrics.Lyrics.SyllableLyrics;
-			lyricsEndTime = lyrics.EndTime;
-			int thing = 0;
+				SyllableSyncedLyrics providerLyrics = JsonConvert.DeserializeObject<SyllableSyncedLyrics>(content);
 
-			foreach (var vocalGroup in lyrics.Content)
-			{
-				if (vocalGroup is Interlude interlude)
+				TransformedLyrics transformedLyrics = LyricUtilities.TransformLyrics(new ProviderLyrics
 				{
-					// lines.Add(interlude);
+					SyllableLyrics = providerLyrics
+				});
 
-					FlexLayout vocalGroupContainer = [];
+				SyllableSyncedLyrics lyrics = transformedLyrics.Lyrics.SyllableLyrics;
+				lyricsEndTime = lyrics.EndTime;
+				int thing = 0;
 
-					vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
-					vocalGroupStartTimes.Add(interlude.Time.StartTime);
-
-					if (Preferences.Get("showInterludes", true))
-						lines.Add(vocalGroupContainer);
-					// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
-				}
-				else
+				foreach (var vocalGroup in lyrics.Content)
 				{
-					SyllableVocalSet set = JsonConvert.DeserializeObject<SyllableVocalSet>(vocalGroup.ToString());
-					// lines.Add(set);
-
-					// Add button
-
-					if (set.Type == "Vocal")
+					if (cancelToken.IsCancellationRequested)
 					{
-						// string styleName = "IdleLyric";
-						string styleName = "LyricGroup";
+						lines.Clear();
+						vocalGroups.Clear();
+						vocalGroupStartTimes.Clear();
 
-						if (set.OppositeAligned)
-							styleName = "LyricGroupOppositeAligned";
-						// styleName = "IdleLyricOppositeAligned";
+						return;
+					}
 
-						VerticalStackLayout topGroup = new VerticalStackLayout();
-						topGroup.Spacing = 0;
-						FlexLayout vocalGroupContainer = new FlexLayout();
-						vocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[styleName] as Style;
+					if (vocalGroup is Interlude interlude)
+					{
+						// lines.Add(interlude);
 
-						// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
-						topGroup.Children.Add(vocalGroupContainer);
-						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(topGroup));
-						lines.Add(topGroup);
+						FlexLayout vocalGroupContainer = [];
 
-						List<SyllableVocals> vocals = [];
-						double startTime = set.Lead.StartTime;
-						vocals.Add(new SyllableVocals(vocalGroupContainer, set.Lead.Syllables, false, false, set.OppositeAligned));
+						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
+						vocalGroupStartTimes.Add(interlude.Time.StartTime);
 
-						if (set.Background?.Count > 0)
+						if (Preferences.Get("showInterludes", true))
+							lines.Add(vocalGroupContainer);
+						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
+					}
+					else
+					{
+						SyllableVocalSet set = JsonConvert.DeserializeObject<SyllableVocalSet>(vocalGroup.ToString());
+						// lines.Add(set);
+
+						// Add button
+
+						if (set.Type == "Vocal")
 						{
-							FlexLayout backgroundVocalGroupContainer = new FlexLayout();
-							backgroundVocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[$"{styleName}"] as Style;
-							// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
-							topGroup.Children.Add(backgroundVocalGroupContainer);
+							// string styleName = "IdleLyric";
+							string styleName = "LyricGroup";
 
-							foreach (var backgroundVocal in set.Background)
+							if (set.OppositeAligned)
+								styleName = "LyricGroupOppositeAligned";
+							// styleName = "IdleLyricOppositeAligned";
+
+							VerticalStackLayout topGroup = new VerticalStackLayout();
+							topGroup.Spacing = 0;
+							FlexLayout vocalGroupContainer = new FlexLayout();
+							vocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[styleName] as Style;
+
+							// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
+							topGroup.Children.Add(vocalGroupContainer);
+							// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(topGroup));
+							lines.Add(topGroup);
+
+							List<SyllableVocals> vocals = [];
+							double startTime = set.Lead.StartTime;
+							vocals.Add(new SyllableVocals(vocalGroupContainer, set.Lead.Syllables, false, false, set.OppositeAligned));
+
+							if (set.Background?.Count > 0)
 							{
-								startTime = Math.Min(startTime, backgroundVocal.StartTime);
-								vocals.Add(new SyllableVocals(backgroundVocalGroupContainer, backgroundVocal.Syllables, true, false, set.OppositeAligned));
+								FlexLayout backgroundVocalGroupContainer = new FlexLayout();
+								backgroundVocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[$"{styleName}"] as Style;
+								// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
+								topGroup.Children.Add(backgroundVocalGroupContainer);
+
+								foreach (var backgroundVocal in set.Background)
+								{
+									startTime = Math.Min(startTime, backgroundVocal.StartTime);
+									vocals.Add(new SyllableVocals(backgroundVocalGroupContainer, backgroundVocal.Syllables, true, false, set.OppositeAligned));
+								}
 							}
+
+							// Stupid piece of crap won't just accept the List of SyllableVocals, EVEN THOUGH IT INHERITS FROM ISyncedVocals
+							List<ISyncedVocals> localVocals = [];
+							localVocals.AddRange(vocals);
+
+							vocalGroups.Add(vocalGroupContainer, localVocals);
+							vocalGroupStartTimes.Add(startTime);
 						}
-
-						// Stupid piece of crap won't just accept the List of SyllableVocals, EVEN THOUGH IT INHERITS FROM ISyncedVocals
-						List<ISyncedVocals> localVocals = [];
-						localVocals.AddRange(vocals);
-
-						vocalGroups.Add(vocalGroupContainer, localVocals);
-						vocalGroupStartTimes.Add(startTime);
 					}
 				}
 			}
+			finally
+			{
+				// LyricsContainer.Dispatcher.Dispatch(() => lines.ForEach(LyricsContainer.Add));
+				LyricsContainer.Dispatcher.Dispatch(() =>
+				{
+					LyricsContainer.Clear();
+					var newLines = lines.ToList();
 
-			LyricsContainer.Dispatcher.Dispatch(() => lines.ForEach(LyricsContainer.Add));
+					try
+					{
+						newLines.Reverse();
+					}
+					finally
+					{
+						foreach (var line in newLines)
+						{
+							LyricsContainer.Add(line);
+						}
+					}
+				});
+			}
 		}
 	}
 
