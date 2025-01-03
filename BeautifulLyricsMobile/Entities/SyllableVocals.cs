@@ -105,33 +105,10 @@ namespace BeautifulLyricsAndroid.Entities
 					bool isEmphasized = IsEmphasized(syllableMetadata, isRomanized);
 					syllableMetadata.IsEmphasized = isEmphasized;
 
-					GradientLabel syllableLabel = new GradientLabel();
-					syllableLabel.MaxLines = 1;
-					syllableLabel.Opacity = 0.75;
-					//syllableLabel.EndColor = new Color(184, 184, 184);
-
-					syllableLabel.Shadow = new Shadow
+					GradientLabel syllableLabel = new GradientLabel
 					{
-						Brush = Brush.White,
-						Opacity = 0,
-						Radius = 0
+						MaxLines = 1
 					};
-					// syllableLabel.Shadow.SetBinding(Shadow.OpacityProperty, static (GradientLabel label) => label.ShadowOpacity);
-					// syllableLabel.Shadow.SetBinding(Shadow.RadiusProperty, static (GradientLabel label) => label.ShadowRadius);
-					// syllableLabel.Shadow.BindingContext = syllableLabel;
-
-					/*ShadowOpacityModel viewModel = new ShadowOpacityModel
-					{
-						SHadowOpacity = 0
-					};
-
-					syllableLabel.Shadow.BindingContext = viewModel;
-					syllableLabel.Shadow.SetBinding(Shadow.OpacityProperty, new Binding
-					{
-						Path = "ShadowOpacity",
-						Source = viewModel,
-						Mode = BindingMode.TwoWay
-					});*/
 
 					List<AnimatedLetter> letters = [];
 					HorizontalStackLayout emphasisGroup = [];
@@ -187,19 +164,9 @@ namespace BeautifulLyricsAndroid.Entities
 							foreach (var letter in letterTexts)
 							{
 								GradientLabel letterLabel = new GradientLabel();
-								letterLabel.Opacity = 0.75;
-								//letterLabel.EndColor = new Color(184, 184, 184);
+								//letterLabel.LabelOpacity = 0.75f;
 								letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricEmphasizedLabel" : "LyricEmphasizedLabel"] as Style;
 								// letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
-								letterLabel.Shadow = new Shadow
-								{
-									Brush = Brush.White,
-									Opacity = 0,
-									Radius = 0
-								};
-								// letterLabel.Shadow.SetBinding(Shadow.OpacityProperty, static (GradientLabel label) => label.ShadowOpacity);
-								// letterLabel.Shadow.SetBinding(Shadow.RadiusProperty, static (GradientLabel label) => label.ShadowRadius);
-								// letterLabel.Shadow.BindingContext = letterLabel;
 
 								letterLabel.Text = letter;
 								emphasisGroup.Add(letterLabel);
@@ -264,20 +231,10 @@ namespace BeautifulLyricsAndroid.Entities
 							foreach (var letter in letterTexts)
 							{
 								GradientLabel letterLabel = new GradientLabel();
-								letterLabel.Opacity = 0.75;
-								//letterLabel.EndColor = new Color(184, 184, 184);
+								//letterLabel.LabelOpacity = 0.75f;
 								letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricEmphasizedLabel" : "LyricEmphasizedLabel"] as Style;
 								// letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
-								letterLabel.Shadow = new Shadow
-								{
-									Brush = Brush.White,
-									Opacity = 0,
-									Radius = 0
-								};
-								// letterLabel.Shadow.SetBinding(Shadow.OpacityProperty, static (GradientLabel label) => label.ShadowOpacity);
-								// letterLabel.Shadow.SetBinding(Shadow.RadiusProperty, static (GradientLabel label) => label.ShadowRadius);
-								// letterLabel.Shadow.BindingContext = letterLabel;
-
+								
 								letterLabel.Text = letter;
 								emphasisGroup.Add(letterLabel);
 
@@ -537,7 +494,6 @@ namespace BeautifulLyricsAndroid.Entities
 
 					if (syllable.Type == "Letters")
 					{
-						// double timeAlpha = (1 - Math.Cos(Math.PI * syllableTimeScale)) / 2; // Ease sinInOut
 						double timeAlpha = Math.Sin(syllableTimeScale * (Math.PI / 2)); // easeSinOut
 
 						foreach (var letter in syllable.Letters)
@@ -601,33 +557,10 @@ namespace BeautifulLyricsAndroid.Entities
 					label.TranslationY = yOffset * (isEmphasized ? 1.5 : 1);
 					label.GradientProgress = gradientProgress;
 
-					// label.ShadowOpacity = gradientProgress >= 100 ? (float)yOffset / 0.1f : gradientProgress;
-					// label.ShadowOpacity = gradientProgress >= 100 ? 0 : gradientProgress / 0.01f;
-					// label.ShadowRadius = (4 + (2 * (float)yOffset * (isEmphasized ? 3 : 1)));
-					// label.ShadowOpacity = (float)glowAlpha * (isEmphasized ? 10 : 3);
-
 					label.ShadowRadius = 4 + (2 * (float)glowAlpha * (isEmphasized ? 3 : 1));
 					label.ShadowOpacity = (float)Math.Max(0, Math.Min(1, glowAlpha * (isEmphasized ? 1 : 0.5f)));
-
-					// label.ShadowOpacity = (float)Math.Abs(glowAlpha);
-
-					// label.ShadowRadius = (float)(4 + (2 * glowAlpha * (isEmphasized ? 3 : 1)));
-					// label.ShadowOpacity = (float)(yOffset * (isEmphasized ? 100 : 35));
-					// label.Shadow.Handler?.UpdateValue(nameof(Shadow.RadiusProperty));
-					// label.Shadow.Handler?.UpdateValue(nameof(Shadow.OpacityProperty));
-					// 
-					// label.InvalidateMeasure();
-
-					// label.Shadow.Radius = (float)(4 + (2 * yOffset * (isEmphasized ? 3 : 1)));
-					// label.Shadow.Opacity = (float)(yOffset * (isEmphasized ? 100 : 35));
-					// label.ShadowRadius = (float)(4 + (2 * yOffset * (isEmphasized ? 3 : 1)));
-					// label.ShadowOpacity = (float)(yOffset * (isEmphasized ? 100 : 35));
-					// label.InvalidateMeasure();
 				});
 			}
-
-			// liveText.BlurRadius = 4 + 2 * glowAlpha * (isEmphasized ? 3 : 1);
-			// liveText.ShadowOpacity = glowAlpha * (isEmphasized ? 100 : 35);
 
 			return liveText.Springs.Scale.Sleeping && liveText.Springs.YOffset.Sleeping && liveText.Springs.Glow.Sleeping;
 		}
@@ -643,14 +576,16 @@ namespace BeautifulLyricsAndroid.Entities
 						foreach (var letter in syllable.Letters)
 						{
 							GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
-							letterLabel.FadeTo(1, 250, Easing.SpringOut);
-							//letterLabel.EndColor = new Color(200, 200, 200);
+							letterLabel.MyFadeTo(1f, 2500, Easing.SpringOut);
+							//letterLabel.LabelOpacity = 1f;
+							// letterLabel.FadeTo(1, 250, Easing.SpringOut);
 						}
 					}
 
 					if (syllable.LiveText.Object is GradientLabel label)
-						label.FadeTo(1, 250, Easing.SpringOut);
-					//label.EndColor = new Color(200, 200, 200);
+						label.MyFadeTo(1f, 2500, Easing.SpringOut);
+					//label.LabelOpacity = 1f;
+					// label.FadeTo(1, 250, Easing.SpringOut);
 				}
 			}
 
@@ -664,8 +599,9 @@ namespace BeautifulLyricsAndroid.Entities
 						{
 							GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
 							letterLabel.GradientProgress = 0;
-							letterLabel.FadeTo(0.75d, 250, Easing.SpringOut);
-							//letterLabel.EndColor = new Color(184, 184, 184);
+							letterLabel.MyFadeTo(0.75f, 2500, Easing.SpringOut);
+							//letterLabel.LabelOpacity = 0.75f;
+							//letterLabel.FadeTo(0.75d, 250, Easing.SpringOut);
 
 							UpdateLiveTextVisuals(letter.LiveText, true, 0, 0);
 						}
@@ -674,131 +610,11 @@ namespace BeautifulLyricsAndroid.Entities
 					if (syllable.LiveText.Object is GradientLabel label)
 					{
 						label.GradientProgress = 0;
-						label.FadeTo(0.75d, 250, Easing.SpringOut);
-						//label.EndColor = new Color(184, 184, 184);
+						label.MyFadeTo(0.75f, 2500, Easing.SpringOut);
+						//label.LabelOpacity = 0.75f;
+						//label.FadeTo(0.75d, 250, Easing.SpringOut);
 
 						UpdateLiveTextVisuals(syllable.LiveText, false, 0, 0);
-					}
-				}
-			}
-
-			return;
-
-			List<string> removeClasses = ["Active", "Sung"];
-			string classToAdd = "";
-
-			if (State == LyricState.Active)
-			{
-				removeClasses.Remove("Active");
-				classToAdd = "Active";
-			}
-			else if (State == LyricState.Sung)
-			{
-				removeClasses.Remove("Sung");
-				classToAdd = "Sung";
-			}
-
-			foreach (var className in removeClasses)
-			{
-				if (className == "Active")
-				{
-					Container.Dispatcher.Dispatch(() => Container.Style = Application.Current.Resources.MergedDictionaries.Last()[OppositeAligned ? "SungLyricOppositeAligned" : "SungLyric"] as Style);
-
-					foreach (var labelObject in Container.Children)
-					{
-						if (labelObject is GradientLabel label)
-						{
-							label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
-						}
-					}
-				}
-				else if (className == "Sung")
-				{
-					Container.Dispatcher.Dispatch(() => Container.Style = Application.Current.Resources.MergedDictionaries.Last()[OppositeAligned ? "IdleLyricOppositeAligned" : "IdleLyric"] as Style);
-
-					foreach (var labelObject in Container.Children)
-					{
-						if (labelObject is GradientLabel label)
-						{
-							label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style);
-						}
-					}
-				}
-			}
-
-			if (!string.IsNullOrWhiteSpace(classToAdd))
-			{
-				// Container.StyleClass?.Add(classToAdd);
-
-				if (classToAdd == "Active")
-				{
-					Container.Dispatcher.Dispatch(() => Container.Style = Application.Current.Resources.MergedDictionaries.Last()[OppositeAligned ? "ActiveLyricOppositeAligned" : "ActiveLyric"] as Style);
-
-					foreach (var labelObject in Container.Children)
-					{
-						if (labelObject is GradientLabel label)
-						{
-							if (label.Margin.Right != 0)
-								label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundActiveLabel" : "ActiveLabel"] as Style);
-							else
-								label.Dispatcher.Dispatch(() => label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundActiveEmphasizedLabel" : "ActiveEmphasizedLabel"] as Style);
-						}
-						else if (labelObject is HorizontalStackLayout layout)
-						{
-							foreach (var newLabel in layout.Children.OfType<Label>())
-							{
-								if (newLabel.Margin.Right != 0)
-									newLabel.Dispatcher.Dispatch(() => newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundActiveLabel" : "ActiveLabel"] as Style);
-								else
-									newLabel.Dispatcher.Dispatch(() => newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundActiveEmphasizedLabel" : "ActiveEmphasizedLabel"] as Style);
-							}
-						}
-					}
-				}
-				else
-				{
-					Container.Dispatcher.Dispatch(() => Container.Style = Application.Current.Resources.MergedDictionaries.Last()[OppositeAligned ? "SungLyricOppositeAligned" : "SungLyric"] as Style);
-
-					foreach (var labelObject in Container.Children)
-					{
-						if (labelObject is GradientLabel label)
-						{
-							if (label.Margin.Right != 0)
-								label.Dispatcher.Dispatch(() =>
-								{
-									label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
-									label.StartColor = new Color(224, 224, 224);
-								});
-							else
-								label.Dispatcher.Dispatch(() =>
-								{
-									label.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungEmphasizedLabel" : "SungEmphasizedLabel"] as Style;
-									label.StartColor = new Color(224, 224, 224);
-								});
-
-							/*label.StyleClass ??= [];
-
-							if (!label.StyleClass.Contains(classToAdd))
-								label.StyleClass.Add(classToAdd);*/
-						}
-						else if (labelObject is HorizontalStackLayout layout)
-						{
-							foreach (var newLabel in layout.Children.OfType<GradientLabel>())
-							{
-								if (newLabel.Margin.Right != 0)
-									newLabel.Dispatcher.Dispatch(() =>
-									{
-										newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
-										newLabel.StartColor = new Color(224, 224, 224);
-									});
-								else
-									newLabel.Dispatcher.Dispatch(() =>
-									{
-										newLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungEmphasizedLabel" : "SungEmphasizedLabel"] as Style;
-										newLabel.StartColor = new Color(224, 224, 224);
-									});
-							}
-						}
 					}
 				}
 			}

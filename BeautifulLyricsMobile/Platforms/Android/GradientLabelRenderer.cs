@@ -65,8 +65,8 @@ namespace BeautifulLyricsMobile.Platforms.Android
 		{
 			GradientLabel label = Element as GradientLabel;
 
-			var c1 = label.StartColor.ToAndroid();
-			var c2 = label.EndColor.ToAndroid();
+			var c1 = label.StartColor.WithAlpha(label.LabelOpacity).ToAndroid();
+			var c2 = label.EndColor.WithAlpha(label.LabelOpacity).ToAndroid();
 
 			// var progress = Control.MeasuredWidth * (label.GradientProgress * 0.01f);
 			float progressFraction = label.GradientProgress * 0.01f;

@@ -36,7 +36,7 @@
             </HorizontalStackLayout>
         </Grid>
 
-        <ScrollView x:Name="ScrollViewer" Grid.Row="1" Grid.RowSpan="2" IsVisible="False">
+        <ScrollView x:Name="ScrollViewer" Grid.Row="1" Grid.RowSpan="2" IsVisible="False" VerticalScrollBarVisibility="Never">
             <VerticalStackLayout x:Name="LyricsContainer" Spacing="20">
                 <Label x:Name="timestampLabel"/>
             </VerticalStackLayout>

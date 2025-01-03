@@ -157,7 +157,7 @@ namespace BeautifulLyricsMobile.Controls
 						using var snapshot = surface.Snapshot();
 						using var blurPaint = new SKPaint
 						{
-							ImageFilter = SKImageFilter.CreateBlur(50, 50)
+							ImageFilter = SKImageFilter.CreateBlur(75, 75)
 						};
 
 						canvas.Clear();
