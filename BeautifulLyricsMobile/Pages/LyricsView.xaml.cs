@@ -346,6 +346,7 @@ public partial class LyricsView : ContentView
 	private void LoadLyrics(string content)
 	{
 		JObject json = JObject.Parse(content);
+		ResourceDictionary styles = Application.Current.Resources.MergedDictionaries.Last();
 
 		// type = content.Split('\"')[7];
 		type = json["Type"].ToString();
@@ -354,7 +355,6 @@ public partial class LyricsView : ContentView
 		{
 			try
 			{
-
 				SyllableSyncedLyrics providerLyrics = JsonConvert.DeserializeObject<SyllableSyncedLyrics>(content);
 
 				TransformedLyrics transformedLyrics = LyricUtilities.TransformLyrics(new ProviderLyrics
@@ -409,7 +409,7 @@ public partial class LyricsView : ContentView
 							VerticalStackLayout topGroup = new VerticalStackLayout();
 							topGroup.Spacing = 0;
 							FlexLayout vocalGroupContainer = new FlexLayout();
-							vocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[styleName] as Style;
+							vocalGroupContainer.Style = styles[styleName] as Style;
 
 							// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
 							topGroup.Children.Add(vocalGroupContainer);
@@ -423,7 +423,7 @@ public partial class LyricsView : ContentView
 							if (set.Background?.Count > 0)
 							{
 								FlexLayout backgroundVocalGroupContainer = new FlexLayout();
-								backgroundVocalGroupContainer.Style = Application.Current.Resources.MergedDictionaries.Last()[$"{styleName}"] as Style;
+								backgroundVocalGroupContainer.Style = styles[$"{styleName}"] as Style;
 								// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
 								topGroup.Children.Add(backgroundVocalGroupContainer);
 

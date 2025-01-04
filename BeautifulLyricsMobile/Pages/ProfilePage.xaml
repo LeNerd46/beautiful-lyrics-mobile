@@ -11,7 +11,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        
+        <Ellipse Grid.Row="1" Fill="White" WidthRequest="100" HeightRequest="100" Scale="1.2"/>
     </Grid>
 
 </ContentPage>

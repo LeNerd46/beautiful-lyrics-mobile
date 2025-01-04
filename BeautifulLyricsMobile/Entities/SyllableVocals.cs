@@ -52,6 +52,11 @@ namespace BeautifulLyricsAndroid.Entities
 			List<SyllableMetadata> currentSyllableGroup = [];
 
 			List<View> visualElements = [];
+			ResourceDictionary styles = Application.Current.Resources.MergedDictionaries.Last();
+			Style lyricLabel = styles["LyricLabel"] as Style;
+			Style backgroundLyricLabel = styles["BackgroundLyricLabel"] as Style;
+			Style lyricEmphasizedLabel = styles["LyricEmphasizedLabel"] as Style;
+			Style backgroundLyricEmphasizedLabel = styles["BackgroundLyricEmphasizedLabel"] as Style;
 
 			lineContainer.BatchBegin();
 
@@ -120,7 +125,7 @@ namespace BeautifulLyricsAndroid.Entities
 						{
 							if (wordGroup != null)
 							{
-								syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricLabel" : "LyricLabel"] as Style;
+								syllableLabel.Style = IsBackground ? backgroundLyricLabel : lyricLabel;
 								// syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
 								syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
@@ -134,7 +139,7 @@ namespace BeautifulLyricsAndroid.Entities
 							}
 							else
 							{
-								syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricLabel" : "LyricLabel"] as Style;
+								syllableLabel.Style = IsBackground ? backgroundLyricLabel : lyricLabel;
 								// syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundSungLabel" : "SungLabel"] as Style;
 								syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
@@ -165,7 +170,7 @@ namespace BeautifulLyricsAndroid.Entities
 							{
 								GradientLabel letterLabel = new GradientLabel();
 								//letterLabel.LabelOpacity = 0.75f;
-								letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricEmphasizedLabel" : "LyricEmphasizedLabel"] as Style;
+								letterLabel.Style = IsBackground ? backgroundLyricEmphasizedLabel : lyricEmphasizedLabel;
 								// letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
 
 								letterLabel.Text = letter;
@@ -207,7 +212,7 @@ namespace BeautifulLyricsAndroid.Entities
 						{
 							wordGroup ??= [];
 
-							syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricEmphasizedLabel" : "LyricEmphasizedLabel"] as Style;
+							syllableLabel.Style = IsBackground ? backgroundLyricEmphasizedLabel : lyricEmphasizedLabel;
 							// syllableLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
 							syllableLabel.Text = isRomanized ? syllableMetadata.RomanizedText : syllableMetadata.Text;
 
@@ -232,7 +237,7 @@ namespace BeautifulLyricsAndroid.Entities
 							{
 								GradientLabel letterLabel = new GradientLabel();
 								//letterLabel.LabelOpacity = 0.75f;
-								letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()[IsBackground ? "BackgroundLyricEmphasizedLabel" : "LyricEmphasizedLabel"] as Style;
+								letterLabel.Style = IsBackground ? backgroundLyricEmphasizedLabel : lyricEmphasizedLabel;
 								// letterLabel.Style = Application.Current.Resources.MergedDictionaries.Last()["SungEmphasizedLabel"] as Style;
 								
 								letterLabel.Text = letter;
@@ -424,19 +429,19 @@ namespace BeautifulLyricsAndroid.Entities
 
 		private readonly List<KeyValuePair<double, double>> scaleRange =
 		[
-			new(0, (double)0.95), // Lowest
+			new(0, 0.95d), // Lowest
 			// new(0, 1.2),
-			new((double)0.7, (double)1.025), // Highest
+			new(0.7d, 1.025d), // Highest
 			// new(0.7, 1.15),
 			new(1, 1), // Resting
 		];
 
 		private readonly List<KeyValuePair<double, double>> yOffsetRange =
 		[
-			new(0, (double)1 / (double)100),
+			new(0, 1d / 100d),
 			// new(0, (double)4 / (double)5),
 			// new(0.7, (double)1.5), // Lowest
-			new(0.9f, -((double)1 / (double)60)), 
+			new(0.9f, -1d / 60d), 
 			// new(0.7, -((double)1 / (double)5)), 
 			// new(0, (double)-1), // Highest
 			new (1, 0)
@@ -558,7 +563,7 @@ namespace BeautifulLyricsAndroid.Entities
 					label.GradientProgress = gradientProgress;
 
 					label.ShadowRadius = 4 + (2 * (float)glowAlpha * (isEmphasized ? 3 : 1));
-					label.ShadowOpacity = (float)Math.Max(0, Math.Min(1, glowAlpha * (isEmphasized ? 1 : 0.5f)));
+					label.ShadowOpacity = (float)Math.Max(0, Math.Min(1, glowAlpha * (isEmphasized ? 1 : 0.4f)));
 				});
 			}
 

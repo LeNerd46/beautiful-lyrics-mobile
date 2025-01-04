@@ -202,7 +202,11 @@ namespace BeautifulLyricsMobile.Entities
 
 		public InterludeVisual(FlexLayout lineContainer, Interlude interludeMetadata)
 		{
-			HorizontalStackLayout container = new HorizontalStackLayout();
+			HorizontalStackLayout container = new HorizontalStackLayout
+			{
+				IsVisible = false
+			};
+
 			container.Dispatcher.Dispatch(() => container.Style = (Style)Application.Current.Resources["Interlude"]);
 			Container = container;
 
@@ -393,11 +397,10 @@ namespace BeautifulLyricsMobile.Entities
 			// Update visuals
 			liveText.Object.Dispatcher.Dispatch(() =>
 			{
-				// liveText.Object.Scale = scale;
+				liveText.Object.Scale = scale;
 				liveText.Object.TranslationY = yOffset;
 				// Glow
-				// liveText.Object.Opacity = opacity;
-				liveText.Object.Opacity = 1;
+				liveText.Object.Opacity = opacity;
 
 				// System.Diagnostics.Debug.WriteLine($"Scale: {scale}");
 			});
@@ -441,9 +444,9 @@ namespace BeautifulLyricsMobile.Entities
 
 			liveText.Object.Dispatcher.Dispatch(() =>
 			{
-				// liveText.Object.Scale = scale;
+				liveText.Object.Scale = scale;
 				liveText.Object.TranslationY = yOffset;
-				// liveText.Object.Opacity = opacity;
+				liveText.Object.Opacity = opacity;
 			});
 
 			return liveText.Springs.Scale.Sleeping && liveText.Springs.YOffset.Sleeping && liveText.Springs.Opacity.Sleeping;
@@ -469,6 +472,17 @@ namespace BeautifulLyricsMobile.Entities
 				{
 					LyricState oldState = State;
 					State = stateNow;
+
+					if (State == LyricState.Active)
+						Container.Dispatcher.Dispatch(() => Container.IsVisible = true);
+					else if (State == LyricState.Sung)
+					{
+						Container.Dispatcher.Dispatch(async () =>
+						{
+							await Container.ScaleTo(0, 350, Easing.SpringOut);
+							Container.IsVisible = false;
+						});
+					}
 
 					// if (State != LyricState.Sung)
 					// 	  EvaluateClassState();
