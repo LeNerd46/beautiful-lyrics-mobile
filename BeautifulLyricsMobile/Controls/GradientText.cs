@@ -33,6 +33,14 @@ namespace BeautifulLyricsMobile.Controls
 			set => SetValue(ProgressProperty, value);
 		}
 
+		public static readonly BindableProperty LabelOpacityProperty = BindableProperty.Create(nameof(LabelOpacityProperty), typeof(float), typeof(GradientLabel), 0.5f);
+
+		public float LabelOpacity
+		{
+			get => (float)GetValue(LabelOpacityProperty);
+			set => SetValue(LabelOpacityProperty, value);
+		}
+
 		public static readonly BindableProperty ShadowRadiusProperty = BindableProperty.Create(nameof(ShadowRadius), typeof(float), typeof(GradientLabel), 10f);
 
 		public float ShadowRadius
@@ -47,6 +55,17 @@ namespace BeautifulLyricsMobile.Controls
 		{
 			get => (float)GetValue(ShadowOpacityProperty);
 			set => SetValue(ShadowOpacityProperty, value);
+		}
+
+		public Task MyFadeTo(float target, uint duration = 250, Easing easing = null)
+		{
+			var taskCompletionSource = new TaskCompletionSource<bool>();
+
+			Animation animation = new Animation(v => LabelOpacity = (float)v, LabelOpacity, target);
+
+			this.Animate("FadeToAnimation", animation, 16, duration, easing ?? Easing.Linear, (v, c) => taskCompletionSource.SetResult(true));
+
+			return taskCompletionSource.Task;
 		}
 	}
 }

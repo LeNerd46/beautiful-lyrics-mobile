@@ -7,6 +7,7 @@
              xmlns:local="clr-namespace:BeautifulLyricsMobile.Controls"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:media="clr-namespace:CommunityToolkit.Maui.Views;assembly=CommunityToolkit.Maui.MediaElement"
+             xmlns:pages="clr-namespace:BeautifulLyricsMobile.Pages"
              Unloaded="ContentPage_Unloaded"
              Title="HomePage">
 
@@ -20,6 +21,7 @@
 
     <Grid x:Name="gridBoy">
         <Grid.RowDefinitions>
+            <RowDefinition Height="60"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="70"/>
         </Grid.RowDefinitions>
@@ -28,25 +30,82 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <ScrollView>
-            <VerticalStackLayout>
-                <Label Text="Hello World!" FontSize="28" HorizontalTextAlignment="Center" Margin="0,40,0,0" TextColor="White">
-                    <Label.Shadow>
-                        <Shadow Brush="White" Radius="20" Opacity="1"/>
-                    </Label.Shadow>
-                </Label>
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="30" Margin="10,0">
+                <Label Text="{Binding GreetingMessage}" FontAttributes="Bold" FontSize="Title" VerticalTextAlignment="End"/>
+                <!--<CollectionView ItemsSource="{Binding GridRecommendedItems}" ItemSizingStrategy="MeasureFirstItem">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="2" VerticalItemSpacing="3" HorizontalItemSpacing="3"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border BackgroundColor="#292929" StrokeThickness="0" Margin="5,3" HeightRequest="60">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10"/>
+                                </Border.StrokeShape>
 
-                <local:GradientLabel Text="Hello World!" StartColor="Lime" EndColor="#b8b8b8" FontSize="36" GradientProgress="34"/>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer/>
+                                </Border.GestureRecognizers>
 
-                <Button Text="Colors!" Clicked="GetColors"/>
+                                <HorizontalStackLayout Spacing="10">
+                                    <Image Source="{Binding Image}"/>
+                                    <Label Text="{Binding Title}" TextColor="White" MaximumWidthRequest="110" MaxLines="2" VerticalTextAlignment="Center" FontAttributes="Bold"/>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>-->
 
-                <VerticalStackLayout Margin="0,50,0,0" HorizontalOptions="Center" Spacing="15">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding FunTitle}" FontSize="Title" FontAttributes="Bold"/>
+                    <CollectionView ItemsSource="{Binding JumpBackInItems}" ItemsLayout="HorizontalList">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout MaximumWidthRequest="200" Margin="5,0" Spacing="2">
+                                    <Image Source="{Binding Image}" WidthRequest="180" HeightRequest="180" HorizontalOptions="Start"/>
+
+                                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" MaxLines="1" MaximumWidthRequest="180" HorizontalOptions="Start"/>
+                                    <Label Text="{Binding Subtitle}" TextColor="LightGray" MaxLines="2"/>
+
+                                    <VerticalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ItemSelectedCommand}" CommandParameter="{Binding Item}"/>
+                                    </VerticalStackLayout.GestureRecognizers>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="{Binding RecentsTitle}" FontSize="Title" FontAttributes="Bold"/>
+                    <CollectionView ItemsSource="{Binding RecentlyPlayedItems}" ItemsLayout="HorizontalList">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout MaximumWidthRequest="200" Margin="5,0" Spacing="2">
+                                    <Image Source="{Binding Image}" WidthRequest="180" HeightRequest="180" HorizontalOptions="Start"/>
+
+                                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" MaxLines="1" MaximumWidthRequest="180" HorizontalOptions="Start"/>
+                                    <Label Text="{Binding Subtitle}" TextColor="LightGray" MaxLines="2"/>
+
+                                    <VerticalStackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ItemSelectedCommand}" CommandParameter="{Binding Item}"/>
+                                    </VerticalStackLayout.GestureRecognizers>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+
+                <!--<Button Text="Colors!" Clicked="GetColors"/>-->
+
+                <VerticalStackLayout Margin="0,50,0,0" HorizontalOptions="Center" Spacing="15" IsVisible="Collapse">
                     <Label Text="Need a new client ID"/>
                     <HorizontalStackLayout>
                         <Entry x:Name="clientIdEntry" Placeholder="New Client ID" WidthRequest="150"/>
                         <Button Text="Confirm" Clicked="NewId"/>
                     </HorizontalStackLayout>
-                    
+
                     <Label Text="Need a new client secret"/>
                     <HorizontalStackLayout>
                         <Entry x:Name="clientSecretEntry" Placeholder="New Client Secret" WidthRequest="150"/>
@@ -65,7 +124,7 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <Border x:Name="songInformationSmall" BackgroundColor="#292929" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="10,0,10,10">
+        <Border x:Name="songInformationSmall" BackgroundColor="#292929" Grid.Row="2" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="10,0,10,10">
             <Border.GestureRecognizers>
                 <TapGestureRecognizer Tapped="TapGestureRecognizer_Tapped"/>
             </Border.GestureRecognizers>
@@ -99,52 +158,6 @@
             </Grid>
         </Border>
 
-        <Border x:Name="fullSongCard" BackgroundColor="#292929" Grid.RowSpan="2" StrokeThickness="0" IsVisible="False">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="250"/>
-                </Grid.RowDefinitions>
-
-                <HorizontalStackLayout Spacing="120">
-                    <Button Text="{mi:MaterialRounded Icon=KeyboardControlKey}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Rotation="180" Clicked="FullCardCollapse"/>
-                    <Button Text="{mi:MaterialRounded Icon=AddCircleOutline}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="AddLyrics"/>
-                    <Button Text="{mi:MaterialRounded Icon=Lyrics}" Background="Transparent" TextColor="White" HorizontalOptions="Start" Clicked="LyricsView"/>
-                </HorizontalStackLayout>
-
-                <media:MediaElement x:Name="albumCoverPlayer" Grid.Row="1" Margin="20" HorizontalOptions="Center" ShouldAutoPlay="True" ShouldShowPlaybackControls="False" ShouldLoopPlayback="True" Aspect="AspectFit"/>
-                <Border x:Name="coverImageBorder" Grid.Row="1" StrokeThickness="0" StrokeShape="RoundRectangle 10,10,10,10" Margin="20" HorizontalOptions="Center">
-                    <Image x:Name="albumCoverImage" Source="{Binding Image}"/>
-                </Border>
-
-                <VerticalStackLayout Grid.Row="2" Margin="30,15,0,0" Spacing="5">
-                    <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" FontSize="Title" MaxLines="1"/>
-                    <Label Text="{Binding Artist}" TextColor="LightGray" FontSize="Subtitle"/>
-
-                    <Slider WidthRequest="375" HorizontalOptions="Start" Margin="-10,20,0,0" Maximum="{Binding Duration}" Value="{Binding Timestamp}" ValueChanged="Slider_ValueChanged"/>
-
-                    <HorizontalStackLayout Spacing="300">
-                        <Label Text="{Binding TimestampString}" TextColor="LightGray" FontSize="Caption"/>
-                        <Label Text="{Binding DurationString}" TextColor="LightGray" FontSize="Caption" Margin="0,0,0,0"/>
-                    </HorizontalStackLayout>
-
-                    <Button Text="Delete Song" Clicked="DeleteSong"/>
-
-                    <HorizontalStackLayout Margin="20,-5,0,0" Spacing="15">
-                        <Button Text="{mi:MaterialRounded Icon=Shuffle}" Margin="-5,0,0,0" Padding="0,7,0,0" BackgroundColor="Transparent" TextColor="White"/>
-                        <Button Text="{mi:MaterialRounded Icon=SkipPrevious}" Padding="0,0,-50,0" BackgroundColor="Transparent" TextColor="White" Clicked="SkipPrevious"/>
-                        <Button x:Name="fullPlayButton" Text="{mi:MaterialRounded Icon=PlayCircle, IconSize=55}" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause" IsVisible="False"/>
-                        <Button x:Name="fullPauseButton" Text="{mi:MaterialRounded Icon=PauseCircle, IconSize=55}" BackgroundColor="Transparent" TextColor="White" Clicked="TogglePause"/>
-                        <Button Text="{mi:MaterialRounded Icon=SkipNext}" Padding="-50,0,0,0" BackgroundColor="Transparent" TextColor="White" Clicked="SkipNext"/>
-                        <Button Text="{mi:MaterialRounded Icon=Repeat}" BackgroundColor="Transparent" TextColor="White"/>
-                    </HorizontalStackLayout>
-
-                    <Border BackgroundColor="Pink" Grid.Row="2" Margin="0,100">
-                        <Label Text="Hello World!"/>
-                    </Border>
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
+        <pages:LyricsView x:Name="lyricsView" ZIndex="1" IsVisible="False" Grid.RowSpan="3" TranslationY="0"/>
     </Grid>
 </ContentPage>

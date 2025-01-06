@@ -1,7 +1,10 @@
-﻿using MauiIcons.Core;
+﻿using Android.Widget;
+using BeautifulLyricsMobile.Pages;
+using MauiIcons.Core;
 using MauiIcons.Material.Rounded;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -128,7 +131,47 @@ namespace BeautifulLyricsMobile.Models
 			}
 		}
 
-		private Timer _timer;
+		public ObservableCollection<PlayableItem> GridRecommendedItems { get; set; } = [];
+		public ObservableCollection<PlayableItem> JumpBackInItems { get; set; } = [];
+		public ObservableCollection<PlayableItem> RecentlyPlayedItems { get; set; } = [];
+
+		private string _grettingMessage;
+
+		public string GreetingMessage
+        {
+            get => _grettingMessage;
+            set
+            {
+                _grettingMessage = value;
+                OnPropertyChanged();
+            }
+        }
+
+		private string _funTitle;
+
+		public string FunTitle
+        {
+            get => _funTitle;
+            set
+            {
+                _funTitle = value;
+                OnPropertyChanged();
+            }
+        }
+
+		private string _recentsTitle;
+
+		public string RecentsTitle
+		{
+			get => _recentsTitle;
+			set
+			{
+				_recentsTitle = value;
+				OnPropertyChanged();
+			}
+		}
+
+        private Timer _timer;
 
 		public event PropertyChangedEventHandler PropertyChanged;
 
@@ -139,7 +182,7 @@ namespace BeautifulLyricsMobile.Models
 
         public SongViewModel()
         {
-			_timer = new Timer(UpdateProgress, null, 0, 100);
+			_timer = new Timer(UpdateProgress, null, 0, 1000);
         }
 
 		private void UpdateProgress(object state)
@@ -148,11 +191,43 @@ namespace BeautifulLyricsMobile.Models
 			TimestampString = TimeSpan.FromMilliseconds(Timestamp).ToString("mm\\:ss");
 		}
 
-		private int updateAmount = 100;
+		private int updateAmount = 1000;
 
 		public void ToggleTimer(bool state)
 		{
-			updateAmount = state ? 100 : 0;
+			updateAmount = state ? 1000 : 0;
 		}
     }
+
+	public class PlayableItem
+	{
+        public string Id { get; set; }
+        public string Type { get; set; }
+
+        public string Image { get; set; }
+		public string Title { get; set; }
+		public string Subtitle { get; set; }
+
+		public PlayableItem Item { get; set; }
+
+        public PlayableItem()
+        {
+			Item = this;
+
+
+            ItemSelectedCommand = new Command<PlayableItem>(async (item) =>
+            {
+                if(item.Type == "artist")
+                {
+
+                }
+                else if(item.Type == "album")
+                    await Shell.Current.GoToAsync($"//AlbumPage?id={item.Id}");
+				else
+                    await Shell.Current.GoToAsync($"//PlaylistPage?id={item.Id}");
+            });
+        }
+
+        public Command<PlayableItem> ItemSelectedCommand { get; set; }
+	}
 }

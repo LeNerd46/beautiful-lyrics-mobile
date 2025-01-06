@@ -1,4 +1,5 @@
-﻿using SpotifyAPI.Web;
+﻿using BeautifulLyricsMobile.Pages;
+using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,7 +22,7 @@ namespace BeautifulLyricsMobile.Models
 
 		public ICommand Search => new Command<string>(async (string query) =>
 		{
-			var response = await MainPage.Spotify.Search.Item(new SearchRequest(SearchRequest.Types.All, query));
+			var response = await LyricsView.Spotify.Search.Item(new SearchRequest(SearchRequest.Types.All, query));
 
 			List<SearchResult> results = response.Tracks.Items.Select(x => new SearchResult
 			{

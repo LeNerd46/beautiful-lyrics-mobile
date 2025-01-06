@@ -82,7 +82,7 @@ namespace BeautifulLyricsAndroid
 			double t = (x - XS[i - 1]) / (XS[i] - XS[i - 1]);
 
 			double a = KS[i - 1] * (XS[i] - XS[i - 1]) - (YS[i] - YS[i - 1]);
-			double b = -KS[i] * (XS[i] - XS[i - 1]) - (YS[i] - YS[i - 1]);
+			double b = -KS[i] * (XS[i] - XS[i - 1]) + (YS[i] - YS[i - 1]);
 			double q = (1 - t) * YS[i - 1] + t * YS[i] + t * (1 - t) * (a * (1 - t) + b * t);
 
 			return q;
