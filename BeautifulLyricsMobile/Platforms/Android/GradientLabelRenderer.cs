@@ -21,7 +21,6 @@ namespace BeautifulLyricsMobile.Platforms.Android
 	{
 		public GradientLabelRenderer(Context context) : base(context) { }
 
-
 		protected override void OnElementChanged(ElementChangedEventArgs<Label> e)
 		{
 			base.OnElementChanged(e);

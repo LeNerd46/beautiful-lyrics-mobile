@@ -29,7 +29,7 @@
                 </Grid>
             </Border>
 
-            <Border x:Name="WordPopup" Background="#383838" HorizontalOptions="Center" WidthRequest="325" HeightRequest="600" Margin="0,55" StrokeShape="RoundRectangle 8" StrokeThickness="0" IsVisible="False" IsEnabled="False" ZIndex="1">
+            <Border x:Name="WordPopupThing" Background="#383838" HorizontalOptions="Center" WidthRequest="325" HeightRequest="600" Margin="0,55" StrokeShape="RoundRectangle 8" StrokeThickness="0" IsVisible="False" IsEnabled="False" ZIndex="1">
                 <Border.Shadow>
                     <Shadow Brush="Black" Radius="40" Opacity="0.6"/>
                 </Border.Shadow>

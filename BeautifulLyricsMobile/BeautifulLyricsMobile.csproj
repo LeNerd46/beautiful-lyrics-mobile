@@ -100,6 +100,7 @@
 		<PackageReference Include="SkiaSharp.Views.Maui.Core" Version="3.0.0-preview.4.1" />
 		<PackageReference Include="SpotifyAPI.Web" Version="7.2.1" />
 		<PackageReference Include="SpotifyAPI.Web.Auth" Version="7.2.1" />
+		<PackageReference Include="The49.Maui.BottomSheet" Version="8.0.3" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0-android'">
@@ -158,6 +159,12 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Pages\SearchPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\SongMoreOptionsSheet.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Pages\WordPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="Resources\Styles\Lyrics.xaml">

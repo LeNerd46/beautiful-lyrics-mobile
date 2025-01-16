@@ -276,8 +276,8 @@ public partial class LyricsEditor : ContentPage
 							});
 						}
 
-						WordPopup.IsVisible = true;
-						WordPopup.IsEnabled = true;
+						WordPopupThing.IsVisible = true;
+						WordPopupThing.IsEnabled = true;
 					};
 
 					lineGroup.Add(button);
@@ -302,7 +302,6 @@ public partial class LyricsEditor : ContentPage
 								}]
 						});
 					}
-
 				}
 
 				LyricsSave.Lines.Add(set);
@@ -353,13 +352,48 @@ public partial class LyricsEditor : ContentPage
 			}
 
 			await LyricsContainer.Dispatcher.DispatchAsync(() => LyricsContainer.Children.Clear());
-
-			Task.Run(RenderLyricsAdvanced);
+			await Task.Run(RenderLyricsAdvancedSync);
 		};
 
 		LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Add(finish));
 	}
 
+	private async Task RenderLyricsAdvancedSync()
+	{
+		lineCount = LyricsSave.Lines.Count;
+		var styles = Application.Current.Resources.MergedDictionaries.Last();
+		List<Layout> lines = [];
+
+		foreach(var item in LyricsSave.Lines)
+		{
+			if(item is SyllableVocalSet vocal)
+			{
+				FlexLayout lineGroup = new FlexLayout
+				{
+					Style = styles[vocal.OppositeAligned ? "LyricGroupOppositeAligned" : "LyricGroup"] as Style,
+					InputTransparent = true
+				};
+
+				foreach(var word in vocal.Lead.Syllables)
+				{
+					lineGroup.Add(new Label
+					{
+						Text = word.Text,
+						Style = word.IsPartOfWord ? styles["LyricEmphasizedLabel"] as Style : styles["LyricLabel"] as Style,
+						InputTransparent = true
+					});
+				}
+
+				lines.Add(lineGroup);
+			}
+		}
+
+		await LyricsContainer.Dispatcher.DispatchAsync(() => lines.ForEach(LyricsContainer.Add));
+
+		started = true;
+
+		stopwatch.Reset();
+	}
 
 	private void OnScreenTouch(object sender, MR.Gestures.DownUpEventArgs e)
 	{
@@ -524,8 +558,8 @@ public partial class LyricsEditor : ContentPage
 	
 	private void CancelSplit(object sender, EventArgs e)
 	{
-		WordPopup.IsVisible = false;
-		WordPopup.IsEnabled = false;
+		WordPopupThing.IsVisible = false;
+		WordPopupThing.IsEnabled = false;
 
 		foreach (var item in wordContainer.Children.ToList())
 		{
@@ -549,8 +583,8 @@ public partial class LyricsEditor : ContentPage
 		// We'll do the actual splits when we're done syncing the entire song, in case if you want to come back to it later
 		metadata.Splits = splits;
 
-		WordPopup.IsVisible = false;
-		WordPopup.IsEnabled = false;
+		WordPopupThing.IsVisible = false;
+		WordPopupThing.IsEnabled = false;
 
 		foreach (var item in wordContainer.Children.ToList())
 		{
@@ -595,8 +629,8 @@ public partial class LyricsEditor : ContentPage
 		set.Lead.Syllables.RemoveAt(selectedWordIndex);
 		set.Lead.Syllables.InsertRange(selectedWordIndex, parts);
 
-		WordPopup.IsVisible = false;
-		WordPopup.IsEnabled = false;
+		WordPopupThing.IsVisible = false;
+		WordPopupThing.IsEnabled = false;
 
 		foreach (var item in wordContainer.Children.ToList())
 		{

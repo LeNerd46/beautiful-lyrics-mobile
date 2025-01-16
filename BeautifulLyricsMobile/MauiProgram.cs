@@ -7,6 +7,8 @@ using BeautifulLyricsMobile.Controls;
 using Microsoft.Maui.Controls.Compatibility.Hosting;
 using SkiaSharp.Views.Maui.Handlers;
 using Microsoft.Maui.LifecycleEvents;
+using The49.Maui.BottomSheet;
+
 
 #if ANDROID
 using Android.Views;
@@ -26,6 +28,7 @@ namespace BeautifulLyricsMobile
 				.UseMauiCommunityToolkitMediaElement()
 				.UseFontAwesomeMauiIcons()
 				.UseMaterialRoundedMauiIcons()
+				.UseBottomSheet()
 				.ConfigureMRGestures()
 				.ConfigureLifecycleEvents(events =>
 				{
@@ -49,6 +52,7 @@ namespace BeautifulLyricsMobile
 				{
 #if ANDROID
 					handlers.AddCompatibilityRenderer(typeof(GradientLabel), typeof(GradientLabelRenderer));
+					handlers.AddHandler(typeof(TouchScrollView), typeof(TouchScrollViewHandler));
 #endif
 					handlers.AddHandler(typeof(BlobAnimationView), typeof(SKCanvasViewHandler));
 				});

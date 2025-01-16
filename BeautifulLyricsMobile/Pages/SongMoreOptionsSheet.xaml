@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<sheet:BottomSheet xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sheet="https://schemas.the49.com/dotnet/2023/maui"
+             xmlns:local="clr-namespace:BeautifulLyricsMobile.Models"
+             x:Class="BeautifulLyricsMobile.Pages.SongMoreOptionsSheet"
+             HasHandle="True" CornerRadius="14" Padding="16,32" BackgroundColor="#292929" HasBackdrop="True">
+
+    <sheet:BottomSheet.BindingContext>
+        <local:MoreOptionsModel x:Name="moreOptionsModel"/>
+    </sheet:BottomSheet.BindingContext>
+    
+    <sheet:BottomSheet.Resources>
+        <Style TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="HorizontalOptions" Value="StartAndExpand" />
+        </Style>
+    </sheet:BottomSheet.Resources>
+
+    <VerticalStackLayout>
+        <!--<HorizontalStackLayout Spacing="16" Padding="16,0">
+            <Border StrokeShape="RoundRectangle 8" StrokeThickness="0">
+                <Image Source="{Binding Image}" WidthRequest="80" HeightRequest="80"/>
+            </Border>
+
+            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="FillAndExpand">
+                <Label Text="{Binding Title}" FontAttributes="Bold"/>
+                <Label Text="{Binding Artist}" FontSize="10" TextColor="LightGray"/>
+            </VerticalStackLayout>
+        </HorizontalStackLayout>-->
+
+        <!--<Label Text="Taylor Swift" TextColor="White"/>-->
+
+        <!--<BoxView Style="{StaticResource Divider}"/>-->
+        <Button Text="Add to Queue" Clicked="QueueButton"/>
+        <Button Text="Delete" TextColor="Red" Clicked="DeleteButton"/>
+    </VerticalStackLayout>
+</sheet:BottomSheet>

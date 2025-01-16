@@ -33,29 +33,54 @@
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="30" Margin="10,0">
                 <Label Text="{Binding GreetingMessage}" FontAttributes="Bold" FontSize="Title" VerticalTextAlignment="End"/>
-                <!--<CollectionView ItemsSource="{Binding GridRecommendedItems}" ItemSizingStrategy="MeasureFirstItem">
-                    <CollectionView.ItemsLayout>
+                <!--<HorizontalStackLayout Spacing="3" HorizontalOptions="Center">
+                    <CollectionView ItemsSource="{Binding GridRecommendedItems1}" ItemsLayout="VerticalList">
+                        --><!--<CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" Span="2" VerticalItemSpacing="3" HorizontalItemSpacing="3"/>
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Border BackgroundColor="#292929" StrokeThickness="0" Margin="5,3" HeightRequest="60">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10"/>
-                                </Border.StrokeShape>
+                    </CollectionView.ItemsLayout>--><!--
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="#292929" StrokeThickness="0" Margin="5,3" HeightRequest="60">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
 
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer/>
-                                </Border.GestureRecognizers>
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer/>
+                                    </Border.GestureRecognizers>
 
-                                <HorizontalStackLayout Spacing="10">
-                                    <Image Source="{Binding Image}"/>
-                                    <Label Text="{Binding Title}" TextColor="White" MaximumWidthRequest="110" MaxLines="2" VerticalTextAlignment="Center" FontAttributes="Bold"/>
-                                </HorizontalStackLayout>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>-->
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Image Source="{Binding Image}"/>
+                                        <Label Text="{Binding Title}" TextColor="White" MaximumWidthRequest="110" MaxLines="2" VerticalTextAlignment="Center" FontAttributes="Bold"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    <CollectionView ItemsSource="{Binding GridRecommendedItems2}" ItemsLayout="VerticalList">
+                        --><!--<CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="2" VerticalItemSpacing="3" HorizontalItemSpacing="3"/>
+                    </CollectionView.ItemsLayout>--><!--
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border BackgroundColor="#292929" StrokeThickness="0" Margin="5,3" HeightRequest="60">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10"/>
+                                    </Border.StrokeShape>
+
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer/>
+                                    </Border.GestureRecognizers>
+
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Image Source="{Binding Image}"/>
+                                        <Label Text="{Binding Title}" TextColor="White" MaximumWidthRequest="110" MaxLines="2" VerticalTextAlignment="Center" FontAttributes="Bold"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </HorizontalStackLayout>-->
 
                 <VerticalStackLayout Spacing="10">
                     <Label Text="{Binding FunTitle}" FontSize="Title" FontAttributes="Bold"/>

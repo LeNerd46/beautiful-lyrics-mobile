@@ -4,7 +4,10 @@
              x:Class="BeautifulLyricsMobile.Pages.LyricsView"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
              xmlns:viewmodels="clr-namespace:BeautifulLyricsMobile.Models"
-             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons">
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+             xmlns:mr="clr-namespace:MR.Gestures;assembly=MR.Gestures"
+             xmlns:local="clr-namespace:BeautifulLyricsMobile.Pages"
+             xmlns:touch="clr-namespace:BeautifulLyricsMobile.Controls">
 
     <ContentView.BindingContext>
         <viewmodels:SongViewModel x:Name="SongViewModel"/>
@@ -32,15 +35,16 @@
 
             <HorizontalStackLayout Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center" Margin="30,0" Spacing="10">
                 <ImageButton Source="{mi:FontAwesome Icon=Heart}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
-                <ImageButton Source="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22" Clicked="MoreOptionButton"/>
             </HorizontalStackLayout>
         </Grid>
 
-        <ScrollView x:Name="ScrollViewer" Grid.Row="1" Grid.RowSpan="2" IsVisible="False" VerticalScrollBarVisibility="Never">
+        <touch:TouchScrollView x:Name="ScrollViewer" Grid.Row="1" Grid.RowSpan="2" IsVisible="False" VerticalScrollBarVisibility="Never" Touch="OnScreenDown" Release="OnScreenRelease">
+            <!--Down="OnScreenDown" Up="OnScreenRelease"-->
             <VerticalStackLayout x:Name="LyricsContainer" Spacing="20">
                 <Label x:Name="timestampLabel"/>
             </VerticalStackLayout>
-        </ScrollView>
+        </touch:TouchScrollView>
 
         <VerticalStackLayout x:Name="nowPlayingFull" Grid.RowSpan="3" ZIndex="1" Spacing="20" Padding="20" HorizontalOptions="Center" VerticalOptions="CenterAndExpand">
             <Border StrokeThickness="0" Padding="0">
@@ -80,7 +84,7 @@
             <!-- Additional icons -->
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="20">
                 <ImageButton Source="{mi:MaterialRounded Icon=Lyrics}" WidthRequest="30" HeightRequest="30" Clicked="SwitchToLyricsView" x:Name="lyricsButton"/>
-                <ImageButton Source="{mi:MaterialRounded Icon=AddCircleOutline}" WidthRequest="30" HeightRequest="30"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=AddCircleOutline}" WidthRequest="30" HeightRequest="30" Clicked="AddLyrics" x:Name="addLyricsButton"/>
             </HorizontalStackLayout>
         </VerticalStackLayout>
     </Grid>

@@ -1,5 +1,6 @@
 ﻿using AndroidX.Annotations;
 using BeautifulLyricsMobile.Pages;
+using CommunityToolkit.Maui.Alerts;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
@@ -92,13 +93,40 @@ namespace BeautifulLyricsMobile.Models
 		public int Index { get; set; }
 
 		public Command PlaySongCommand { get; set; }
+		public Command LongPressCommand { get; set; }
+
+        private bool longPressed = false;
 
         public SongMetadata()
         {
             PlaySongCommand = new Command(() =>
             {
+                if (longPressed) return;
+
                 // LyricsView.Remote?.PlayerApi?.Play(CollectionUrl);
                 LyricsView.Remote?.PlayerApi?.SkipToIndex(CollectionUrl, Index);
+            });
+
+            LongPressCommand = new Command(() =>
+            {
+                longPressed = true;
+
+                SongMoreOptionsSheet sheet = new SongMoreOptionsSheet();
+                sheet.Info = new MoreOptionsModel
+                {
+                    Url = Url,
+                    Title = Title,
+                    Artist = Artist,
+                    Album = Album,
+                    Image = Image
+                };
+
+                sheet.ShowAsync();
+
+                sheet.Dismissed += (s, e) =>
+                {
+                    longPressed = false;
+                };
             });
         }
     }

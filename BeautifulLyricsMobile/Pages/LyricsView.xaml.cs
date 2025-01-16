@@ -17,6 +17,10 @@ using System.Diagnostics;
 using BeautifulLyricsMobile.Models;
 using BeautifulLyricsMobile.Controls;
 using System.Collections.Concurrent;
+using Button = Microsoft.Maui.Controls.Button;
+using Bumptech.Glide.Load.Resource.Gif;
+using Java.Util.Concurrent;
+using Com.Spotify.Protocol.Client;
 
 namespace BeautifulLyricsMobile.Pages;
 
@@ -79,6 +83,17 @@ public partial class LyricsView : ContentView
 
 	public SongViewModel Song { get; set; }
 	private ConcurrentBag<Layout> lines = [];
+
+	// Syncing
+
+	private CustomSyncedLyrics LyricsSave;
+
+	private List<LineVocal> Vocals { get; set; }
+	private SyllableVocal currentLine;
+
+	private int selectedLineIndex = 0;
+	private int selectedWordIndex = 0;
+	private int cursorPosition = 0;
 
 	public LyricsView()
 	{
@@ -185,6 +200,12 @@ public partial class LyricsView : ContentView
 
 	private async void OnSongChanged(object sender, SongChangedEventArgs e)
 	{
+		if (syncingSong)
+		{
+			Remote.PlayerApi?.SkipPrevious();
+			return;
+		}
+
 		//newSong = true;
 		CurrentTrackId = e.Id;
 		Song.Title = e.Name;
@@ -296,6 +317,18 @@ public partial class LyricsView : ContentView
 			{
 				hasLyrics = false;
 				lyricsButton.IsEnabled = false;
+
+				nowPlayingFull.IsVisible = true;
+
+				await Task.WhenAll
+				(
+					nowPlayingLyrics.FadeTo(0, 500, Easing.SpringOut),
+					nowPlayingFull.FadeTo(100, 500, Easing.SpringOut)
+				);
+
+				nowPlayingLyrics.IsVisible = false;
+				ScrollViewer.IsVisible = false;
+
 				return;
 			}
 			else
@@ -312,6 +345,26 @@ public partial class LyricsView : ContentView
 			double canSyncNonLocalTimestamp = isPlaying ? syncTimings.Length : 0;
 
 			PlayerState player = await RequestPositionSync();
+
+			if (player.Track.Uri.Split(':')[2] != CurrentTrackId)
+			{
+				// Track has changed after we loaded the lyrics
+
+				LyricsContainer.Dispatcher.Dispatch(() =>
+				{
+					LyricsContainer.Children.Clear();
+					lines.Clear();
+					vocalGroups.Clear();
+					vocalGroupStartTimes.Clear();
+
+					cancelToken.Dispose();
+					cancelToken = new CancellationTokenSource();
+				});
+
+				await Task.Run(RenderLyrics);
+				return;
+			}
+
 			long before = stopwatch.ElapsedMilliseconds;
 
 			isPlaying = !player.IsPaused;
@@ -353,6 +406,9 @@ public partial class LyricsView : ContentView
 
 		if (type == "Syllable")
 		{
+			addLyricsButton.IsEnabled = false;
+			lyricsButton.IsEnabled = true;
+
 			try
 			{
 				SyllableSyncedLyrics providerLyrics = JsonConvert.DeserializeObject<SyllableSyncedLyrics>(content);
@@ -363,6 +419,10 @@ public partial class LyricsView : ContentView
 				});
 
 				SyllableSyncedLyrics lyrics = transformedLyrics.Lyrics.SyllableLyrics;
+
+				if (local)
+					lyrics.Content = [.. lyrics.Content.Where(x => x is not Interlude)];
+
 				lyricsEndTime = lyrics.EndTime;
 				int thing = 0;
 
@@ -386,8 +446,7 @@ public partial class LyricsView : ContentView
 						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
 
-						if (Preferences.Get("showInterludes", true))
-							lines.Add(vocalGroupContainer);
+						lines.Add(vocalGroupContainer);
 						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
 					}
 					else
@@ -449,11 +508,12 @@ public partial class LyricsView : ContentView
 				// LyricsContainer.Dispatcher.Dispatch(() => lines.ForEach(LyricsContainer.Add));
 				LyricsContainer.Dispatcher.Dispatch(() =>
 				{
-					LyricsContainer.Clear();
 					var newLines = lines.ToList();
 
 					try
 					{
+						LyricsContainer.Clear();
+
 						newLines.Reverse();
 					}
 					finally
@@ -465,6 +525,11 @@ public partial class LyricsView : ContentView
 					}
 				});
 			}
+		}
+		else
+		{
+			addLyricsButton.IsEnabled = true;
+			lyricsButton.IsEnabled = false;
 		}
 	}
 
@@ -645,20 +710,492 @@ public partial class LyricsView : ContentView
 #endif
 	}
 
-	private void SwitchToPlayerView(object sender, EventArgs e)
+	private async void SwitchToPlayerView(object sender, EventArgs e)
 	{
-		nowPlayingLyrics.IsVisible = false;
 		nowPlayingFull.IsVisible = true;
 
+		await Task.WhenAll
+		(
+			nowPlayingFull.FadeTo(100, 500, Easing.SpringOut),
+			nowPlayingLyrics.FadeTo(0, 500, Easing.SpringOut)
+		);
+
+		nowPlayingLyrics.IsVisible = false;
 		ScrollViewer.IsVisible = false;
 	}
 
-	private void SwitchToLyricsView(object sender, EventArgs e)
+	private async void SwitchToLyricsView(object sender, EventArgs e)
 	{
 		nowPlayingLyrics.IsVisible = true;
-		nowPlayingFull.IsVisible = false;
 
+		await Task.WhenAll
+		(
+			nowPlayingLyrics.FadeTo(100, 500, Easing.SpringOut),
+			nowPlayingFull.FadeTo(0, 500, Easing.SpringOut)
+		);
+
+		nowPlayingFull.IsVisible = false;
 		ScrollViewer.IsVisible = true;
+	}
+
+	private async void AddLyrics(object sender, EventArgs e)
+	{
+		nowPlayingLyrics.IsVisible = true;
+
+		await Task.WhenAll
+		(
+			nowPlayingLyrics.FadeTo(100, 500, Easing.SpringOut),
+			nowPlayingFull.FadeTo(0, 500, Easing.SpringOut)
+		);
+
+		nowPlayingFull.IsVisible = false;
+		ScrollViewer.IsVisible = true;
+
+		await Task.Run(RenderSyncLyrics);
+	}
+
+	// Splitting
+	private async Task RenderSyncLyrics()
+	{
+		// This feels wrong
+		LyricsSave = new CustomSyncedLyrics([]);
+		var response = await Client.ExecuteAsync(new RestRequest(CurrentTrackId));
+		var styles = Application.Current.Resources.MergedDictionaries.Last();
+
+		if (!response.IsSuccessful)
+		{
+			MainThread.BeginInvokeOnMainThread(() => Toast.MakeText(Platform.CurrentActivity, "Failed To Get Lyrics", ToastLength.Long).Show());
+			return;
+		}
+
+		List<LineVocal> lines = [];
+		List<Layout> lineGroups = [];
+
+		LineSyncedLyrics lineVocals = JsonConvert.DeserializeObject<LineSyncedLyrics>(response.Content);
+
+		TransformedLyrics transformedLyrics = LyricUtilities.TransformLyrics(new ProviderLyrics
+		{
+			LineLyrics = lineVocals
+		});
+
+		LineSyncedLyrics lyrics = transformedLyrics.Lyrics.LineLyrics;
+		Vocals = lyrics.Content.Where(x => x is LineVocal).Select(x => x as LineVocal).ToList();
+
+		WordPopup popup = new WordPopup
+		{
+			ZIndex = 2
+		};
+
+		foreach (var item in lyrics.Content)
+		{
+			if (item is LineVocal vocal)
+			{
+				FlexLayout lineGroup = new FlexLayout()
+				{
+					Style = styles[vocal.OppositeAligned ? "LyricGroupOppositeAligned" : "LyricGroup"] as Style,
+					InputTransparent = false
+				};
+
+				SyllableVocalSet set = new SyllableVocalSet
+				{
+					Type = "Vocal",
+					OppositeAligned = vocal.OppositeAligned,
+					Lead = new SyllableVocal
+					{
+						Syllables = []
+					}
+				};
+
+				string leadVocals = vocal.Text;
+				string? backgroundVocals = null;
+
+				if (vocal.Text.Contains('('))
+				{
+					set.Background = [];
+
+					var split = leadVocals.Split('(');
+					var splitAfer = leadVocals.Split(')');
+
+					if (split.Length == 2)
+					{
+						string lineBefore = split[1];
+						backgroundVocals = lineBefore.Split(')')[0];
+
+						string outputBefore = split[0].Trim();
+						string outputAfter = splitAfer[1];
+
+						leadVocals = $"{outputBefore} {outputAfter}".Trim();
+					}
+					else
+					{
+						// This only supports up to two sets of parentheses, Look What You Made Me Do by Taylor Swift has three, same with Say Don't Go (on MuxicMatch at least)
+
+						// (Hey! I don't knwo about you (I don't know about you) but I'm feeling 22
+
+						string first = split[1];
+						string second = first.Split(')')[0]; // Hey!
+						string third = split[2];
+						string fourth = third.Split(')')[0]; // I don't know about you
+
+						backgroundVocals = $"{second} {fourth}"; // Hey! I don't know about you
+
+						string leadFirst = split[0].Trim(); // ""
+						string leadSecond = splitAfer[1]; // I don't know about you (I don't know about you
+						string leadThird = splitAfer[2]; // but I'm feeling 22
+
+						leadVocals = $"{leadFirst} {second.Split('(')[0]} {third}".Trim();
+					}
+				}
+
+				foreach (var word in leadVocals.Split(' '))
+				{
+					var button = new Button
+					{
+						Text = word,
+						BackgroundColor = Colors.Transparent,
+						TextColor = Colors.White,
+						Style = styles["LyricLabel"] as Style,
+						HorizontalOptions = LayoutOptions.Start
+					};
+
+					button.Clicked += (sender, e) =>
+					{
+						Button self = sender as Button;
+
+						selectedLineIndex = LyricsContainer.IndexOf(LyricsContainer.Children.FirstOrDefault(x => x is FlexLayout flex && flex.Children.Any(x => x as Button == self)));
+						selectedWordIndex = ((FlexLayout)LyricsContainer.Children[selectedLineIndex]).IndexOf(self);
+						selectedLineIndex--;
+
+						popup.SetWord(self.Text);
+
+						popup.Canceled += (s, e) =>
+						{
+							selectedLineIndex = 0;
+							selectedWordIndex = 0;
+
+							gridThing.Remove(popup);
+						};
+
+						popup.Finished += (s, e) =>
+						{
+							SyllableVocalSet set = LyricsSave.Lines[selectedLineIndex];
+							SyllableMetadata metadata = set.Lead.Syllables[selectedWordIndex]; // If you split multiple words in the same line, it breaks because you just added a ton of syllables
+							string word = metadata.Text;
+
+							List<SyllableMetadata> parts = [];
+							int start = 0;
+
+							foreach (var index in popup.splits)
+							{
+								parts.Add(new SyllableMetadata
+								{
+									Text = word[start..index],
+									IsPartOfWord = true
+								});
+							}
+
+							parts.Add(new SyllableMetadata
+							{
+								Text = word[start..],
+								IsPartOfWord = false
+							});
+
+							set.Lead.Syllables.RemoveAt(selectedWordIndex);
+							set.Lead.Syllables.InsertRange(selectedWordIndex, parts);
+
+							selectedLineIndex = 0;
+							selectedWordIndex = 0;
+
+							gridThing.Remove(popup);
+						};
+
+						gridThing.Add(popup);
+						//WordPopup thingPopup = new WordPopup();
+
+						// gridThing.Add(thingPopup);
+						gridThing.SetRow(popup, 1);
+
+						// WordPopup.IsVisible = true;
+						// WordPopup.IsEnabled = true;
+					};
+
+					lineGroup.Add(button);
+
+					set.Lead.Syllables.Add(new SyllableMetadata
+					{
+						Text = word,
+						IsPartOfWord = false
+					});
+				}
+
+				if (backgroundVocals != null)
+				{
+					foreach (var word in backgroundVocals.Split(' '))
+					{
+						set.Background.Add(new SyllableVocal
+						{
+							Syllables = [new SyllableMetadata
+								{
+									Text = word,
+									IsPartOfWord = false
+								}]
+						});
+					}
+				}
+
+				LyricsSave.Lines.Add(set);
+				lineGroups.Add(lineGroup);
+			}
+		}
+
+		await LyricsContainer.Dispatcher.DispatchAsync(() => lineGroups.ForEach(LyricsContainer.Add));
+
+		Button finish = new Button
+		{
+			Text = "Finish",
+			VerticalOptions = LayoutOptions.End
+		};
+
+		finish.Clicked += async (sender, e) =>
+		{
+			foreach (var line in LyricsSave.Lines)
+			{
+				foreach (var word in line.Lead.Syllables)
+				{
+					if (word.Splits?.Count > 0)
+					{
+						string text = word.Text;
+
+						List<SyllableMetadata> parts = [];
+						int start = 0;
+
+						foreach (var index in popup.splits)
+						{
+							parts.Add(new SyllableMetadata
+							{
+								Text = text[start..index],
+								IsPartOfWord = true
+							});
+
+							start = index;
+						}
+
+						parts.Add(new SyllableMetadata
+						{
+							Text = text[start..],
+							IsPartOfWord = false
+						});
+
+						int wordIndex = line.Lead.Syllables.IndexOf(word);
+						line.Lead.Syllables.RemoveAt(wordIndex);
+						line.Lead.Syllables.InsertRange(wordIndex, parts);
+					}
+				}
+			}
+
+			await LyricsContainer.Dispatcher.DispatchAsync(() =>
+			{
+				LyricsContainer.Children.Clear();
+				gridThing.Remove(finish);
+			});
+
+			await Task.Run(RenderLyricsAdvancedSync);
+		};
+
+		gridThing.Dispatcher.Dispatch(() =>
+		{
+			gridThing.Add(finish);
+			gridThing.SetRow(finish, 2);
+		});
+		// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Add(finish));
+
+		MainThread.BeginInvokeOnMainThread(() => CommunityToolkit.Maui.Alerts.Toast.Make("This does not work right now, please press Finish", CommunityToolkit.Maui.Core.ToastDuration.Long).Show());
+	}
+
+	int lineCount = 0;
+	bool started = false;
+	int wordIndex = 0;
+	int index = 0;
+	double startTime = 0;
+	bool syncingSong = false;
+
+	// Tapping
+	private async Task RenderLyricsAdvancedSync()
+	{
+		syncingSong = true;
+		lineCount = LyricsSave.Lines.Count;
+		var styles = Application.Current.Resources.MergedDictionaries.Last();
+		List<Layout> lines = [];
+
+		foreach (var item in LyricsSave.Lines)
+		{
+			if (item is SyllableVocalSet vocal)
+			{
+				FlexLayout lineGroup = new FlexLayout
+				{
+					Style = styles[vocal.OppositeAligned ? "LyricGroupOppositeAligned" : "LyricGroup"] as Style,
+					InputTransparent = true
+				};
+
+				foreach (var word in vocal.Lead.Syllables)
+				{
+					lineGroup.Add(new Label
+					{
+						Text = word.Text,
+						Style = word.IsPartOfWord ? styles["LyricEmphasizedLabel"] as Style : styles["LyricLabel"] as Style,
+						InputTransparent = true,
+						TextColor = new Color(224, 224, 224, 0.5f)
+					});
+				}
+
+				lines.Add(lineGroup);
+			}
+		}
+
+		await LyricsContainer.Dispatcher.DispatchAsync(() => lines.ForEach(LyricsContainer.Add));
+
+		started = true;
+
+		stopwatch.Reset();
+
+#if ANDROID
+		Remote.PlayerApi?.Resume();
+		Remote.PlayerApi?.SeekTo(0);
+#endif
+
+		stopwatch.Start();
+	}
+
+	private void OnScreenDown(object sender, EventArgs e)
+	{
+		if (!started) return;
+
+		FlexLayout container = LyricsContainer.Children[lineIndex] as FlexLayout;
+		Label label = container[wordIndex] as Label;
+
+		if (wordIndex == 0)
+		{
+			foreach (var word in container.Children)
+			{
+				if (word is Label labelWord)
+					labelWord.TextColor = new Color(224, 224, 224);
+				// labelWord.TextColor = Colors.White.WithAlpha(1f);
+			}
+		}
+
+
+		double seconds = TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds;
+
+		if (index == 0)
+			startTime = seconds;
+
+		SyllableVocal current = LyricsSave.Lines[lineIndex].Lead;
+
+		if (wordIndex == 0)
+			current.StartTime = seconds;
+
+		current.Syllables[wordIndex].StartTime = seconds;
+
+		label.TextColor = Colors.White;
+		label.ScaleTo(1.05f, 250, Easing.SpringOut);
+		label.TranslateTo(0, 1, 250, Easing.SpringOut);
+		label.Shadow = new Shadow
+		{
+			Brush = Brush.White,
+			Opacity = 0.4f
+		};
+	}
+
+	private void OnScreenRelease(object sender, EventArgs e)
+	{
+		if (!started) return;
+
+		FlexLayout container = LyricsContainer.Children[lineIndex] as FlexLayout;
+		Label label = container[wordIndex] as Label;
+
+		double seconds = TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds).TotalSeconds;
+
+		LyricsSave.Lines[lineIndex].Lead.Syllables[wordIndex].EndTime = seconds;
+
+		label.ScaleTo(1, 250, Easing.SpringOut);
+		label.TranslateTo(0, 0, 250, Easing.SpringOut);
+		label.Shadow = null;
+
+		wordIndex++;
+		index++; // We're literally only using this in one spot
+
+		// We've reached the last word in the line
+		if (wordIndex == container.Children.Count)
+		{
+			wordIndex = 0;
+			lineIndex++;
+
+			// We've reached the end of the song
+			if (lineIndex == lineCount)
+			{
+				try
+				{
+					var song = new SyllableSyncedLyrics
+					{
+						StartTime = startTime,
+						EndTime = seconds,
+						Content = [.. LyricsSave.Lines]
+					};
+
+					song.Content = [.. song.Content.Where(x => x is not Interlude)];
+
+					File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, $"{CurrentTrackId}.json"), JsonConvert.SerializeObject(song));
+
+					CommunityToolkit.Maui.Alerts.Toast.Make("Lyrics Saved!").Show();
+
+					LyricsContainer.Children.Clear();
+
+					syncingSong = false;
+					Remote.PlayerApi?.SeekTo(0);
+					Task.Run(RenderLyrics);
+				}
+				catch (Exception ex)
+				{
+					CommunityToolkit.Maui.Alerts.Toast.Make(ex.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
+				}
+			}
+			else
+			{
+				ScrollViewer.ScrollToAsync(LyricsContainer.Children[lineIndex] as FlexLayout, ScrollToPosition.Center, true);
+
+				foreach (var word in container.Children)
+				{
+					if (word is Label labelWord)
+						labelWord.TextColor = new Color(224, 224, 224, 0.75f);
+					//labelWord.TextColor = Colors.White.WithAlpha(0.75f);
+				}
+			}
+		}
+	}
+
+	private async void MoreOptionButton(object sender, EventArgs e)
+	{
+		SongMoreOptionsSheet sheet = new SongMoreOptionsSheet();
+
+		sheet.Delete += (s, e) =>
+		{
+			string path = Path.Combine(FileSystem.AppDataDirectory, $"{CurrentTrackId}.json");
+
+			if (File.Exists(path))
+			{
+				File.Delete(path);
+				CommunityToolkit.Maui.Alerts.Toast.Make("Song Deleted!").Show();
+			}
+			else
+				CommunityToolkit.Maui.Alerts.Toast.Make("No Local Lyrics Found!").Show();
+		};
+
+		sheet.Queue += (s, e) =>
+		{
+			Remote?.PlayerApi?.Queue($"spotify:track:{CurrentTrackId}");
+		};
+
+		await sheet.ShowAsync();
 	}
 }
 

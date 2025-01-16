@@ -309,7 +309,6 @@ namespace BeautifulLyricsMobile.Entities
 
 			try
 			{
-
 				for (int i = 0; i < 3; i++)
 				{
 					Ellipse dot = new Ellipse();
@@ -387,7 +386,7 @@ namespace BeautifulLyricsMobile.Entities
 		private bool UpdateLiveDotVisuals(DotLiveText liveText, double deltaTime)
 		{
 			double scale = liveText.Springs.Scale.Update(deltaTime);
-			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 25;
+			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 12;
 			double glowAlpha = liveText.Springs.Glow.Update(deltaTime);
 			double opacity = liveText.Springs.Opacity.Update(deltaTime);
 
