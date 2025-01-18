@@ -83,6 +83,7 @@ public partial class LyricsView : ContentView
 
 	public SongViewModel Song { get; set; }
 	private ConcurrentBag<Layout> lines = [];
+	private static readonly object listLock = new object();
 
 	// Syncing
 
@@ -238,9 +239,13 @@ public partial class LyricsView : ContentView
 
 		stopwatch.Reset();
 		// await LyricsContainer.Dispatcher.DispatchAsync(LyricsContainer.Children.Clear);
-		vocalGroups = [];
-		vocalGroupStartTimes = [];
-		lines = [];
+		lock (listLock)
+		{
+			vocalGroups.Clear();
+			vocalGroupStartTimes.Clear();
+			lines.Clear();
+		}
+
 		lastUpdatedAt = stopwatch.ElapsedMilliseconds;
 		cancelToken?.Dispose();
 		cancelToken = new CancellationTokenSource();
@@ -352,10 +357,13 @@ public partial class LyricsView : ContentView
 
 				LyricsContainer.Dispatcher.Dispatch(() =>
 				{
-					LyricsContainer.Children.Clear();
-					lines.Clear();
-					vocalGroups.Clear();
-					vocalGroupStartTimes.Clear();
+					lock (listLock)
+					{
+						LyricsContainer.Children.Clear();
+						lines.Clear();
+						vocalGroups.Clear();
+						vocalGroupStartTimes.Clear();
+					}
 
 					cancelToken.Dispose();
 					cancelToken = new CancellationTokenSource();
@@ -446,7 +454,10 @@ public partial class LyricsView : ContentView
 						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
 
-						lines.Add(vocalGroupContainer);
+						lock (listLock)
+						{
+							lines.Add(vocalGroupContainer);
+						}
 						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
 					}
 					else
@@ -489,16 +500,24 @@ public partial class LyricsView : ContentView
 								foreach (var backgroundVocal in set.Background)
 								{
 									startTime = Math.Min(startTime, backgroundVocal.StartTime);
-									vocals.Add(new SyllableVocals(backgroundVocalGroupContainer, backgroundVocal.Syllables, true, false, set.OppositeAligned));
+
+									lock (listLock)
+									{
+										vocals.Add(new SyllableVocals(backgroundVocalGroupContainer, backgroundVocal.Syllables, true, false, set.OppositeAligned));
+									}
 								}
 							}
 
 							// Stupid piece of crap won't just accept the List of SyllableVocals, EVEN THOUGH IT INHERITS FROM ISyncedVocals
-							List<ISyncedVocals> localVocals = [];
-							localVocals.AddRange(vocals);
+							lock (listLock)
+							{
 
-							vocalGroups.Add(vocalGroupContainer, localVocals);
-							vocalGroupStartTimes.Add(startTime);
+								List<ISyncedVocals> localVocals = [];
+								localVocals.AddRange(vocals);
+
+								vocalGroups.Add(vocalGroupContainer, localVocals);
+								vocalGroupStartTimes.Add(startTime);
+							}
 						}
 					}
 				}
@@ -508,19 +527,23 @@ public partial class LyricsView : ContentView
 				// LyricsContainer.Dispatcher.Dispatch(() => lines.ForEach(LyricsContainer.Add));
 				LyricsContainer.Dispatcher.Dispatch(() =>
 				{
-					var newLines = lines.ToList();
-
-					try
+					lock (listLock)
 					{
-						LyricsContainer.Clear();
 
-						newLines.Reverse();
-					}
-					finally
-					{
-						foreach (var line in newLines)
+						var newLines = lines.ToList();
+
+						try
 						{
-							LyricsContainer.Add(line);
+							LyricsContainer.Clear();
+
+							newLines.Reverse();
+						}
+						finally
+						{
+							foreach (var line in newLines)
+							{
+								LyricsContainer.Add(line);
+							}
 						}
 					}
 				});

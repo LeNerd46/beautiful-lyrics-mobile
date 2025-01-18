@@ -119,9 +119,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="QTFastStart">
-	    <HintPath>bin\Debug\net8.0-android34.0\QTFastStart.dll</HintPath>
-	  </Reference>
 	  <Reference Include="SpotifyAppRemoteBinding">
 	    <HintPath>..\..\SpotifyAppRemoteBinding\SpotifyAppRemoteBinding\bin\Release\net8.0-android\SpotifyAppRemoteBinding.dll</HintPath>
 	  </Reference>

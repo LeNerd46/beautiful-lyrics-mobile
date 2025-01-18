@@ -548,7 +548,7 @@ namespace BeautifulLyricsAndroid.Entities
 			double yOffset = liveText.Springs.YOffset.Update(deltaTime) * 50;
 			double glowAlpha = liveText.Springs.Glow.Update(deltaTime);
 
-			if (Math.Abs(scale) > 1000) return true;
+			if (double.IsInfinity(scale)) return true;
 
 			float gradientProgress = (int)Math.Round(-20 + 120 * timeScale);
 			liveText.YOffset = yOffset * (isEmphasized ? 3 : 1);
