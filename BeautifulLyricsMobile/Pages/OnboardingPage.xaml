@@ -58,10 +58,7 @@
 
                     <Image Aspect="AspectFit" Source="{Binding Image}"/>
 
-                    <VerticalStackLayout VerticalOptions="Center">
-                        <Entry Placeholder="Spotify Client ID" Text="{Binding ClientId}" IsVisible="{Binding SpotifyClientPage}"/>
-                        <Entry Placeholder="Spotify Client Secret" Text="{Binding ClientSecret}" IsVisible="{Binding SpotifyClientPage}"/>
-                    </VerticalStackLayout>
+                    <Entry Placeholder="Spotify Client ID" Text="{Binding ClientId}" IsVisible="{Binding SpotifyClientPage}" VerticalOptions="Center"/>
 
                     <VerticalStackLayout Grid.Row="1" Spacing="10">
                         <Label HorizontalTextAlignment="Center" Padding="10,5,10,5" Text="{Binding Title}" FontSize="30" LineBreakMode="WordWrap"/>

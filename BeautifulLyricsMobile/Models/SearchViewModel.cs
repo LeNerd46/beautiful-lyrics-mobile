@@ -2,6 +2,7 @@
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -58,10 +59,12 @@ namespace BeautifulLyricsMobile.Models
 			// results.AddRange(response.Artists.Items.Select(x => x.Name));
 			// results.AddRange(response.Albums.Items.Select(x => x.Name));
 
-			SearchResults = results;
+			// SearchResults = results;
+			results.ForEach(SearchResults.Add);
 		});
 
-		private List<SearchResult> searchResults = [];
+		public ObservableCollection<SearchResult> SearchResults { get; set; } = [];
+		/*private List<SearchResult> searchResults = [];
 		public List<SearchResult> SearchResults
 		{
 			get => searchResults;
@@ -71,7 +74,7 @@ namespace BeautifulLyricsMobile.Models
 				searchResults = value;
 				NotifyPropertyChanged();
 			}
-		}
+		}*/
 	}
 
 	class SearchResult

@@ -1,4 +1,5 @@
 using BeautifulLyricsMobile.Models;
+using CommunityToolkit.Maui.Alerts;
 using The49.Maui.BottomSheet;
 
 namespace BeautifulLyricsMobile.Pages;
@@ -28,6 +29,7 @@ public partial class SongMoreOptionsSheet : BottomSheet
 	private void QueueButton(object sender, EventArgs e)
 	{
 		LyricsView.Remote?.PlayerApi?.Queue(Info.Url);
+		Toast.Make("Added to queue");
 		Queue?.Invoke(this, EventArgs.Empty);
 		DismissAsync();
 	}

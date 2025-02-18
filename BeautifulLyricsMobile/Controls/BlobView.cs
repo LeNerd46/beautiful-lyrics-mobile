@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace BeautifulLyricsMobile.Controls
 {
-	public class BlobAnimationView : SKCanvasView
+	public class BlobAnimationView : SKCanvasView, IDisposable
 	{
 		private SKPaint[] blobPaints;
 		private SKBitmap image;
@@ -20,7 +20,10 @@ namespace BeautifulLyricsMobile.Controls
 		private int renderHeight = 0;
 		CancellationTokenSource cancel = null;
 
+		private readonly object busyLock = new object();
 		private bool isBusy = false;
+
+		private IDispatcherTimer timer;
 
 		public BlobAnimationView(SKBitmap _image, CancellationTokenSource cancelToken = null)
 		{
@@ -118,17 +121,24 @@ namespace BeautifulLyricsMobile.Controls
 				});
 			}*/
 
-			IDispatcherTimer timer = Dispatcher.CreateTimer();
+			timer = Dispatcher.CreateTimer();
 			timer.Interval = TimeSpan.FromMilliseconds(33);
+			timer.Tick += OnTimerTick;
 
-			timer.Tick += async (s, e) =>
+			timer.Start();
+			stopwatch.Start();
+		}
+
+		private async void OnTimerTick(object? sender, EventArgs e)
+		{
+			if (isBusy) return;
+			isBusy = true;
+
+			await Task.Run(() =>
 			{
-				if (isBusy) return;
-				isBusy = true;
-
-				await Task.Run(() =>
+				try
 				{
-					try
+					lock (busyLock)
 					{
 						var bitmap = new SKBitmap(image.Width, image.Height);
 						var info = new SKImageInfo(image.Width, image.Height);
@@ -140,6 +150,18 @@ namespace BeautifulLyricsMobile.Controls
 						int i = 0;
 						foreach (var blob in blobs)
 						{
+							if (cancel == null) return;
+
+							if (cancel.IsCancellationRequested)
+							{
+								canvas.Dispose();
+								bitmap.Dispose();
+								renderedBitmap.Dispose();
+
+								isBusy = false;
+								return;
+							}
+
 							using var paint = new SKPaint
 							{
 								Style = SKPaintStyle.StrokeAndFill,
@@ -164,30 +186,43 @@ namespace BeautifulLyricsMobile.Controls
 						canvas.DrawImage(snapshot, 0, 0, blurPaint);
 						surface.Snapshot().ReadPixels(info, bitmap.GetPixels(), bitmap.RowBytes);
 
-						if (cancel.IsCancellationRequested)
-						{
-							canvas.Dispose();
-							bitmap.Dispose();
-							return;
-						}
 
 						MainThread.BeginInvokeOnMainThread(() =>
 						{
+							if (cancel == null) return;
+
+							if (cancel.IsCancellationRequested)
+							{
+								canvas.Dispose();
+								bitmap.Dispose();
+								renderedBitmap.Dispose();
+
+								isBusy = false;
+								return;
+							}
+
 							var oldBitmap = renderedBitmap;
 							renderedBitmap = bitmap;
 							oldBitmap?.Dispose();
 							InvalidateSurface();
 						});
 					}
-					finally
-					{
-						isBusy = false;
-					}
-				}, cancel.Token);
-			};
-
-			timer.Start();
-			stopwatch.Start();
+				}
+				catch(Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+				}
+				finally
+				{
+					isBusy = false;
+				}
+			}, cancel.Token).ContinueWith((task) =>
+			{
+				if(task.IsFaulted)
+				{
+					Console.WriteLine(task.Exception.Message);
+				}
+			});
 		}
 
 		protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
@@ -213,7 +248,6 @@ namespace BeautifulLyricsMobile.Controls
 		{
 			try
 			{
-
 				const int numPoints = 12;
 				const float angleStep = 360f / numPoints;
 
@@ -280,6 +314,31 @@ namespace BeautifulLyricsMobile.Controls
 			// return SKShader.CreateCompose(gradient, imageShader);
 
 			return imageShader;
+		}
+
+		public void Dispose()
+		{
+			if(timer != null)
+			{
+				timer.Stop();
+				timer.Tick -= OnTimerTick;
+				timer = null;
+			}
+
+			if(cancel != null)
+			{
+				if (!cancel.IsCancellationRequested)
+					cancel.Cancel();
+
+				cancel.Dispose();
+				cancel = null;
+			}
+
+			renderedBitmap?.Dispose();
+			renderedBitmap = null;
+
+			image?.Dispose();
+			image = null;
 		}
 	}
 

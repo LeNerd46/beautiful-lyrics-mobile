@@ -49,9 +49,9 @@ public partial class AlbumPage : ContentPage
 		}
 	}
 
-	protected override bool OnBackButtonPressed()
+	/*protected override bool OnBackButtonPressed()
 	{
 		Shell.Current.GoToAsync("//Home");
 		return true;
-	}
+	}*/
 }

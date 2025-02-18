@@ -215,7 +215,6 @@ namespace BeautifulLyricsMobile.Models
         {
 			Item = this;
 
-
             ItemSelectedCommand = new Command<PlayableItem>(async (item) =>
             {
                 if(item.Type == "artist")

@@ -10,6 +10,7 @@ using NTextCat.Commons;
 using BeautifulLyricsMobile;
 using BeautifulLyricsMobile.Controls;
 using BeautifulLyricsMobile.Models;
+using Android.Widget;
 
 namespace BeautifulLyricsAndroid.Entities
 {
@@ -563,7 +564,7 @@ namespace BeautifulLyricsAndroid.Entities
 					label.GradientProgress = gradientProgress;
 
 					label.ShadowRadius = 4 + (2 * (float)glowAlpha * (isEmphasized ? 3 : 1));
-					label.ShadowOpacity = (float)Math.Max(0, Math.Min(1, glowAlpha * (isEmphasized ? 1 : 0.4f)));
+					label.ShadowOpacity = (float)Math.Max(0, Math.Min(1, glowAlpha * (isEmphasized ? 1 : 0.5f)));
 				});
 			}
 
@@ -572,56 +573,63 @@ namespace BeautifulLyricsAndroid.Entities
 
 		private void EvaluateClassState()
 		{
-			if (State == LyricState.Active)
+			try
 			{
-				foreach (var syllable in Syllables)
+				if (State == LyricState.Active)
 				{
-					if (syllable.Type == "Letters")
+					foreach (var syllable in Syllables)
 					{
-						foreach (var letter in syllable.Letters)
+						if (syllable.Type == "Letters")
 						{
-							GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
-							letterLabel.MyFadeTo(1f, 2500, Easing.SpringOut);
-							//letterLabel.LabelOpacity = 1f;
-							// letterLabel.FadeTo(1, 250, Easing.SpringOut);
+							foreach (var letter in syllable.Letters)
+							{
+								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
+								letterLabel.MyFadeTo(1f, 2500, Easing.SpringOut);
+								//letterLabel.LabelOpacity = 1f;
+								// letterLabel.FadeTo(1, 250, Easing.SpringOut);
+							}
+						}
+
+						if (syllable.LiveText.Object is GradientLabel label)
+							label.MyFadeTo(1f, 2500, Easing.SpringOut);
+						//label.LabelOpacity = 1f;
+						// label.FadeTo(1, 250, Easing.SpringOut);
+					}
+				}
+
+				if (State == LyricState.Sung)
+				{
+					foreach (var syllable in Syllables)
+					{
+						if (syllable.Type == "Letters")
+						{
+							foreach (var letter in syllable.Letters)
+							{
+								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
+								letterLabel.GradientProgress = 0;
+								letterLabel.MyFadeTo(0.75f, 2500, Easing.SpringOut);
+								//letterLabel.LabelOpacity = 0.75f;
+								//letterLabel.FadeTo(0.75d, 250, Easing.SpringOut);
+
+								UpdateLiveTextVisuals(letter.LiveText, true, 0, 0);
+							}
+						}
+
+						if (syllable.LiveText.Object is GradientLabel label)
+						{
+							label.GradientProgress = 0;
+							label.MyFadeTo(0.75f, 2500, Easing.SpringOut);
+							//label.LabelOpacity = 0.75f;
+							//label.FadeTo(0.75d, 250, Easing.SpringOut);
+
+							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 0);
 						}
 					}
-
-					if (syllable.LiveText.Object is GradientLabel label)
-						label.MyFadeTo(1f, 2500, Easing.SpringOut);
-					//label.LabelOpacity = 1f;
-					// label.FadeTo(1, 250, Easing.SpringOut);
 				}
 			}
-
-			if (State == LyricState.Sung)
+			catch(Exception ex)
 			{
-				foreach (var syllable in Syllables)
-				{
-					if (syllable.Type == "Letters")
-					{
-						foreach (var letter in syllable.Letters)
-						{
-							GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
-							letterLabel.GradientProgress = 0;
-							letterLabel.MyFadeTo(0.75f, 2500, Easing.SpringOut);
-							//letterLabel.LabelOpacity = 0.75f;
-							//letterLabel.FadeTo(0.75d, 250, Easing.SpringOut);
-
-							UpdateLiveTextVisuals(letter.LiveText, true, 0, 0);
-						}
-					}
-
-					if (syllable.LiveText.Object is GradientLabel label)
-					{
-						label.GradientProgress = 0;
-						label.MyFadeTo(0.75f, 2500, Easing.SpringOut);
-						//label.LabelOpacity = 0.75f;
-						//label.FadeTo(0.75d, 250, Easing.SpringOut);
-
-						UpdateLiveTextVisuals(syllable.LiveText, false, 0, 0);
-					}
-				}
+				MainThread.BeginInvokeOnMainThread(() => CommunityToolkit.Maui.Alerts.Toast.Make(ex.Message));
 			}
 		}
 

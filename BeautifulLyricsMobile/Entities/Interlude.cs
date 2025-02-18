@@ -334,7 +334,7 @@ namespace BeautifulLyricsMobile.Entities
 				SetToGeneralState(false);
 				lineContainer.Add(container);
 			}
-			catch
+			catch(Exception)
 			{
 				// Stupid
 			}
@@ -440,6 +440,8 @@ namespace BeautifulLyricsMobile.Entities
 			double scale = LiveText.Springs.Scale.Update(deltaTime);
 			double yOffset = LiveText.Springs.YOffset.Update(deltaTime) * 25;
 			double opacity = LiveText.Springs.Opacity.Update(deltaTime);
+
+			if (double.IsInfinity(scale)) return true;
 
 			liveText.Object.Dispatcher.Dispatch(() =>
 			{

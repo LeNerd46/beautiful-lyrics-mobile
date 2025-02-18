@@ -3,19 +3,55 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="BeautifulLyricsMobile.Pages.ProfilePage"
              xmlns:touch="clr-namespace:BeautifulLyricsMobile.Controls"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
              Title="ProfilePage" Loaded="OnPageLoaded">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="200"/>
+            <RowDefinition Height="100"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <Grid>
+            <HorizontalStackLayout VerticalOptions="Center" Margin="15,15,0,0" Spacing="10">
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 50">
+                    <Image Source="{Binding ProfilePicture}" Aspect="AspectFill" WidthRequest="40" HeightRequest="40"/>
+                </Border>
 
-        <touch:TouchScrollView Grid.Row="1" Touch="TouchScrollView_Touch" Release="TouchScrollView_Release">
-            <Ellipse  Fill="White" WidthRequest="100" HeightRequest="100" Scale="1.2"/>
-        </touch:TouchScrollView>
+                <Label Text="{Binding Username}" TextColor="White" VerticalOptions="Center" FontSize="20" FontAttributes="Bold"/>
+            </HorizontalStackLayout>
 
+            <HorizontalStackLayout HorizontalOptions="End" VerticalOptions="Center" Margin="0,0,5,0">
+                <ImageButton Source="{mi:MaterialRounded Icon=Search}" WidthRequest="35" HeightRequest="35"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=Add}" WidthRequest="40" HeightRequest="40"/>
+            </HorizontalStackLayout>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <CollectionView ItemsSource="{Binding Items}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ItemSelectedCommand}" CommandParameter="{Binding Item}"/>
+                            </Grid.GestureRecognizers>
+
+                            <!-- https://www.svgrepo.com/show/508699/landscape-placeholder.svg -->
+                            <Image Source="{Binding Image}" Aspect="AspectFill" WidthRequest="75" HeightRequest="75"/>
+
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{Binding Title}" TextColor="White" FontSize="20" FontAttributes="Bold" MaxLines="1"/>
+                                <Label Text="{Binding Info}" FontSize="Subtitle" TextColor="DarkGray" MaxLines="1"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </ScrollView>
     </Grid>
-
 </ContentPage>

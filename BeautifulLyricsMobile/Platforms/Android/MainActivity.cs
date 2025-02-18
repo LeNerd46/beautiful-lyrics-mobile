@@ -10,9 +10,11 @@ using BeautifulLyricsMobile.Pages;
 using Com.Spotify.Android.Appremote.Api;
 using Com.Spotify.Protocol.Types;
 using Java.Lang;
+using Newtonsoft.Json;
 using RestSharp;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
+using SpotifyAPI.Web.Http;
 using static BeautifulLyricsMobile.Pages.HomePage;
 using static Com.Spotify.Android.Appremote.Api.IConnector;
 
@@ -72,76 +74,20 @@ namespace BeautifulLyricsMobile
 				// while (LyricsView.Remote == null) ;
 
 				string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
-				string secret = SecureStorage.GetAsync("spotifySecret").GetAwaiter().GetResult();
-				string updatedToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
 
-				if (LyricsView.Remote == null)
-				{
+				if (string.IsNullOrWhiteSpace(clientId)) return;
+
+				// if (LyricsView.Remote == null)
+				// {
 					SpotifyAppRemote remote;
 					ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
 					SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, new ConnectionListener());
-				}
+				// }
 
-				if (string.IsNullOrWhiteSpace(updatedToken))
-				{
-					Task.Run(async () =>
-					{
-						/*while (LyricsView.Remote == null)
-						{
-							await Task.Delay(1000);
-						}*/
-
-						server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
-						await server.Start();
-
-						server.ImplictGrantReceived += async (sender, response) =>
-						{
-							await server.Stop();
-
-							LyricsView.AccessToken = response.AccessToken;
-							LyricsView.Spotify = new SpotifyClient(response.AccessToken);
-
-							LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-							LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {response.AccessToken}");
-
-							await SecureStorage.SetAsync("token", LyricsView.AccessToken);
-						};
-
-						server.ErrorReceived += async (sender, error, state) =>
-						{
-							await server.Stop();
-						};
-
-						var request = new LoginRequest(server.BaseUri, clientId, LoginRequest.ResponseType.Token)
-						{
-							Scope = new List<string> { Scopes.UserReadPrivate }
-						};
-
-						await Launcher.OpenAsync(request.ToUri());
-					});
-				}
+				if (File.Exists(Path.Combine(FileSystem.AppDataDirectory, "creds.json")))
+					LyricsView.Spotify = GetToken(clientId);
 				else
-				{
-					LyricsView.AccessToken = SecureStorage.GetAsync("token").GetAwaiter().GetResult();
-
-					if (!string.IsNullOrWhiteSpace(LyricsView.AccessToken))
-					{
-						LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
-						LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {LyricsView.AccessToken}");
-					}
-					// else
-					// 	Toast.MakeText(Platform.CurrentActivity, "Error reading token", ToastLength.Long).Show();
-
-					var config = SpotifyClientConfig.CreateDefault();
-
-					if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
-						return;
-
-					var request = new ClientCredentialsRequest(clientId, secret);
-					var response = new OAuthClient(config).RequestToken(request).GetAwaiter().GetResult();
-
-					LyricsView.Spotify = new SpotifyClient(config.WithToken(response.AccessToken));
-				}
+					CreateToken(clientId!).Wait();
 			}
 			catch (System.Exception ex)
 			{
@@ -158,8 +104,53 @@ namespace BeautifulLyricsMobile
 		protected override void OnStop()
 		{
 			SpotifyAppRemote.Disconnect(LyricsView.Remote);
+			LyricsView.Remote = null;
+			LyricsView.cancelToken.Cancel();
 
 			base.OnStop();
+		}
+
+		private SpotifyClient GetToken(string id)
+		{
+			var json = File.ReadAllText(Path.Combine(FileSystem.AppDataDirectory, "creds.json"));
+			var token = JsonConvert.DeserializeObject<PKCETokenResponse>(json);
+
+			var auth = new PKCEAuthenticator(id, token!);
+			auth.TokenRefreshed += (sender, token) => File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, "creds.json"), JsonConvert.SerializeObject(token));
+
+			var config = SpotifyClientConfig.CreateDefault().WithAuthenticator(auth);
+
+			LyricsView.Client = new RestClient("https://beautiful-lyrics.socalifornian.live/lyrics/");
+			LyricsView.Client.AddDefaultHeader("Authorization", $"Bearer {token!.RefreshToken}");
+
+			return new SpotifyClient(config);
+		}
+
+		private async Task CreateToken(string id)
+		{
+			var (verifier, challenge) = PKCEUtil.GenerateCodes();
+
+			EmbedIOAuthServer server = new EmbedIOAuthServer(new System.Uri("http://localhost:5543/callback"), 5543);
+
+			await server.Start();
+
+			server.AuthorizationCodeReceived += async (sender, response) =>
+			{
+				await server.Stop();
+				var token = await new OAuthClient().RequestToken(new PKCETokenRequest(id, response.Code, server.BaseUri, verifier));
+
+				await File.WriteAllTextAsync(Path.Combine(FileSystem.AppDataDirectory, "creds.json"), JsonConvert.SerializeObject(token));
+				GetToken(id);
+			};
+
+			var request = new LoginRequest(server.BaseUri, id, LoginRequest.ResponseType.Code)
+			{
+				CodeChallenge = challenge,
+				CodeChallengeMethod = "S256",
+				Scope = [Scopes.UserReadPrivate, Scopes.PlaylistReadPrivate, Scopes.PlaylistReadCollaborative, Scopes.UserLibraryRead, Scopes.UserReadRecentlyPlayed]
+			};
+
+			await Launcher.OpenAsync(request.ToUri());
 		}
 	}
 

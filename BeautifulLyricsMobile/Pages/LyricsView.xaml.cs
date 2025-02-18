@@ -21,6 +21,8 @@ using Button = Microsoft.Maui.Controls.Button;
 using Bumptech.Glide.Load.Resource.Gif;
 using Java.Util.Concurrent;
 using Com.Spotify.Protocol.Client;
+using Android.Media;
+using CommunityToolkit.Maui.Views;
 
 namespace BeautifulLyricsMobile.Pages;
 
@@ -57,8 +59,8 @@ public partial class LyricsView : ContentView
 
 	private string type = "None";
 	double lyricsEndTime = -1;
-	private Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups = [];
-	private List<double> vocalGroupStartTimes = [];
+	private static Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups = [];
+	private static List<double> vocalGroupStartTimes = [];
 
 	private double timestamp;
 	private bool isPlaying;
@@ -72,7 +74,7 @@ public partial class LyricsView : ContentView
 
 	private Task activeTask = null;
 	private System.Timers.Timer progressSyncTimer;
-	private CancellationTokenSource cancelToken;
+	public static CancellationTokenSource cancelToken;
 	private CancellationTokenSource backgroundCancel;
 
 	private int lineIndex = 0;
@@ -84,6 +86,10 @@ public partial class LyricsView : ContentView
 	public SongViewModel Song { get; set; }
 	private ConcurrentBag<Layout> lines = [];
 	private static readonly object listLock = new object();
+	private bool modifyingLyrics = false;
+	private bool sameAlbum = false;
+	private int firstSong = 0;
+	private double offset = 0;
 
 	// Syncing
 
@@ -207,6 +213,14 @@ public partial class LyricsView : ContentView
 			return;
 		}
 
+		/*Task.Run(async () =>
+		{
+			FullTrack previousTrack = await spotify.Tracks.Get(CurrentTrackId);
+			FullTrack track = await Spotify.Tracks.Get(e.Id);
+
+			sameAlbum = previousTrack.Album.Id == track.Album.Id;
+		});*/
+
 		//newSong = true;
 		CurrentTrackId = e.Id;
 		Song.Title = e.Name;
@@ -221,6 +235,15 @@ public partial class LyricsView : ContentView
 
 		PlayerState player = await RequestPositionSync();
 
+		/*using HttpClient apple = new HttpClient
+		{
+			BaseAddress = new System.Uri("http://ec2-34-221-128-116.us-west-2.compute.amazonaws.com:8080/api/")
+		};*/
+
+		//animatedAlbum.Source = MediaSource.FromResource($"http://ec2-34-221-128-116.us-west-2.compute.amazonaws.com:8080/api/apple/album/{CurrentTrackId}");
+
+		//Song.AnimatedImage = $"http://ec2-34-221-128-116.us-west-2.compute.amazonaws.com:8080/api/apple/album/{CurrentTrackId}";
+		// Song.AnimatedImage = $"https://static.videezy.com/system/resources/previews/000/037/474/original/circle_loading.mp4";
 		Song.Image = $"https://i.scdn.co/image/{player.Track.ImageUri.Raw.Split(':')[2]}";
 		Song.Timestamp = player.PlaybackPosition;
 
@@ -256,6 +279,9 @@ public partial class LyricsView : ContentView
 
 	public async Task RenderLyrics()
 	{
+		if (cancelToken.IsCancellationRequested)
+			return;
+
 		try
 		{
 			stopwatch.Start();
@@ -266,6 +292,10 @@ public partial class LyricsView : ContentView
 			// Background
 			// await Task.Run(async () =>
 			// {
+			// if (!sameAlbum || firstSong == 0)
+			// {
+			firstSong++;
+
 			FullTrack track = await Spotify.Tracks.Get(CurrentTrackId);
 			using HttpClient download = new HttpClient();
 
@@ -282,20 +312,30 @@ public partial class LyricsView : ContentView
 
 			gridThing.Dispatcher.Dispatch(() =>
 			{
+				if (gridThing.Children.Any(x => x is BlobAnimationView))
+				{
+					BlobAnimationView background = gridThing.Children.FirstOrDefault(x => x is BlobAnimationView) as BlobAnimationView;
+					background.Dispose();
+					gridThing.Remove(background);
+				}
+
+				backgroundCancel = new CancellationTokenSource();
+
 				BlobAnimationView blobs = new BlobAnimationView(image, backgroundCancel)
 				{
 					HorizontalOptions = LayoutOptions.FillAndExpand,
 					VerticalOptions = LayoutOptions.FillAndExpand,
 					InputTransparent = true,
-					ZIndex = -1
+					ZIndex = -2
 				};
 
 				gridThing.Add(blobs);
 				gridThing.SetRowSpan(blobs, 3);
 
-				if (gridThing.Children.Where(x => x is BlobAnimationView).Count() == 2)
-					gridThing.Remove(gridThing.Children.First(x => x is BlobAnimationView));
+				/*if (gridThing.Children.Where(x => x is BlobAnimationView).Count() == 2)
+					gridThing.Remove(gridThing.Children.First(x => x is BlobAnimationView));*/
 			});
+			// }
 
 			string content = "";
 
@@ -351,27 +391,12 @@ public partial class LyricsView : ContentView
 
 			PlayerState player = await RequestPositionSync();
 
-			if (player.Track.Uri.Split(':')[2] != CurrentTrackId)
-			{
-				// Track has changed after we loaded the lyrics
+			var audioManager = (AudioManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService);
 
-				LyricsContainer.Dispatcher.Dispatch(() =>
-				{
-					lock (listLock)
-					{
-						LyricsContainer.Children.Clear();
-						lines.Clear();
-						vocalGroups.Clear();
-						vocalGroupStartTimes.Clear();
-					}
-
-					cancelToken.Dispose();
-					cancelToken = new CancellationTokenSource();
-				});
-
-				await Task.Run(RenderLyrics);
-				return;
-			}
+			// Check if the user is using Bluetooth, hopefully compensate a little for the audio delay
+			if (audioManager.BluetoothA2dpOn || audioManager.BluetoothScoOn)
+				startedSyncAt += 100;
+			//startedSyncAt += offset;
 
 			long before = stopwatch.ElapsedMilliseconds;
 
@@ -390,6 +415,25 @@ public partial class LyricsView : ContentView
 
 			songLoaded = true;
 
+			if (player.Track.Uri.Split(':')[2] != CurrentTrackId && !modifyingLyrics)
+			{
+				// Track has changed after we loaded the lyrics
+				modifyingLyrics = true;
+
+				await LyricsContainer.Dispatcher.DispatchAsync(() =>
+				{
+					lock (listLock)
+					{
+						LyricsContainer.Children.Clear();
+						ResetVocals();
+					}
+				});
+
+				modifyingLyrics = false;
+				await Task.Run(RenderLyrics, cancelToken.Token);
+				return;
+			}
+
 			await UpdateProgress(player.PlaybackPosition, startedSyncAt, vocalGroups, player.Track.Duration, cancelToken.Token);
 #endif
 
@@ -404,7 +448,7 @@ public partial class LyricsView : ContentView
 		}
 	}
 
-	private void LoadLyrics(string content)
+	private async void LoadLyrics(string content)
 	{
 		JObject json = JObject.Parse(content);
 		ResourceDictionary styles = Application.Current.Resources.MergedDictionaries.Last();
@@ -419,6 +463,8 @@ public partial class LyricsView : ContentView
 
 			try
 			{
+				cancelToken.Token.ThrowIfCancellationRequested();
+
 				SyllableSyncedLyrics providerLyrics = JsonConvert.DeserializeObject<SyllableSyncedLyrics>(content);
 
 				TransformedLyrics transformedLyrics = LyricUtilities.TransformLyrics(new ProviderLyrics
@@ -434,119 +480,129 @@ public partial class LyricsView : ContentView
 				lyricsEndTime = lyrics.EndTime;
 				int thing = 0;
 
-				foreach (var vocalGroup in lyrics.Content)
+				try
 				{
-					if (cancelToken.IsCancellationRequested)
+
+					foreach (var vocalGroup in lyrics.Content)
 					{
-						lines.Clear();
-						vocalGroups.Clear();
-						vocalGroupStartTimes.Clear();
+						cancelToken.Token.ThrowIfCancellationRequested();
 
-						return;
-					}
-
-					if (vocalGroup is Interlude interlude)
-					{
-						// lines.Add(interlude);
-
-						FlexLayout vocalGroupContainer = [];
-
-						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
-						vocalGroupStartTimes.Add(interlude.Time.StartTime);
-
-						lock (listLock)
+						if (vocalGroup is Interlude interlude)
 						{
-							lines.Add(vocalGroupContainer);
+							// lines.Add(interlude);
+
+							FlexLayout vocalGroupContainer = [];
+
+							vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
+							vocalGroupStartTimes.Add(interlude.Time.StartTime);
+
+							lock (listLock)
+								lines.Add(vocalGroupContainer);
+							// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
 						}
-						// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(vocalGroupContainer));
-					}
-					else
-					{
-						SyllableVocalSet set = JsonConvert.DeserializeObject<SyllableVocalSet>(vocalGroup.ToString());
-						// lines.Add(set);
-
-						// Add button
-
-						if (set.Type == "Vocal")
+						else
 						{
-							// string styleName = "IdleLyric";
-							string styleName = "LyricGroup";
+							SyllableVocalSet set = JsonConvert.DeserializeObject<SyllableVocalSet>(vocalGroup.ToString());
+							// lines.Add(set);
 
-							if (set.OppositeAligned)
-								styleName = "LyricGroupOppositeAligned";
-							// styleName = "IdleLyricOppositeAligned";
+							// Add button
 
-							VerticalStackLayout topGroup = new VerticalStackLayout();
-							topGroup.Spacing = 0;
-							FlexLayout vocalGroupContainer = new FlexLayout();
-							vocalGroupContainer.Style = styles[styleName] as Style;
-
-							// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
-							topGroup.Children.Add(vocalGroupContainer);
-							// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(topGroup));
-							lines.Add(topGroup);
-
-							List<SyllableVocals> vocals = [];
-							double startTime = set.Lead.StartTime;
-							vocals.Add(new SyllableVocals(vocalGroupContainer, set.Lead.Syllables, false, false, set.OppositeAligned));
-
-							if (set.Background?.Count > 0)
+							if (set.Type == "Vocal")
 							{
-								FlexLayout backgroundVocalGroupContainer = new FlexLayout();
-								backgroundVocalGroupContainer.Style = styles[$"{styleName}"] as Style;
-								// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
-								topGroup.Children.Add(backgroundVocalGroupContainer);
+								// string styleName = "IdleLyric";
+								string styleName = "LyricGroup";
 
-								foreach (var backgroundVocal in set.Background)
+								if (set.OppositeAligned)
+									styleName = "LyricGroupOppositeAligned";
+								// styleName = "IdleLyricOppositeAligned";
+
+								VerticalStackLayout topGroup = new VerticalStackLayout();
+								topGroup.Spacing = 0;
+								FlexLayout vocalGroupContainer = new FlexLayout();
+								vocalGroupContainer.Style = styles[styleName] as Style;
+
+								// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(vocalGroupContainer));
+								topGroup.Children.Add(vocalGroupContainer);
+								// LyricsContainer.Dispatcher.Dispatch(() => LyricsContainer.Children.Add(topGroup));
+								lines.Add(topGroup);
+
+								List<SyllableVocals> vocals = [];
+								double startTime = set.Lead.StartTime;
+								vocals.Add(new SyllableVocals(vocalGroupContainer, set.Lead.Syllables, false, false, set.OppositeAligned));
+
+								if (set.Background?.Count > 0)
 								{
-									startTime = Math.Min(startTime, backgroundVocal.StartTime);
+									FlexLayout backgroundVocalGroupContainer = new FlexLayout();
+									backgroundVocalGroupContainer.Style = styles[$"{styleName}"] as Style;
+									// topGroup.Dispatcher.Dispatch(() => topGroup.Children.Add(backgroundVocalGroupContainer));
+									topGroup.Children.Add(backgroundVocalGroupContainer);
 
-									lock (listLock)
+									foreach (var backgroundVocal in set.Background)
 									{
-										vocals.Add(new SyllableVocals(backgroundVocalGroupContainer, backgroundVocal.Syllables, true, false, set.OppositeAligned));
+										startTime = Math.Min(startTime, backgroundVocal.StartTime);
+
+										lock (listLock)
+										{
+											vocals.Add(new SyllableVocals(backgroundVocalGroupContainer, backgroundVocal.Syllables, true, false, set.OppositeAligned));
+										}
 									}
 								}
-							}
 
-							// Stupid piece of crap won't just accept the List of SyllableVocals, EVEN THOUGH IT INHERITS FROM ISyncedVocals
-							lock (listLock)
-							{
+								// Stupid piece of crap won't just accept the List of SyllableVocals, EVEN THOUGH IT INHERITS FROM ISyncedVocals
+								lock (listLock)
+								{
 
-								List<ISyncedVocals> localVocals = [];
-								localVocals.AddRange(vocals);
+									List<ISyncedVocals> localVocals = [];
+									localVocals.AddRange(vocals);
 
-								vocalGroups.Add(vocalGroupContainer, localVocals);
-								vocalGroupStartTimes.Add(startTime);
+									vocalGroups.Add(vocalGroupContainer, localVocals);
+									vocalGroupStartTimes.Add(startTime);
+								}
 							}
 						}
 					}
 				}
+				catch (OperationCanceledException)
+				{
+					ResetVocals();
+				}
+			}
+			catch (OperationCanceledException)
+			{
+				ResetVocals();
 			}
 			finally
 			{
 				// LyricsContainer.Dispatcher.Dispatch(() => lines.ForEach(LyricsContainer.Add));
-				LyricsContainer.Dispatcher.Dispatch(() =>
+				if (!modifyingLyrics)
 				{
-					lock (listLock)
+					modifyingLyrics = true;
+
+					await LyricsContainer.Dispatcher.DispatchAsync(() =>
 					{
-
-						var newLines = lines.ToList();
-
-						try
+						lock (listLock)
 						{
-							LyricsContainer.Clear();
 
-							newLines.Reverse();
-						}
-						finally
-						{
-							foreach (var line in newLines)
+							var newLines = lines.ToList();
+
+							try
 							{
-								LyricsContainer.Add(line);
+								LyricsContainer.Clear();
+
+								newLines.Reverse();
+							}
+							finally
+							{
+								foreach (var line in newLines)
+								{
+									LyricsContainer.Add(line);
+								}
 							}
 						}
-					}
-				});
+					});
+
+					modifyingLyrics = false;
+				}
 			}
 		}
 		else
@@ -563,46 +619,52 @@ public partial class LyricsView : ContentView
 
 	private async Task Update(CancellationToken cancel, Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, double lyricsEndTime, double timestamp, double deltaTime, bool skipped = true, bool skippedByVocal = true)
 	{
-		if (cancel.IsCancellationRequested)
-			return;
-
-		double timestampToUse = timestamp;
-
-		if (skipped)
+		try
 		{
-			timestampToUse = newTimestamp;
-			this.skipped = false;
-		}
+			cancel.ThrowIfCancellationRequested();
 
-		foreach (var vocalGroup in vocalGroups.Values)
-		{
-			foreach (var vocal in vocalGroup)
+			double timestampToUse = timestamp;
+
+			if (skipped)
 			{
-				// timestampLabel.Dispatcher.Dispatch(() => timestampLabel.Text = $"Time: {timestamp}\nDelta Time: {deltaTime}");
-				vocal.Animate(timestampToUse, deltaTime, skipped);
+				timestampToUse = newTimestamp;
+				this.skipped = false;
+			}
 
-				// if(vocal is SyllableVocals syllable && syllable.IsActive())
-				// 	ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
-
-				if (vocal is SyllableVocals syllable && syllable.IsActive() && deltaTime > 0 && isPlaying && hasLyrics)
+			foreach (var vocalGroup in vocalGroups.Values.ToList())
+			{
+				foreach (var vocal in vocalGroup)
 				{
-					int index = LyricsContainer.IndexOf(syllable.Container.Parent as IView);
+					// timestampLabel.Dispatcher.Dispatch(() => timestampLabel.Text = $"Time: {timestamp}\nDelta Time: {deltaTime}");
+					vocal.Animate(timestampToUse, deltaTime, skipped);
 
-					if (timestamp > syllable.StartTime && index != previousLineIndex)
+					// if(vocal is SyllableVocals syllable && syllable.IsActive())
+					// 	ScrollViewer.Dispatcher.Dispatch(() => ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true));
+
+					if (vocal is SyllableVocals syllable && syllable.IsActive() && deltaTime > 0 && isPlaying && hasLyrics)
 					{
-						// LyricsContainer.Dispatcher.Dispatch(async () => await scroller.ScrollAsync());
-						ScrollViewer.Dispatcher.Dispatch(() =>
+						int index = LyricsContainer.IndexOf(syllable.Container.Parent as IView);
+
+						if (timestamp > syllable.StartTime && index != previousLineIndex)
 						{
-							if (cancel.IsCancellationRequested) return;
+							// LyricsContainer.Dispatcher.Dispatch(async () => await scroller.ScrollAsync());
+							ScrollViewer.Dispatcher.Dispatch(() =>
+							{
+								if (!LyricsView.vocalGroups.Values.Any(x => x.Contains(syllable))) return;
+								ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true);
+							});
 
-							ScrollViewer.ScrollToAsync(syllable.Container, ScrollToPosition.Center, true);
-						});
-
-						previousLineIndex = lineIndex;
-						lineIndex = index;
+							previousLineIndex = lineIndex;
+							lineIndex = index;
+						}
 					}
 				}
 			}
+		}
+		catch (OperationCanceledException)
+		{
+			vocalGroups.Clear();
+			ResetVocals();
 		}
 	}
 
@@ -612,63 +674,90 @@ public partial class LyricsView : ContentView
 
 	private async Task UpdateProgress(long initialPosition, double startedSyncAt, Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, double lyricsEndTime, CancellationToken cancel)
 	{
-		if (cancel.IsCancellationRequested)
-			return;
+		try
+		{
+			if(cancel.IsCancellationRequested)
+			{
+				return;
+			}
+
+			cancel.ThrowIfCancellationRequested();
 
 #if ANDROID
-		double deltaTime = -1;
-		long position = initialPosition;
-		long updatedAt;
+			double deltaTime = -1;
+			long position = initialPosition;
+			long updatedAt;
 
-		position = initialPosition;
-		updatedAt = stopwatch.ElapsedMilliseconds;
-		// deltaTime = (updatedAt - lastUpdatedAt) / 1000;
-		// deltaTime = (updatedAt - lastUpdatedAt).TotalMilliseconds / 1000;
-		deltaTime = (stopwatch.Elapsed - TimeSpan.FromMilliseconds(lastUpdatedAt)).TotalSeconds;
+			position = initialPosition;
+			updatedAt = stopwatch.ElapsedMilliseconds;
+			// deltaTime = (updatedAt - lastUpdatedAt) / 1000;
+			// deltaTime = (updatedAt - lastUpdatedAt).TotalMilliseconds / 1000;
+			deltaTime = (stopwatch.Elapsed - TimeSpan.FromMilliseconds(lastUpdatedAt)).TotalSeconds;
 
-		double newTimestamp = 0;
-		double fireDeltaTime = deltaTime;
+			double newTimestamp = 0;
+			double fireDeltaTime = deltaTime;
 
-		if (skipped)
-		{
-			position = this.newTimestamp;
-			resetOffset = stopwatch.ElapsedMilliseconds - 2500;
-		}
-
-		double syncedTimestamp = (position / 1000) + (startedSyncAt == 0 ? 0 : (updatedAt - startedSyncAt) / 1000) - (resetOffset / 1000);
-
-		if (syncedTimestamp >= lyricsEndTime)
-			return;
-
-		// startedSyncAt = -1; idk why I did this
-		// position = -1;
-
-		if (isPlaying)
-		{
-			if (syncedTimestamp == 0 || Math.Abs(syncedTimestamp - timestamp) < 0.075)
+			if (skipped)
 			{
-				newTimestamp = timestamp + deltaTime;
-				fireDeltaTime = deltaTime;
+				position = this.newTimestamp;
+				resetOffset = stopwatch.ElapsedMilliseconds - 2500;
 			}
-			else
+
+			double syncedTimestamp = (position / 1000) + (startedSyncAt == 0 ? 0 : (updatedAt - startedSyncAt) / 1000) - (resetOffset / 1000);
+
+			if (syncedTimestamp >= lyricsEndTime)
+				return;
+
+			// startedSyncAt = -1; idk why I did this
+			// position = -1;
+
+			if (isPlaying)
+			{
+				if (syncedTimestamp == 0 || Math.Abs(syncedTimestamp - timestamp) < 0.075)
+				{
+					newTimestamp = timestamp + deltaTime;
+					fireDeltaTime = deltaTime;
+				}
+				else
+					newTimestamp = syncedTimestamp;
+			}
+			else if (syncedTimestamp != 0 && Math.Abs(syncedTimestamp - timestamp) > 0.05)
+			{
 				newTimestamp = syncedTimestamp;
-		}
-		else if (syncedTimestamp != 0 && Math.Abs(syncedTimestamp - timestamp) > 0.05)
-		{
-			newTimestamp = syncedTimestamp;
-			fireDeltaTime = 0;
-		}
+				fireDeltaTime = 0;
+			}
 
-		if (newTimestamp != 0 && isPlaying)
-		{
-			timestamp = newTimestamp;
-			await Update(cancel, vocalGroups, lyricsEndTime, timestamp, deltaTime, skipped, false);
-		}
+			if (newTimestamp != 0 && isPlaying)
+			{
+				timestamp = newTimestamp;
+				await Update(cancel, vocalGroups, lyricsEndTime, timestamp, deltaTime, skipped, false);
+			}
 
-		lastUpdatedAt = updatedAt;
+			lastUpdatedAt = updatedAt;
 
-		await Defer(async () => await UpdateProgress(position, startedSyncAt, vocalGroups, lyricsEndTime, cancel));
+			await Defer(async () => await UpdateProgress(position, startedSyncAt, vocalGroups, lyricsEndTime, cancel));
 #endif
+		}
+		catch (OperationCanceledException)
+		{
+
+		}
+	}
+
+	private void ResetVocals()
+	{
+		if (modifyingLyrics) return;
+
+		cancelToken.Cancel();
+
+		cancelToken?.Dispose();
+		vocalGroups.Clear();
+		vocalGroupStartTimes.Clear();
+
+		stopwatch.Reset();
+		lineIndex = 0;
+		previousLineIndex = -1;
+		cancelToken = new CancellationTokenSource();
 	}
 
 	protected void OnDisappearing()

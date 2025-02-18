@@ -20,6 +20,11 @@
             <RowDefinition Height="300"/>
         </Grid.RowDefinitions>
 
+        <!-- Workaround because the opacity does not get set correctly on startup. Gotta love .NET MAUI -->
+        <Grid Grid.RowSpan="3" Opacity="0.2" ZIndex="-1">
+            <BoxView Color="Black"/>
+        </Grid>
+
         <Grid x:Name="nowPlayingLyrics" VerticalOptions="End" Margin="0,0,0,10" IsVisible="False">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100"/>
@@ -51,7 +56,11 @@
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="0"/>
                 </Border.StrokeShape>
-                <Image Source="{Binding Image}" Aspect="AspectFill" WidthRequest="300" HeightRequest="300"/>
+
+                <!--<toolkit:MediaElement x:Name="animatedAlbum" Aspect="AspectFill" WidthRequest="300" HeightRequest="300" ShouldShowPlaybackControls="False" ShouldAutoPlay="True" ShouldLoopPlayback="True"/>-->
+                <Image Source="{Binding Image}" Aspect="AspectFill" WidthRequest="300" HeightRequest="300" IsVisible="True"/>
+                <!--<Grid WidthRequest="300" HeightRequest="300">
+                </Grid>-->
             </Border>
 
             <VerticalStackLayout Spacing="2" HorizontalOptions="Center">

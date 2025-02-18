@@ -51,9 +51,9 @@ public partial class PlaylistPage : ContentPage
 		}
 	}
 
-	protected override bool OnBackButtonPressed()
+	/*protected override bool OnBackButtonPressed()
 	{
 		Shell.Current.GoToAsync("//Home");
 		return true;
-	}
+	}*/
 }

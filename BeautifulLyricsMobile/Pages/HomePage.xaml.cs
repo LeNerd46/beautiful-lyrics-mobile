@@ -574,7 +574,7 @@ public partial class HomePage : ContentPage
 			gridBoy.Children.Remove(blob);
 		}
 
-		gridBoy.Add(new BlobAnimationView(image)
+		gridBoy.Add(new BlobAnimationView(image, null)
 		{
 			HorizontalOptions = LayoutOptions.FillAndExpand,
 			VerticalOptions = LayoutOptions.FillAndExpand,
