@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:model="clr-namespace:BeautifulLyricsMobileV2.PageModels"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+             xmlns:touch="clr-namespace:BeautifulLyricsMobileV2.Controls"
+             x:Class="BeautifulLyricsMobileV2.Pages.LyricsView">
+
+    <Grid x:Name="backgroundGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="00"/>
+        </Grid.RowDefinitions>
+
+        <!-- Workaround because the opacity does not get set correctly on startup. Gotta love .NET MAUI -->
+        <Grid Grid.RowSpan="3" Opacity="0.2" ZIndex="-1">
+            <BoxView Color="Black"/>
+        </Grid>
+
+        <Grid x:Name="nowPlayingLyrics" VerticalOptions="End" Margin="0,0,0,10" x:DataType="model:LyricsViewModel">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ImageButton x:Name="smallAlbumCover" Source="{Binding Image}" WidthRequest="50" HeightRequest="50" HorizontalOptions="End" Margin="10, 0"/>
+
+            <VerticalStackLayout Grid.Column="1">
+                <Label Text="{Binding Title}" FontSize="20" MaxLines="1" MaximumWidthRequest="220" HorizontalOptions="Start"/>
+                <Label Text="{Binding Artist}" TextColor="LightGray"/>
+            </VerticalStackLayout>
+
+            <HorizontalStackLayout Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center" Margin="30, 0" Spacing="10">
+                <ImageButton x:Name="heartButton" Source="{mi:MaterialRounded Icon=FavoriteOutline}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
+                <ImageButton Source="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
+            </HorizontalStackLayout>
+        </Grid>
+
+        <touch:TouchScrollView x:Name="ScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout x:Name="lyricsContainer" Spacing="20"/>
+        </touch:TouchScrollView>
+    </Grid>
+</ContentView>
