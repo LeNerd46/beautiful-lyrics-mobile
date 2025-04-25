@@ -1,7 +1,30 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
-Heavily based on [beautiful-lyrics](https://github.com/surfbryce/beautiful-lyrics) by surfbryce
+Heavily based on [beautiful-lyrics](https://github.com/surfbryce/beautiful-lyrics) by [@surfbryce](https://github.com/surfbryce)
+
+## [1.0.0-preview] - 2025-4-25
+Complete rewrite of the app, almost everything is different. This version focused **heavily** on stability instead of new features
+
+### Added
+- Heart button displays correct state, you can like and unlike songs
+- Line by line lyrics
+- Static lyrics
+
+### Fixed
+- Songs **never** crash when changing songs
+- Songs are **always** in time with Spotify
+- Songs **almost always** load instantly
+
+### Changed
+- Home screen has been removed
+- Album/playlist views have been removed
+- Search page has been removed
+- Player view has been removed, only lyrics view now
+- Onboarding screen is completely different. It has gradient colors and you can actually look at the text
+- Can no longer seek in the song, lyrics do not update accordingly anymore
+- Lyrics do not update after leaving the app
+- Line scrolling is much more efficient
 
 ## [0.2] - 2025-1-16
   
