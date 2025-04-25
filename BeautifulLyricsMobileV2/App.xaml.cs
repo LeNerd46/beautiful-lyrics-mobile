@@ -11,7 +11,8 @@ namespace BeautifulLyricsMobileV2
 
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new AppShell());
+            bool onboardingNeeded = !Preferences.Get("Onboarding", false);
+            return new Window(onboardingNeeded ? new OnboardingPage() : new AppShell());
         }
     }
 }

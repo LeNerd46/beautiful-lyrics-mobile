@@ -513,8 +513,8 @@ namespace BeautifulLyricsMobileV2.Entities
 				}
 			}).ContinueWith(t =>
 			{
-				if (t.IsFaulted)
-					MainThread.BeginInvokeOnMainThread(() => Toast.Make(t.Exception?.Message).Show());
+				//if (t.IsFaulted)
+				//	MainThread.BeginInvokeOnMainThread(() => Toast.Make(t.Exception?.Message).Show());
 			});
 		}
 

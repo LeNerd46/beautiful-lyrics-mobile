@@ -5,7 +5,6 @@ using Android.Content.PM;
 using Android.OS;
 using BeautifulLyricsMobileV2.Platforms.Android.PlatformServices;
 using BeautifulLyricsMobileV2.Services;
-using Com.Google.Android.Exoplayer2.Source.Dash.Manifest;
 using Com.Spotify.Android.Appremote.Api;
 using CommunityToolkit.Maui.Alerts;
 using Java.Lang;
@@ -26,66 +25,28 @@ namespace BeautifulLyricsMobileV2
 		protected override void OnCreate(Bundle? savedInstanceState)
 		{
 			base.OnCreate(savedInstanceState);
-			SecureStorage.SetAsync("spotifyId", "4d42ec7301a64d57bc1971655116a3b9");
 
 			Remote = IPlatformApplication.Current.Services.GetRequiredService<ISpotifyRemoteService>();
-			string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
-			string firstTime = SecureStorage.GetAsync("first").GetAwaiter().GetResult();
-
-			if (!string.IsNullOrWhiteSpace(clientId))
-			{
-				// For some reason, we have to open Spotify in order for the app to actually ask Spotify to authenticate. Not a pretty solution, but the only way I could figure it out to work
-				if (string.IsNullOrWhiteSpace(firstTime) || firstTime != "false")
-				{
-					var spotifyIntent = PackageManager.GetLaunchIntentForPackage("com.spotify.music");
-
-					if (spotifyIntent != null)
-					{
-						spotifyIntent.AddFlags(ActivityFlags.NewTask);
-						// StartActivity(spotifyIntent);
-					}/*
-
-					ConnectionListener listener = new ConnectionListener();
-
-					listener.Connected += (s, e) =>
-					{
-						Remote = new AndroidSpotifyService();
-						Remote.SetRemoteClient(e.Remote);
-
-						//Connected?.Invoke(this, EventArgs.Empty);
-						Remote.InvokeConnected();
-					};
-
-					listener.Failed += (s, e) =>
-					{
-						Toast.Make(e.ErrorMessage, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
-					};
-
-					SpotifyAppRemote remote;
-					ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
-					SpotifyAppRemote.Connect(this, connectionParams, listener);*/
-				}
-			}
 
 			receiver = new SpotifyBroadcastReceiver();
 			filter = new IntentFilter();
 
 			filter.AddAction("com.spotify.music.playbackstatechanged");
 			filter.AddAction("com.spotify.music.metadatachanged");
-
-			// filter.AddAction("com.spotify.music.queuechanged");
 		}
 
 		protected override void OnResume()
 		{
 			base.OnResume();
+			RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
+			
+			// if (!Preferences.Get("Onboarding", false))
+			// 	return;
 
 			try
 			{
-				RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
-				string clientId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
-
-				if (string.IsNullOrWhiteSpace(clientId)) return;
+				string spotifyId = SecureStorage.GetAsync("spotifyId").GetAwaiter().GetResult();
+				if (string.IsNullOrWhiteSpace(spotifyId)) return;
 
 				ConnectionListener listener = new ConnectionListener();
 
@@ -99,21 +60,22 @@ namespace BeautifulLyricsMobileV2
 
 				listener.Failed += (s, e) =>
 				{
+					//Preferences.Set("Onboarding", false);
 					Toast.Make(e.ErrorMessage, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
 				};
 
 				SpotifyAppRemote remote;
-				ConnectionParams connectionParams = new ConnectionParams.Builder(clientId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+				ConnectionParams connectionParams = new ConnectionParams.Builder(spotifyId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
 				SpotifyAppRemote.Connect(this, connectionParams, listener);
 
-				SpotifyClient client;
+				// SpotifyClient client;
 
-				if (File.Exists(Path.Combine(FileSystem.AppDataDirectory, "creds.json")))
+				/*if (File.Exists(Path.Combine(FileSystem.AppDataDirectory, "creds.json")))
 					client = GetToken(clientId);
 				else
-					CreateToken(clientId).Wait();
+					CreateToken(clientId).Wait();*/
 			}
-			catch(System.Exception ex)
+			catch (System.Exception ex)
 			{
 				Toast.Make(ex.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
 			}
@@ -121,14 +83,20 @@ namespace BeautifulLyricsMobileV2
 
 		protected override void OnPause()
 		{
-			UnregisterReceiver(receiver);
+			try
+			{
+				UnregisterReceiver(receiver);
+			}
+			catch(System.Exception) { }
+
 			base.OnPause();
 		}
 
 		protected override void OnStop()
 		{
-			SpotifyAppRemote.Disconnect(Remote.Client as SpotifyAppRemote);
-			
+			if (Remote?.Client != null)
+				SpotifyAppRemote.Disconnect(Remote.Client as SpotifyAppRemote);
+
 			base.OnStop();
 		}
 
@@ -197,7 +165,7 @@ namespace BeautifulLyricsMobileV2
 
 				SongChanged?.Invoke(this, new SongChangedEventArgs(realId, title, artist, album, length));
 			}
-			else if(intent.Action == "com.spotify.music.playbackstatechanged")
+			else if (intent.Action == "com.spotify.music.playbackstatechanged")
 			{
 				bool isPlaying = intent.GetBooleanExtra("playing", false);
 				int position = intent.GetIntExtra("playbackPosition", 0);

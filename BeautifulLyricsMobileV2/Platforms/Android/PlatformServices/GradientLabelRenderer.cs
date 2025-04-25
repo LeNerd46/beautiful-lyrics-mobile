@@ -12,9 +12,8 @@ using System.Threading.Tasks;
 
 namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 {
-    // Not a platform service, but I don't care
-    class GradientLabelRenderer : LabelRenderer
-    {
+	class GradientLabelRenderer : LabelRenderer
+	{
 		public GradientLabelRenderer(Context context) : base(context) { }
 
 		protected override void OnElementChanged(ElementChangedEventArgs<Label> e)
@@ -44,12 +43,6 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 			if (radius <= 0 || opacity <= 0)
 				return;
 
-			// if (opacity <= label.PreviousOpacity || radius <= label.PreviousRadius)
-			// 	return;
-			// 
-			// label.PreviousOpacity = opacity;
-			// label.PreviousRadius = radius;
-
 			var color = Colors.White.ToAndroid();
 			color.A = (byte)(opacity * 255);
 
@@ -59,23 +52,31 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 		private void SetColors()
 		{
 			GradientLabel label = Element as GradientLabel;
+			Shader shader;
 
 			var c1 = label.StartColor.WithAlpha(label.LabelOpacity).ToAndroid();
 			var c2 = label.EndColor.WithAlpha(label.LabelOpacity).ToAndroid();
 
-			// var progress = Control.MeasuredWidth * (label.GradientProgress * 0.01f);
 			float progressFraction = label.Progress * 0.01f;
 
-			// Shader shader = new LinearGradient(progress, 0, Control.MeasuredWidth, 0, c1, c2, Shader.TileMode.Clamp);
-
-			Shader shader;
-
-			if (progressFraction <= 0f)
-				shader = new LinearGradient(0, 0, Control.MeasuredWidth, 0, c2, c2, Shader.TileMode.Clamp);
-			else if (progressFraction >= 1f)
-				shader = new LinearGradient(0, 0, Control.MeasuredWidth, 0, c1, c1, Shader.TileMode.Clamp);
+			if (!label.LineVocal)
+			{
+				if (progressFraction <= 0f)
+					shader = new LinearGradient(0, 0, Control.MeasuredWidth, 0, c2, c2, Shader.TileMode.Clamp);
+				else if (progressFraction >= 1f)
+					shader = new LinearGradient(0, 0, Control.MeasuredWidth, 0, c1, c1, Shader.TileMode.Clamp);
+				else
+					shader = new LinearGradient(0, 0, Control.MeasuredWidth, 0, [c1, c1, c2, c2], [0f, progressFraction, progressFraction, 1f], Shader.TileMode.Clamp);
+			}
 			else
-				shader = new LinearGradient(0, 0, Control.MeasuredWidth, 0, [c1, c1, c2, c2], [0f, progressFraction, progressFraction, 1f], Shader.TileMode.Clamp);
+			{
+				if (progressFraction <= 0f)
+					shader = new LinearGradient(0, 0, 0, Control.MeasuredHeight, c2, c2, Shader.TileMode.Clamp);
+				else if (progressFraction >= 1f)
+					shader = new LinearGradient(0, 0, 0, Control.MeasuredHeight, c1, c1, Shader.TileMode.Clamp);
+				else
+					shader = new LinearGradient(0, 0, 0, Control.MeasuredHeight, [c1, c1, c2, c2], [0f, progressFraction, progressFraction, 1f], Shader.TileMode.Clamp);
+			}
 
 			Control.Paint.SetShader(shader);
 			Control.Invalidate();

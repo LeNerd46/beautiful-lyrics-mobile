@@ -8,8 +8,7 @@ using BeautifulLyricsMobileV2.Pages;
 using Microsoft.Maui.Controls.Compatibility.Hosting;
 using BeautifulLyricsMobileV2.Controls;
 using SkiaSharp.Views.Maui.Handlers;
-
-
+using Syncfusion.Maui.Toolkit.Hosting;
 
 
 
@@ -26,10 +25,10 @@ namespace BeautifulLyricsMobileV2
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
+                .UseMauiCompatibility()
                 .UseMauiCommunityToolkit()
                 .UseMauiCommunityToolkitMediaElement()
                 .UseMaterialRoundedMauiIcons()
-                .UseMauiCompatibility()
                 .ConfigureLifecycleEvents(events =>
                 {
 #if ANDROID

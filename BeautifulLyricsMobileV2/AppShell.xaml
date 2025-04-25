@@ -11,5 +11,4 @@
     <ShellContent Title="Loading" ContentTemplate="{DataTemplate pages:LoadingPage}" Route="LoadingPage"/>
 
     <ShellContent Title="Home" ContentTemplate="{DataTemplate local:MainPage}" Route="MainPage" />
-
 </Shell>

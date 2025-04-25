@@ -32,7 +32,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(ProgressProperty, value);
 		}
 
-		public static readonly BindableProperty LabelOpacityProperty = BindableProperty.Create(nameof(LabelOpacity), typeof(float), typeof(float), 0.5f);
+		public static readonly BindableProperty LabelOpacityProperty = BindableProperty.Create(nameof(LabelOpacity), typeof(float), typeof(float), 0.35f);
 
 		public float LabelOpacity
 		{
@@ -56,7 +56,15 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(ShadowOpacityProperty, value);
 		}
 
-		public Task MyFadeTo(float target, uint duration = 250, Easing easing = null)
+		public static readonly BindableProperty LineVocalProperty = BindableProperty.Create(nameof(LineVocal), typeof(bool), typeof(bool), false);
+
+		public bool LineVocal
+		{
+			get => (bool)GetValue(LineVocalProperty);
+			set => SetValue(LineVocalProperty, value);
+		}
+
+		public Task FadeTo(float target, uint duration = 250, Easing easing = null)
 		{
 			var taskCompletionSource = new TaskCompletionSource<bool>();
 

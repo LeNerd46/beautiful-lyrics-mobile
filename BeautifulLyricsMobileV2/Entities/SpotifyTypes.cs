@@ -37,6 +37,11 @@ namespace BeautifulLyricsMobileV2.Entities
 		public string Image { get; set; }
 
 		/// <summary>
+		/// The Spotify URI for the image
+		/// </summary>
+		public string SpotifyImage { get; set; }
+
+		/// <summary>
 		/// The album this track is a part of
 		/// </summary>
 		public SpotifyAlbum Album { get; set; }
@@ -94,4 +99,30 @@ namespace BeautifulLyricsMobileV2.Entities
 		/// </summary>
 		public string Id { get => Uri.Split(':')[2]; }
 	}
+
+	public class SpotifyLibraryState
+	{
+		/// <summary>
+		/// The URI of the item
+		/// </summary>
+		public string Uri { get; set; }
+
+		/// <summary>
+		/// Whether or not the user can save this item
+		/// </summary>
+		public bool CanAdd { get; set; }
+
+		/// <summary>
+		/// Whether this item is already saved in the user's library
+		/// </summary>
+		public bool IsAdded { get; set; }
+	}
+}
+
+public enum PlayableItemType
+{
+	Album,
+	Artist,
+	Playlist,
+	Track
 }

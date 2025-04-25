@@ -1,111 +1,68 @@
-﻿using BeautifulLyricsMobileV2.Services;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using BeautifulLyricsMobileV2.Entities;
+using BeautifulLyricsMobileV2.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MauiIcons.Core;
+using MauiIcons.Material.Rounded;
+using System.Formats.Asn1;
+using BeautifulLyricsMobileV2.Pages;
 
 namespace BeautifulLyricsMobileV2.PageModels
 {
-	public class LyricsViewModel : INotifyPropertyChanged
+	public partial class LyricsViewModel : ObservableObject
 	{
-		public event PropertyChangedEventHandler PropertyChanged;
-		public ISpotifyRemoteService Remote { get; set; }
+		public ISpotifyRemoteService Remote { get; }
 
 		public LyricsViewModel(ISpotifyRemoteService remote) 
 		{
 			Remote = remote;
+			//Image = "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg";
 		}
 
 		public LyricsViewModel()
 		{
-			Image = "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg";
+			//Image = "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg";
 		}
 
-		private string _id;
+		[ObservableProperty]
+		public partial bool IsPlaying { get; set; }
 
-		public string Id
+		[ObservableProperty]
+		public partial bool Saved { get; set; }
+
+		[ObservableProperty]
+		private SpotifyTrack track;
+
+		[RelayCommand]
+		public async Task NoFunctionButton(Image image)
 		{
-			get => _id;
-			set 
-			{ 
-				_id = value;
-				OnPropertyChanged();
-			}
+			await image.ScaleTo(0.8, 150, Easing.CubicIn);
+			await image.ScaleTo(1, 150, Easing.CubicOut);
 		}
 
-		private string _title;
-
-		public string Title
+		[RelayCommand]
+		public async Task ToggleLiked(Image image)
 		{
-			get => _title;
-			set
-			{
-				_title = value;
-				OnPropertyChanged();
-			}
+			await image.ScaleTo(0.8, 150, Easing.CubicIn);
+			await image.ScaleTo(1, 150, Easing.CubicOut);
+
+			SpotifyLibraryState state = await Remote.GetLibraryState(Track.Id);
+			Saved = !state.IsAdded;
+
+			if(state.IsAdded)
+				await Remote.RemoveLibraryItem(Track.Id);
+			else
+				await Remote.SaveLibraryItem(Track.Id);
 		}
 
-		private string _album;
-
-		public string Album
+		[RelayCommand]
+		public async Task OpenSheet(Image image)
 		{
-			get => _album;
-			set
-			{
-				_album = value;
-				OnPropertyChanged();
-			}
-		}
+			await image.ScaleTo(0.8, 150, Easing.CubicIn);
+			await image.ScaleTo(1, 150, Easing.CubicOut);
 
-		private string _artist;
-
-		public string Artist
-		{
-			get => _artist;
-			set
-			{
-				_artist = value;
-				OnPropertyChanged();
-			}
-		}
-
-		private int _duration;
-
-		public int Duration
-		{
-			get => _duration;
-			set
-			{
-				_duration = value;
-				OnPropertyChanged();
-			}
-		}
-
-		private bool _isPlaying;
-
-		public bool IsPlaying
-		{
-			get => _isPlaying;
-			set
-			{
-				_isPlaying = value;
-				OnPropertyChanged();
-			}
-		}
-
-		private string _image;
-
-		public string Image
-		{
-			get => _image;
-			set
-			{
-				_image = value;
-				OnPropertyChanged();
-			}
-		}
-
-		protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-		{
-			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+			// Doesn't work in .NET 9 :(
+			// await sheet.ShowAsync();
 		}
 	}
 }

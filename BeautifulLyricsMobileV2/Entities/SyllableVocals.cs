@@ -18,13 +18,10 @@ namespace BeautifulLyricsMobileV2.Entities
 		public double Duration { get; set; }
 		public List<AnimatedSyllable> Syllables { get; } = [];
 		private bool Active { get; set; }
-		public bool Sung { get; set; }
 
 		private LyricState State = LyricState.Idle;
 		private bool isSleeping = true;
-
 		public bool IsBackground { get; set; }
-		public bool OppositeAligned { get; set; }
 
 		public SyllableVocals(FlexLayout lineContainer, List<SyllableMetadata> syllables, bool isBackground, bool isRomanized, bool oppositeAligned)
 		{
@@ -33,7 +30,6 @@ namespace BeautifulLyricsMobileV2.Entities
 
 			Active = false;
 			IsBackground = isBackground;
-			OppositeAligned = oppositeAligned;
 
 			StartTime = syllables[0].StartTime;
 			Duration = syllables[^1].EndTime - StartTime + 0.3d;
@@ -328,7 +324,7 @@ namespace BeautifulLyricsMobileV2.Entities
 					label.TranslationY = yOffset * (isEmphasized ? 1.5d : 1d);
 					label.Progress = gradientProgress;
 
-					label.ShadowRadius = (float)(4 * (2 * (float)glow * (isEmphasized ? 3d : 1d)));
+					label.ShadowRadius = (float)(4 * (2 * (float)glow * (isEmphasized ? 1.69d : 1d)));
 					label.ShadowOpacity = (float)Math.Max(0, Math.Min(1, glow * (isEmphasized ? 1 : 0.4f)));
 				});
 			}
@@ -429,12 +425,12 @@ namespace BeautifulLyricsMobileV2.Entities
 							foreach (var letter in syllable.Letters)
 							{
 								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
-								_ = letterLabel.MyFadeTo(0.85f, 250, Easing.CubicInOut);
+								_ = letterLabel.FadeTo(0.75f, 250, Easing.CubicInOut);
 							}
 						}
 
 						if (syllable.LiveText.Object is GradientLabel label)
-							_ = label.MyFadeTo(0.85f, 250, Easing.CubicInOut);
+							_ = label.FadeTo(0.75f, 250, Easing.CubicInOut);
 					}
 				}
 
@@ -448,7 +444,10 @@ namespace BeautifulLyricsMobileV2.Entities
 							{
 								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
 								letterLabel.Progress = 0;
-								_ = letterLabel.MyFadeTo(0.75f, 250, Easing.CubicInOut);
+								_ = letterLabel.FadeTo(0.65f, 250, Easing.CubicInOut);
+								letterLabel.StartColor = new Color(224, 224, 224);
+								//letterLabel.EndColor = Colors.Pink;
+								//letterLabel.StartColor = Colors.Pink;
 
 								// SetToGeneralState(false);
 								UpdateLiveTextVisuals(letter.LiveText, true, 0, 0);
@@ -458,7 +457,10 @@ namespace BeautifulLyricsMobileV2.Entities
 						if (syllable.LiveText.Object is GradientLabel label)
 						{
 							label.Progress = 0;
-							_ = label.MyFadeTo(0.75f, 250, Easing.CubicInOut);
+							_ = label.FadeTo(0.65f, 250, Easing.CubicInOut);
+							label.StartColor = new Color(224, 224, 224);
+							//label.EndColor = Colors.Pink;
+							//label.StartColor = Colors.Pink;
 
 							// SetToGeneralState(false);
 							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 0);

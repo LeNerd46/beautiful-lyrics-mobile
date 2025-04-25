@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:model="clr-namespace:BeautifulLyricsMobileV2.PageModels"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+             x:Class="BeautifulLyricsMobileV2.Pages.OnboardingPage"
+             Title="OnboardingPage">
+
+    <ContentPage.Resources>
+        <!-- FIRST PAGE -->
+        <RadialGradientBrush x:Key="AnimatedBrush" Center="0.8,0.2" Radius="1.0">
+            <GradientStop Color="#22D3EE" Offset="0.0" />
+            <GradientStop Color="#3B82F6" Offset="0.5" />
+            <GradientStop Color="#5eadf7" Offset="0.8" />
+            <GradientStop Color="#FFFFFF" Offset="1.0" />
+        </RadialGradientBrush>
+        
+        <!-- SECOND PAGE -->
+        <RadialGradientBrush x:Key="SpotifyPageBrush" Center="0.8,0.2" Radius="1.0">
+            <GradientStop Color="#A7F3D0" Offset="0.0" />
+            <GradientStop Color="#6EE7B7" Offset="0.3" />
+            <GradientStop Color="#D1FAE5" Offset="0.7" />
+            <GradientStop Color="#FFFFFF" Offset="1.0" />
+        </RadialGradientBrush>
+        
+        <!-- THIRD PAGE -->
+        <RadialGradientBrush x:Key="LastPageBrush" Center="0.8,0.2" Radius="1.0">
+            <GradientStop Color="#FF7EB3" Offset="0.0" />
+            <GradientStop Color="#FF758C" Offset="0.4" />
+            <GradientStop Color="#FFDAB9" Offset="0.7" />
+            <GradientStop Color="#FFFFFF" Offset="1.0" />
+        </RadialGradientBrush>
+    </ContentPage.Resources>
+
+    <Grid x:Name="gridBackground" Background="{Binding Background}">
+        <CarouselView x:Name="onboardingView" ItemsSource="{Binding Items}" IndicatorView="{x:Reference onboardingIndicator}" Loop="False" PositionChanged="OnboardingViewChanged">
+            <CarouselView.ItemTemplate>
+                <DataTemplate x:DataType="model:OnboardingItem">
+                    <Grid RowDefinitions="*,*,*">
+                        <Image mi:MauiIcon.Value="{mi:MaterialRounded Icon=HelpOutline}" IsVisible="{Binding secondPage}" HorizontalOptions="End" Margin="0,15,5,0">
+                            <Image.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="HelpButtonTapped"/>
+                            </Image.GestureRecognizers>
+                        </Image>
+                        
+                        <Label Text="{Binding Title}" HorizontalOptions="Center" FontSize="36">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding TitlePosition}" Value="0">
+                                    <Setter Property="VerticalOptions" Value="Start"/>
+                                    <Setter Property="Margin" Value="0,50,0,0"/>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" Binding="{Binding TitlePosition}" Value="1">
+                                    <Setter Property="VerticalOptions" Value="Center"/>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" Binding="{Binding TitlePosition}" Value="2">
+                                    <Setter Property="VerticalOptions" Value="End"/>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+
+                        <VerticalStackLayout Grid.Row="1" Margin="20,10,20,0" HorizontalOptions="Center" Spacing="20">
+                            <Label Text="{Binding Description}" FontSize="18" HorizontalTextAlignment="Center"/>
+
+                            <Entry IsVisible="{Binding secondPage}" Placeholder="Enter Spotify Cilent ID" TextChanged="OnSpotifyEntryTextChanged" PlaceholderColor="#80FFFFFF"/>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Row="2" Spacing="20">
+                            <Label Text="{Binding BottomText}" HorizontalOptions="Center" FontSize="16"/>
+
+                            <Button Text="{Binding ButtonText}" Margin="20,10" FontSize="18" CornerRadius="18" TextColor="Black" BackgroundColor="#80FFFFFF" Clicked="ProgressOnboarding"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+
+        <IndicatorView x:Name="onboardingIndicator" IndicatorsShape="Circle" IndicatorSize="12" HorizontalOptions="Center" VerticalOptions="End" IndicatorColor="#90FFFFFF" SelectedIndicatorColor="#40FFFFFF" Margin="0,0,0,30"/>
+
+        <!--<Label Text="Beautiful Lyrics" HorizontalOptions="Center" VerticalOptions="End" FontSize="36"/>
+
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" Margin="0,10,0,0">
+            <Label Text="Revolutionize your lyrics with " FontSize="18"/>
+            <Label Text="beautiful" FontAttributes="Italic" FontSize="18"/>
+            <Label Text=" lyrics" FontSize="18"/>
+        </HorizontalStackLayout>
+
+        <VerticalStackLayout Grid.Row="2" Spacing="20">
+            <Label Text="Connect with Spotify to continue" HorizontalOptions="Center" FontSize="16"/>
+
+            <Button Text="Connect With Spotify" Margin="20,10" FontSize="18" CornerRadius="18" TextColor="Black" BackgroundColor="#80FFFFFF" Clicked="ConnectSpotify"/>
+        </VerticalStackLayout>-->
+    </Grid>
+</ContentPage>

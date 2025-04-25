@@ -62,77 +62,84 @@ namespace BeautifulLyricsMobileV2.Entities
 			}
 			else if (lyrics.Lyrics.LineLyrics is LineSyncedLyrics lineLyrics)
 			{
-				List<string> lines = [];
-				List<LineVocal> lineVocals = [];
-
-				foreach (var vocalGroup in lineLyrics.Content)
+				try
 				{
-					LineVocal deserialize = JsonConvert.DeserializeObject<LineVocal>(vocalGroup.ToString());
+					List<string> lines = [];
+					List<LineVocal> lineVocals = [];
 
-					if (deserialize is LineVocal vocal)
+					foreach (var vocalGroup in lineLyrics.Content)
 					{
-						lines.Add(vocal.Text);
-						lineVocals.Add(vocal);
+						LineVocal deserialize = JsonConvert.DeserializeObject<LineVocal>(vocalGroup.ToString());
 
-						vocalTimes.Add(new TimeMetadata
+						if (deserialize is LineVocal vocal)
 						{
-							StartTime = vocal.StartTime,
-							EndTime = vocal.EndTime
-						});
+							lines.Add(vocal.Text);
+							lineVocals.Add(vocal);
+
+							vocalTimes.Add(new TimeMetadata
+							{
+								StartTime = vocal.StartTime,
+								EndTime = vocal.EndTime
+							});
+						}
 					}
 
-					lineLyrics.Content = [.. lines];
+					lineLyrics.Content = [.. lineVocals];
 					string textToProcess = lines.Join("\n");
 
 					lyrics.Language = GetLanguage(textToProcess);
 					lyrics.NaturalAlignment = GetNaturalAlignment(lyrics.Language);
 
 					// Romanization
-				}
 
-				// Check if first vocal group needs an interlude before it
-				bool addedStartInterlude = false;
-				var firstVocalGroup = vocalTimes[0];
-				TimeMetadata time = new TimeMetadata
-				{
-					StartTime = -1,
-					EndTime = -1
-				};
-
-				if (firstVocalGroup.StartTime >= 2)
-				{
-					vocalTimes.Insert(0, time);
-
-					var newList = lineLyrics.Content.ToList();
-					newList.Insert(0, new Interlude
+					// Check if first vocal group needs an interlude before it
+					bool addedStartInterlude = false;
+					var firstVocalGroup = vocalTimes[0];
+					TimeMetadata time = new TimeMetadata
 					{
-						Time = time
-					});
+						StartTime = -1,
+						EndTime = -1
+					};
 
-					lineLyrics.Content = [.. newList];
-					addedStartInterlude = true;
-				}
-
-				for (int i = vocalTimes.Count; i > (addedStartInterlude ? 1 : 0); i--)
-				{
-					var endingVocalGroup = vocalTimes[i];
-					var startingVocalGroup = vocalTimes[i - 1];
-
-					if (endingVocalGroup.StartTime - startingVocalGroup.EndTime >= 2)
+					if (firstVocalGroup.StartTime >= 2)
 					{
-						vocalTimes.Insert(i, time);
+						vocalTimes.Insert(0, time);
 
-						TimeMetadata newTime = new TimeMetadata
+						var newList = lineLyrics.Content.ToList();
+						newList.Insert(0, new Interlude
 						{
-							StartTime = startingVocalGroup.StartTime,
-							EndTime = endingVocalGroup.EndTime - 0.25f
-						};
-
-						lineLyrics.Content.Insert(i, new Interlude
-						{
-							Time = newTime
+							Time = time
 						});
+
+						lineLyrics.Content = [.. newList];
+						addedStartInterlude = true;
 					}
+
+					for (int i = vocalTimes.Count - 1; i > (addedStartInterlude ? 1 : 0); i--)
+					{
+						var endingVocalGroup = vocalTimes[i];
+						var startingVocalGroup = vocalTimes[i - 1];
+
+						if (endingVocalGroup.StartTime - startingVocalGroup.EndTime >= 2)
+						{
+							vocalTimes.Insert(i, time);
+
+							TimeMetadata newTime = new TimeMetadata
+							{
+								StartTime = startingVocalGroup.EndTime,
+								EndTime = endingVocalGroup.StartTime - 0.25d
+							};
+
+							lineLyrics.Content.Insert(i, new Interlude
+							{
+								Time = newTime
+							});
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex.Message);
 				}
 			}
 			else if (lyrics.Lyrics.SyllableLyrics is SyllableSyncedLyrics syllableLyrics)

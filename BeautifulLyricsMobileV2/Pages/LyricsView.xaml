@@ -24,16 +24,35 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <ImageButton x:Name="smallAlbumCover" Source="{Binding Image}" WidthRequest="50" HeightRequest="50" HorizontalOptions="End" Margin="10, 0"/>
+            <ImageButton x:Name="smallAlbumCover" Source="{Binding Track.Image}" WidthRequest="50" HeightRequest="50" HorizontalOptions="End" Margin="10, 0"/>
 
             <VerticalStackLayout Grid.Column="1">
-                <Label Text="{Binding Title}" FontSize="20" MaxLines="1" MaximumWidthRequest="220" HorizontalOptions="Start"/>
-                <Label Text="{Binding Artist}" TextColor="LightGray"/>
+                <Label Text="{Binding Track.Title}" FontSize="20" MaxLines="1" MaximumWidthRequest="220" HorizontalOptions="Start"/>
+                <Label Text="{Binding Track.Artist.Name}" TextColor="LightGray"/>
             </VerticalStackLayout>
 
             <HorizontalStackLayout Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center" Margin="30, 0" Spacing="10">
-                <ImageButton x:Name="heartButton" Source="{mi:MaterialRounded Icon=FavoriteOutline}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
-                <ImageButton Source="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="22" HeightRequest="22"/>
+                <Image x:Name="heartButton" mi:MauiIcon.Value="{mi:MaterialRounded Icon=FavoriteOutline}" BackgroundColor="Transparent" WidthRequest="28" HeightRequest="28">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleLikedCommand}" CommandParameter="{x:Reference heartButton}"/>
+                    </Image.GestureRecognizers>
+
+                    <Image.Triggers>
+                        <DataTrigger TargetType="Image" Binding="{Binding Saved}" Value="True">
+                            <Setter Property="mi:MauiIcon.Value" Value="{mi:MaterialRounded Icon=Favorite}"/>
+                        </DataTrigger>
+
+                        <DataTrigger TargetType="Image" Binding="{Binding Saved}" Value="False">
+                            <Setter Property="mi:MauiIcon.Value" Value="{mi:MaterialRounded Icon=FavoriteOutline}"/>
+                        </DataTrigger>
+                    </Image.Triggers>
+                </Image>
+
+                <Image x:Name="moreButton" mi:MauiIcon.Value="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="28" HeightRequest="28">
+                    <Image.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenSheetCommand}" CommandParameter="{x:Reference moreButton}"/>
+                    </Image.GestureRecognizers>
+                </Image>
             </HorizontalStackLayout>
         </Grid>
 
