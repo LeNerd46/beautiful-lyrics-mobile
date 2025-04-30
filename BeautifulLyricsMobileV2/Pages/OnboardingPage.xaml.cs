@@ -164,7 +164,7 @@ public partial class OnboardingPage : ContentPage
 		}
 	}
 
-	private void OnSpotifyEntryTextChanged(object sender, TextChangedEventArgs e) => spotifyId = e.NewTextValue;
+	private void OnSpotifyEntryTextChanged(object sender, TextChangedEventArgs e) => spotifyId = e.NewTextValue.Trim();
 
 	private async void HelpButtonTapped(object sender, TappedEventArgs e)
 	{

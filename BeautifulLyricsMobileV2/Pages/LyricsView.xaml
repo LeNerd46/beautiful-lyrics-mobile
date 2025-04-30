@@ -18,6 +18,8 @@
             <BoxView Color="Black"/>
         </Grid>
 
+        <touch:BackgroundAnimationView x:Name="backgroundVisual" Grid.RowSpan="3" ZIndex="-2"/>
+
         <Grid x:Name="nowPlayingLyrics" VerticalOptions="End" Margin="0,0,0,10" x:DataType="model:LyricsViewModel">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100"/>
@@ -50,7 +52,7 @@
 
                 <Image x:Name="moreButton" mi:MauiIcon.Value="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="28" HeightRequest="28">
                     <Image.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenSheetCommand}" CommandParameter="{x:Reference moreButton}"/>
+                        <TapGestureRecognizer Command="{Binding OpenSheetCommand}" CommandParameter="{x:Reference moreButton}" Tapped="TapGestureRecognizer_Tapped"/>
                     </Image.GestureRecognizers>
                 </Image>
             </HorizontalStackLayout>

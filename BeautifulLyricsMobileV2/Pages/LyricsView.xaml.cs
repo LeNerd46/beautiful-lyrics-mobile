@@ -1,17 +1,10 @@
-#if ANDROID
-using Android.Media;
-#endif
-
-using BeautifulLyricsMobileV2.Controls;
 using BeautifulLyricsMobileV2.Entities;
 using BeautifulLyricsMobileV2.PageModels;
 using CommunityToolkit.Maui.Alerts;
 using MauiIcons.Core;
-using MauiIcons.Material.Rounded;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SkiaSharp;
-using SkiaSharp.Views.Maui.Controls;
 using System.Diagnostics;
 using System.Net;
 
@@ -23,9 +16,12 @@ public partial class LyricsView : ContentView
 	private string Token { get; }
 
 	private Task currentTask = Task.CompletedTask;
-	private CancellationTokenSource? cancelSource;
+	private static CancellationTokenSource? cancelSource;
 
 	private static Stopwatch stopwatch = new Stopwatch();
+	private KeyValuePair<bool, int> updatedPosition = new(false, 0);
+	private static Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups;
+	private static bool appeared = false;
 
 	public LyricsView()
 	{
@@ -49,6 +45,7 @@ public partial class LyricsView : ContentView
 
 		SpotifyBroadcastReceiver.PlaybackChanged += (s, e) => Song.IsPlaying = e.IsPlaying;
 #endif
+		vocalGroups = new Dictionary<FlexLayout, List<ISyncedVocals>>();
 	}
 
 	private async Task<SpotifyPlayerState?> TryGetPlayerState(int maxRetries = 3, int delay = 200)
@@ -69,6 +66,8 @@ public partial class LyricsView : ContentView
 	// Spotify no longer sends a song changed event on app startup for some reason :(
 	public void OnAppearing()
 	{
+		if (appeared) return;
+
 		var task = Task.Run(async () =>
 		{
 			SpotifyPlayerState? player = await TryGetPlayerState();
@@ -81,9 +80,32 @@ public partial class LyricsView : ContentView
 
 			await UpdateSong(player.Track);
 		});
+
+		backgroundVisual.Initalize();
+
+		Song.Remote.Resumed += (s, e) =>
+		{
+			Song.Remote.Connected += async (sender, eC) =>
+			{
+				SpotifyPlayerState? player = await TryGetPlayerState();
+				if (player == null) return;
+
+				if (player.Track.Id != Song.Track.Id)
+					await UpdateSong(player.Track, true);
+				else
+				{
+					double position = player.PlaybackPosition / 1000d;
+
+					await Update(cancelSource.Token, vocalGroups, position, 1.0 / 60, true);
+					await UpdateProgress(player.PlaybackPosition, stopwatch.ElapsedMilliseconds, vocalGroups, cancelSource.Token);
+				}
+			};
+		};
+
+		appeared = true;
 	}
 
-	private async Task UpdateSong(SpotifyTrack track)
+	private async Task UpdateSong(SpotifyTrack track, bool returning = false)
 	{
 		Song.Track = track;
 
@@ -91,9 +113,13 @@ public partial class LyricsView : ContentView
 		Song.Saved = state.IsAdded;
 
 		cancelSource?.Cancel();
-		try { await currentTask; }
-		catch (OperationCanceledException) { }
-		catch(WebException) { }
+
+		if (!returning)
+		{
+			try { await currentTask; }
+			catch (OperationCanceledException) { }
+			catch (WebException) { }
+		}
 
 		ResetLyrics();
 
@@ -102,7 +128,6 @@ public partial class LyricsView : ContentView
 
 	private async Task RenderLyrics(CancellationToken cancel)
 	{
-		Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups = [];
 		List<double> vocalGroupStartTimes = [];
 		List<Layout> lines = [];
 		double lyricsEndTime = -1;
@@ -135,23 +160,7 @@ public partial class LyricsView : ContentView
 
 				await backgroundGrid.Dispatcher.DispatchAsync(() =>
 				{
-					// Maybe make it just switch the image instead of removing it and making a new one?
-					if (backgroundGrid.Children.Any(x => x is BackgroundAnimationView))
-					{
-						BackgroundAnimationView backgroundToRemove = backgroundGrid.Children.FirstOrDefault(x => x is BackgroundAnimationView) as BackgroundAnimationView;
-						backgroundToRemove?.Dispose();
-						backgroundGrid.Remove(backgroundToRemove);
-					}
-
-					BackgroundAnimationView background = new BackgroundAnimationView(image, cancel)
-					{
-						HorizontalOptions = LayoutOptions.FillAndExpand,
-						VerticalOptions = LayoutOptions.FillAndExpand,
-						ZIndex = -1
-					};
-
-					backgroundGrid.Add(background);
-					backgroundGrid.SetRowSpan(background, 3);
+					backgroundVisual.UpdateImage(image, cancel);
 				});
 			}, cancel);
 
@@ -168,7 +177,7 @@ public partial class LyricsView : ContentView
 						BaseAddress = new Uri("https://beautiful-lyrics.socalifornian.live/lyrics/")
 					};
 
-					client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "BQDLdaKMJYKr8LRep_MvqrQfV72ty55wFQ4oXYuPM9AaPVcEOjqbLh3UAcSzQpOckxn4cfWn9hfDFJ-1W0scDjl214UjytYJYG-fOsqNOYvWbttLWLegqW9o8EoIZecBZbqVSeaa9rUI7qQg4has3p2WD80daDugR2KNU89EVefoFySCVPYSPk9eBKUFgVmOMUCYr8Q7TOj05Jb5Mn2gbKfEkPXOODXjG60pspeOC4jxScu9-Xay4r-ks7bZwKsinu6kvYnUGWbhe-ST2PFmebcDwJxS");
+					client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "BQDLdaKMJYKr8LRep_MvqrQfV72ty55wFL4oXYuPM9AaPVcEOjqbLh3UAcSzQpOckxn4cfWn9hfDFJ-1W0scDjl214UjytYJYG-fOsqNOYvWbttLWLegqW9o8EoIZecBZbqVSeaa9rUI7qQg4has3p2WD80daDugR2KNU89EVefoFySCVPYSPk9eBKUFgVmOMUCYr8Q7TOj05Jb5Mn2gbKfEkPXOODXjG60pspeOC4jxScu9-Xay4r-ks7bZwKsinu6kvYnUGWbhe-ST2PFmebcDwJxS");
 
 					HttpResponseMessage response = await client.GetAsync(Song.Track.Id, cancel);
 
@@ -181,14 +190,14 @@ public partial class LyricsView : ContentView
 					content = await response.Content.ReadAsStringAsync(cancel);
 				}
 			}
-			catch(TaskCanceledException)
+			catch (TaskCanceledException)
 			{
 				throw new OperationCanceledException(cancel);
 			}
 
 			ResourceDictionary styles = Application.Current.Resources.MergedDictionaries.First();
 
-			if (string.IsNullOrWhiteSpace(content))
+			if (string.IsNullOrWhiteSpace(content.Trim()))
 			{
 				// No lyrics!
 				lyricsContainer.Dispatcher.Dispatch(() =>
@@ -222,6 +231,7 @@ public partial class LyricsView : ContentView
 				SyllableSyncedLyrics lyrics = transformedLyrics.Lyrics.SyllableLyrics;
 				lyricsEndTime = lyrics.EndTime;
 
+				int i = 0;
 				foreach (var vocalGroup in lyrics.Content) // Maybe make enumerable?
 				{
 					cancel.ThrowIfCancellationRequested();
@@ -229,17 +239,23 @@ public partial class LyricsView : ContentView
 					if (vocalGroup is Interlude interlude)
 					{
 						FlexLayout vocalGroupContainer = [];
+						if (interlude.Time.StartTime == 0) vocalGroupContainer.Margin = new Thickness(0, 10, 0, 0);
 
 						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
+
+						// Check opposite alignment
+
+						if (i != 0 && i != lyrics.Content.Count - 1 && ((SyllableVocalSet)lyrics.Content[i - 1]).OppositeAligned && ((SyllableVocalSet)lyrics.Content[i + 1]).OppositeAligned)
+							vocalGroupContainer.HorizontalOptions = LayoutOptions.End;
 
 						lines.Add(vocalGroupContainer);
 					}
 					else
 					{
-						SyllableVocalSet set = JsonConvert.DeserializeObject<SyllableVocalSet>(vocalGroup.ToString());
+						// SyllableVocalSet set = JsonConvert.DeserializeObject<SyllableVocalSet>(vocalGroup.ToString());
 
-						if (set.Type == "Vocal")
+						if (vocalGroup is SyllableVocalSet set)
 						{
 							string styleName = set.OppositeAligned ? "LyricGroupOppositeAligned" : "LyricGroup";
 
@@ -275,6 +291,8 @@ public partial class LyricsView : ContentView
 							vocalGroupStartTimes.Add(startTime);
 						}
 					}
+
+					i++;
 				}
 			}
 			else if (type == "Line")
@@ -291,14 +309,20 @@ public partial class LyricsView : ContentView
 				LineSyncedLyrics lyrics = transformedLyrics.Lyrics.LineLyrics;
 				lyricsEndTime = lyrics.EndTime;
 
+				int i = 0;
 				foreach (var vocalGroup in lyrics.Content)
 				{
 					if (vocalGroup is Interlude interlude)
 					{
 						FlexLayout vocalGroupContainer = [];
+						if (interlude.Time.StartTime == 0) vocalGroupContainer.Margin = new Thickness(0, 10, 0, 0);
+
 
 						vocalGroups.Add(vocalGroupContainer, [new InterludeVisual(vocalGroupContainer, interlude)]);
 						vocalGroupStartTimes.Add(interlude.Time.StartTime);
+
+						if (i != 0 && i != lyrics.Content.Count - 1 && ((LineVocal)(lyrics.Content[i - 1])).OppositeAligned && ((LineVocal)(lyrics.Content[i + 1])).OppositeAligned)
+							vocalGroupContainer.HorizontalOptions = LayoutOptions.End;
 
 						lines.Add(vocalGroupContainer);
 					}
@@ -324,6 +348,8 @@ public partial class LyricsView : ContentView
 							lines.Add(vocalGroupContainer);
 						}
 					}
+
+					i++;
 				}
 			}
 			else if (type == "Static")
@@ -356,6 +382,12 @@ public partial class LyricsView : ContentView
 					lines.Add(layout);
 				}
 			}
+
+			await lyricsContainer.Dispatcher.DispatchAsync(() =>
+			{
+				lyricsContainer.Clear();
+				lines.ForEach(lyricsContainer.Add);
+			});
 		}
 		catch (OperationCanceledException)
 		{
@@ -364,14 +396,6 @@ public partial class LyricsView : ContentView
 		catch (WebException webEx) when (webEx.Status == WebExceptionStatus.RequestCanceled)
 		{
 			throw new OperationCanceledException(webEx.Message, webEx, cancel);
-		}
-		finally
-		{
-			await lyricsContainer.Dispatcher.DispatchAsync(() =>
-			{
-				lyricsContainer.Clear();
-				lines.ForEach(lyricsContainer.Add);
-			});
 		}
 
 		if (staticLyrics) return;
@@ -382,7 +406,7 @@ public partial class LyricsView : ContentView
 
 		await Update(cancel, vocalGroups, player.PlaybackPosition / 1000d, 1.0 / 60, true);
 
-		await UpdateProgress(player.PlaybackPosition, stopwatch.ElapsedMilliseconds, vocalGroups, lyricsEndTime, cancel);
+		await UpdateProgress(player.PlaybackPosition, stopwatch.ElapsedMilliseconds, vocalGroups, cancel);
 	}
 
 	private async Task Update(CancellationToken cancel, Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, double timestamp, double deltaTime, bool skipped = true)
@@ -406,9 +430,10 @@ public partial class LyricsView : ContentView
 		}
 	}
 
-	private long lastUpdatedAt = 0;
+	private static long lastUpdatedAt = 0;
+	private static double lastTimestamp = 0;
 
-	private async Task UpdateProgress(long initialPosition, double startedSyncAt, Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, double lyricsEndTime, CancellationToken cancel)
+	private async Task UpdateProgress(long initialPosition, double startedSyncAt, Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups, CancellationToken cancel)
 	{
 		try
 		{
@@ -447,7 +472,9 @@ public partial class LyricsView : ContentView
 					double syncedTimestamp = (initialPosition + (updatedAt - startedSyncAt)) / 1000d;
 					double deltaTime = (updatedAt - lastUpdatedAt) / 1000d;
 
-					await Update(cancel, vocalGroups, syncedTimestamp, deltaTime, false);
+					await Update(cancel, vocalGroups, syncedTimestamp, deltaTime, Math.Abs(initialPosition / 1000d - lastTimestamp) > 0.8d);
+
+					lastTimestamp = syncedTimestamp;
 				}
 
 				lastUpdatedAt = updatedAt;
@@ -462,10 +489,6 @@ public partial class LyricsView : ContentView
 		}
 	}
 
-	// 33 is 30 FPS
-	// 16 is 60 FPS
-	private async Task Defer(Func<Task> callback) => await Task.Delay(16).ContinueWith(_ => callback());
-
 	private void ResetLyrics()
 	{
 		stopwatch.Restart();
@@ -474,6 +497,17 @@ public partial class LyricsView : ContentView
 		cancelSource?.Dispose();
 		cancelSource = new CancellationTokenSource();
 
-		lyricsContainer.Dispatcher.Dispatch(lyricsContainer.Children.Clear);
+		vocalGroups.Clear();
+
+		lyricsContainer.Dispatcher.Dispatch(async () =>
+		{
+			// await ScrollViewer.ScrollToAsync(0, 0, true);
+			lyricsContainer.Children.Clear();
+		});
+	}
+
+	private void TapGestureRecognizer_Tapped(object sender, TappedEventArgs e)
+	{
+		backgroundVisual.UpdateBlurState();
 	}
 }

@@ -3,6 +3,16 @@ All notable changes to this project will be documented in this file.
 
 Heavily based on [beautiful-lyrics](https://github.com/surfbryce/beautiful-lyrics) by [@surfbryce](https://github.com/surfbryce)
 
+## [1.0.0] - 2025-5-
+Full release!
+
+### Added
+
+### Fixed
+- Background actually darkens now
+
+### Changed
+
 ## [1.0.0-preview] - 2025-4-25
 Complete rewrite of the app, almost everything is different. This version focused **heavily** on stability instead of new features
 

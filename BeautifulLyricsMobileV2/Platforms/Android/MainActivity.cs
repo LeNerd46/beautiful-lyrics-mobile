@@ -22,6 +22,8 @@ namespace BeautifulLyricsMobileV2
 		SpotifyBroadcastReceiver receiver;
 		IntentFilter filter;
 
+		private int resume;
+
 		protected override void OnCreate(Bundle? savedInstanceState)
 		{
 			base.OnCreate(savedInstanceState);
@@ -33,13 +35,16 @@ namespace BeautifulLyricsMobileV2
 
 			filter.AddAction("com.spotify.music.playbackstatechanged");
 			filter.AddAction("com.spotify.music.metadatachanged");
+
+			resume = 0;
 		}
 
 		protected override void OnResume()
 		{
 			base.OnResume();
 			RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
-			
+			resume++;
+
 			// if (!Preferences.Get("Onboarding", false))
 			// 	return;
 
@@ -61,12 +66,15 @@ namespace BeautifulLyricsMobileV2
 				listener.Failed += (s, e) =>
 				{
 					//Preferences.Set("Onboarding", false);
-					Toast.Make(e.ErrorMessage, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
+					Toast.Make(string.IsNullOrWhiteSpace(e.Exception.Message) ? "Error connecting Spotify" : e.Exception.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
 				};
 
 				SpotifyAppRemote remote;
 				ConnectionParams connectionParams = new ConnectionParams.Builder(spotifyId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
 				SpotifyAppRemote.Connect(this, connectionParams, listener);
+
+				if (resume > 0)
+					Remote.InvokeResumed();
 
 				// SpotifyClient client;
 
@@ -87,7 +95,7 @@ namespace BeautifulLyricsMobileV2
 			{
 				UnregisterReceiver(receiver);
 			}
-			catch(System.Exception) { }
+			catch (System.Exception) { }
 
 			base.OnPause();
 		}

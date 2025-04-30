@@ -1,11 +1,5 @@
 ﻿using BeautifulLyricsMobileV2.Controls;
 using CommunityToolkit.Maui.Alerts;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautifulLyricsMobileV2.Entities
 {
@@ -433,8 +427,7 @@ namespace BeautifulLyricsMobileV2.Entities
 							_ = label.FadeTo(0.75f, 250, Easing.CubicInOut);
 					}
 				}
-
-				if (State == LyricState.Sung)
+				else if (State == LyricState.Sung)
 				{
 					foreach (var syllable in Syllables)
 					{
@@ -445,12 +438,12 @@ namespace BeautifulLyricsMobileV2.Entities
 								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
 								letterLabel.Progress = 0;
 								_ = letterLabel.FadeTo(0.65f, 250, Easing.CubicInOut);
-								letterLabel.StartColor = new Color(224, 224, 224);
+								//letterLabel.StartColor = new Color(224, 224, 224);
 								//letterLabel.EndColor = Colors.Pink;
 								//letterLabel.StartColor = Colors.Pink;
 
 								// SetToGeneralState(false);
-								UpdateLiveTextVisuals(letter.LiveText, true, 0, 0);
+								UpdateLiveTextVisuals(letter.LiveText, true, 0, 1.0 / 60);
 							}
 						}
 
@@ -458,12 +451,45 @@ namespace BeautifulLyricsMobileV2.Entities
 						{
 							label.Progress = 0;
 							_ = label.FadeTo(0.65f, 250, Easing.CubicInOut);
-							label.StartColor = new Color(224, 224, 224);
+							//label.StartColor = new Color(224, 224, 224);
 							//label.EndColor = Colors.Pink;
 							//label.StartColor = Colors.Pink;
 
 							// SetToGeneralState(false);
-							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 0);
+							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 1.0 / 60);
+						}
+					}
+				}
+				else
+				{
+					foreach (var syllable in Syllables)
+					{
+						if (syllable.Type == "Letters")
+						{
+							foreach (var letter in syllable.Letters)
+							{
+								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
+								letterLabel.Progress = 0;
+								_ = letterLabel.FadeTo(0.35f, 250, Easing.CubicInOut);
+								//letterLabel.StartColor = new Color(224, 224, 224);
+								//letterLabel.EndColor = Colors.Pink;
+								//letterLabel.StartColor = Colors.Pink;
+
+								// SetToGeneralState(false);
+								UpdateLiveTextVisuals(letter.LiveText, true, 0, 1.0 / 60);
+							}
+						}
+
+						if (syllable.LiveText.Object is GradientLabel label)
+						{
+							label.Progress = 0;
+							_ = label.FadeTo(0.35f, 250, Easing.CubicInOut);
+							//label.StartColor = new Color(224, 224, 224);
+							//label.EndColor = Colors.Pink;
+							//label.StartColor = Colors.Pink;
+
+							// SetToGeneralState(false);
+							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 1.0 / 60);
 						}
 					}
 				}
@@ -481,7 +507,7 @@ namespace BeautifulLyricsMobileV2.Entities
 
 		private readonly List<KeyValuePair<double, double>> scaleRange =
 		[
-			new(0, 0.95d), // Lowest
+			new(0, 1d), // Lowest
 			new(0.7d, 1.025d), // Highest
 			new(1, 1) // Resting
 		];

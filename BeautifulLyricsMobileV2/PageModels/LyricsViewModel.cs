@@ -2,10 +2,6 @@
 using BeautifulLyricsMobileV2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MauiIcons.Core;
-using MauiIcons.Material.Rounded;
-using System.Formats.Asn1;
-using BeautifulLyricsMobileV2.Pages;
 
 namespace BeautifulLyricsMobileV2.PageModels
 {

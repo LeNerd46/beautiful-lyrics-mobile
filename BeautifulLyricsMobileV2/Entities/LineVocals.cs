@@ -104,10 +104,16 @@ namespace BeautifulLyricsMobileV2.Entities
 			else if (State == LyricState.Sung)
 			{
 				LyricText.Progress = 0;
-				LyricText.StartColor = new Color(224, 224, 224);
 				LyricText.FadeTo(0.65f, 250, Easing.CubicInOut);
 
-				UpdateLiveTextVisuals(0, 0);
+				UpdateLiveTextVisuals(0, 1.0 / 60);
+			}
+			else
+			{
+				LyricText.Progress = 0;
+				LyricText.FadeTo(0.35f, 250, Easing.CubicInOut);
+
+				UpdateLiveTextVisuals(0, 1.0 / 60);
 			}
 		}
 

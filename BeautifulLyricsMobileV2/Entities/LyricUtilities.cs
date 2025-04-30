@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NTextCat;
 using NTextCat.Commons;
+using Swan;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -97,8 +98,8 @@ namespace BeautifulLyricsMobileV2.Entities
 					var firstVocalGroup = vocalTimes[0];
 					TimeMetadata time = new TimeMetadata
 					{
-						StartTime = -1,
-						EndTime = -1
+						StartTime = 0,
+						EndTime = firstVocalGroup.StartTime - 0.25d
 					};
 
 					if (firstVocalGroup.StartTime >= 2)
@@ -145,6 +146,7 @@ namespace BeautifulLyricsMobileV2.Entities
 			else if (lyrics.Lyrics.SyllableLyrics is SyllableSyncedLyrics syllableLyrics)
 			{
 				List<string> lines = [];
+				List<SyllableVocalSet> vocalLines = [];
 
 				foreach (var vocalGroup in syllableLyrics.Content)
 				{
@@ -161,6 +163,7 @@ namespace BeautifulLyricsMobileV2.Entities
 						}
 
 						lines.Add(text);
+						vocalLines.Add(syllableVocalSet);
 
 						double startTime = vocalSet.Lead.StartTime;
 						double endTime = vocalSet.Lead.EndTime;
@@ -186,6 +189,7 @@ namespace BeautifulLyricsMobileV2.Entities
 
 				lyrics.Language = GetLanguage(textToProcess);
 				lyrics.NaturalAlignment = GetNaturalAlignment(lyrics.Language);
+				syllableLyrics.Content = [.. vocalLines];
 
 				// Romanization
 
@@ -195,8 +199,8 @@ namespace BeautifulLyricsMobileV2.Entities
 
 				TimeMetadata time = new TimeMetadata
 				{
-					StartTime = -1,
-					EndTime = -1
+					StartTime = 0,
+					EndTime = firstVocalGroup.StartTime - 0.25d
 				};
 
 				if (firstVocalGroup.StartTime >= 2)

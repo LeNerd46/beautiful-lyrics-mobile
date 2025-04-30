@@ -11,8 +11,10 @@ namespace BeautifulLyricsMobileV2.Services
 	{
 		public void SetRemoteClient(object client);
 		public event EventHandler Connected;
+		public event EventHandler Resumed;
 
 		public void InvokeConnected();
+		public void InvokeResumed();
 
 		/// <summary>
 		/// Gets the actual Spotify client

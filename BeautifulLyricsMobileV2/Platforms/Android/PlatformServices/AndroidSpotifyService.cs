@@ -14,6 +14,7 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 	{
 		private static SpotifyAppRemote Remote;
 		public event EventHandler Connected;
+		public event EventHandler Resumed;
 
 		public void SetRemoteClient(object client)
 		{
@@ -35,7 +36,7 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 
 				Track track = player.Track;
 				var rawImage = track.ImageUri?.Raw;
-				string imageUrl = rawImage != null && rawImage.Contains(':') ? $"https://i.scdn.co/image/{track.ImageUri.Raw.Split(':')[2]}" : "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg";
+				string imageUrl = rawImage != null && rawImage.Contains(':') && rawImage.Split(':').Length >= 3 ? $"https://i.scdn.co/image/{rawImage.Split(':')[2]}" : "https://t4.ftcdn.net/jpg/06/71/92/37/360_F_671923740_x0zOL3OIuUAnSF6sr7PuznCI5bQFKhI0.jpg";
 
 				completeSource.TrySetResult(new SpotifyPlayerState
 				{
@@ -66,6 +67,7 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 		}
 
 		public void InvokeConnected() => Connected?.Invoke(this, EventArgs.Empty);
+		public void InvokeResumed() => Resumed?.Invoke(this, EventArgs.Empty);
 		public void Resume() => Remote?.PlayerApi?.Resume();
 
 		public async Task<SpotifyLibraryState> GetLibraryState(string id, PlayableItemType type = PlayableItemType.Track)
