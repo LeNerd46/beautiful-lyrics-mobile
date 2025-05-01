@@ -437,26 +437,16 @@ namespace BeautifulLyricsMobileV2.Entities
 							{
 								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
 								letterLabel.Progress = 0;
+								letterLabel.StartColor = new Color(224, 224, 224);
 								_ = letterLabel.FadeTo(0.65f, 250, Easing.CubicInOut);
-								//letterLabel.StartColor = new Color(224, 224, 224);
-								//letterLabel.EndColor = Colors.Pink;
-								//letterLabel.StartColor = Colors.Pink;
-
-								// SetToGeneralState(false);
-								UpdateLiveTextVisuals(letter.LiveText, true, 0, 1.0 / 60);
 							}
 						}
 
 						if (syllable.LiveText.Object is GradientLabel label)
 						{
 							label.Progress = 0;
+							label.StartColor = new Color(224, 224, 224);
 							_ = label.FadeTo(0.65f, 250, Easing.CubicInOut);
-							//label.StartColor = new Color(224, 224, 224);
-							//label.EndColor = Colors.Pink;
-							//label.StartColor = Colors.Pink;
-
-							// SetToGeneralState(false);
-							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 1.0 / 60);
 						}
 					}
 				}
@@ -470,26 +460,16 @@ namespace BeautifulLyricsMobileV2.Entities
 							{
 								GradientLabel letterLabel = letter.LiveText.Object as GradientLabel;
 								letterLabel.Progress = 0;
+								letterLabel.StartColor = Colors.White;
 								_ = letterLabel.FadeTo(0.35f, 250, Easing.CubicInOut);
-								//letterLabel.StartColor = new Color(224, 224, 224);
-								//letterLabel.EndColor = Colors.Pink;
-								//letterLabel.StartColor = Colors.Pink;
-
-								// SetToGeneralState(false);
-								UpdateLiveTextVisuals(letter.LiveText, true, 0, 1.0 / 60);
 							}
 						}
 
 						if (syllable.LiveText.Object is GradientLabel label)
 						{
 							label.Progress = 0;
+							label.StartColor = Colors.White;
 							_ = label.FadeTo(0.35f, 250, Easing.CubicInOut);
-							//label.StartColor = new Color(224, 224, 224);
-							//label.EndColor = Colors.Pink;
-							//label.StartColor = Colors.Pink;
-
-							// SetToGeneralState(false);
-							UpdateLiveTextVisuals(syllable.LiveText, false, 0, 1.0 / 60);
 						}
 					}
 				}

@@ -22,8 +22,16 @@
             <GradientStop Color="#D1FAE5" Offset="0.7" />
             <GradientStop Color="#FFFFFF" Offset="1.0" />
         </RadialGradientBrush>
-        
+
         <!-- THIRD PAGE -->
+        <RadialGradientBrush x:Key="SpotifyWebPageBrush" Center="0.7,0.3" Radius="1.2">
+            <GradientStop Color="#8EC5FC" Offset="0.0" />
+            <GradientStop Color="#E0C3FC" Offset="0.4" />
+            <GradientStop Color="#FFE4F1" Offset="0.75" />
+            <GradientStop Color="#FFFFFF" Offset="1.0" />
+        </RadialGradientBrush>
+
+        <!-- FOURTH PAGE -->
         <RadialGradientBrush x:Key="LastPageBrush" Center="0.8,0.2" Radius="1.0">
             <GradientStop Color="#FF7EB3" Offset="0.0" />
             <GradientStop Color="#FF758C" Offset="0.4" />
@@ -65,7 +73,7 @@
                         </VerticalStackLayout>
 
                         <VerticalStackLayout Grid.Row="2" Spacing="20">
-                            <Label Text="{Binding BottomText}" HorizontalOptions="Center" FontSize="16"/>
+                            <Label Text="{Binding BottomText}" HorizontalOptions="Center" FontSize="16" HorizontalTextAlignment="Center" Padding="20,0"/>
 
                             <Button Text="{Binding ButtonText}" Margin="20,10" FontSize="18" CornerRadius="18" TextColor="Black" BackgroundColor="#80FFFFFF" Clicked="ProgressOnboarding"/>
                         </VerticalStackLayout>
@@ -74,7 +82,7 @@
             </CarouselView.ItemTemplate>
         </CarouselView>
 
-        <IndicatorView x:Name="onboardingIndicator" IndicatorsShape="Circle" IndicatorSize="12" HorizontalOptions="Center" VerticalOptions="End" IndicatorColor="#90FFFFFF" SelectedIndicatorColor="#40FFFFFF" Margin="0,0,0,30"/>
+        <IndicatorView x:Name="onboardingIndicator" IndicatorsShape="Circle" IndicatorSize="12" HorizontalOptions="Center" VerticalOptions="End" IndicatorColor="#90FFFFFF" SelectedIndicatorColor="#40FFFFFF" Margin="0,0,0,30" Count="4"/>
 
         <!--<Label Text="Beautiful Lyrics" HorizontalOptions="Center" VerticalOptions="End" FontSize="36"/>
 

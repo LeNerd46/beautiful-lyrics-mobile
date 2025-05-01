@@ -52,7 +52,7 @@
 
                 <Image x:Name="moreButton" mi:MauiIcon.Value="{mi:MaterialRounded Icon=MoreVert}" BackgroundColor="Transparent" WidthRequest="28" HeightRequest="28">
                     <Image.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenSheetCommand}" CommandParameter="{x:Reference moreButton}" Tapped="TapGestureRecognizer_Tapped"/>
+                        <TapGestureRecognizer Command="{Binding OpenSheetCommand}" CommandParameter="{x:Reference moreButton}"/>
                     </Image.GestureRecognizers>
                 </Image>
             </HorizontalStackLayout>

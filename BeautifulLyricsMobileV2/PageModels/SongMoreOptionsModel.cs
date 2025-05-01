@@ -15,6 +15,14 @@ namespace BeautifulLyricsMobileV2.PageModels
 		[ObservableProperty]
 		private SpotifyTrack track;
 
+		[ObservableProperty]
+		public string VersionText { get; set; }
+
+		public SongMoreOptionsModel()
+		{
+			VersionText = $"Version {AppInfo.VersionString} - created by LeNerd46";
+		}
+
 		[RelayCommand]
 		public async Task OpenInSpotify()
 		{

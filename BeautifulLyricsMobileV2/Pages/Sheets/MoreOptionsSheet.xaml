@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:model="clr-namespace:BeautifulLyricsMobileV2.PageModels"
+             x:Class="BeautifulLyricsMobileV2.Pages.Sheets.MoreOptionsSheet"
+             Title="MoreOptionsSheet">
+
+    <ContentPage.Resources>
+        <Style TargetType="Button">
+            <Setter Property="BackgroundColor" Value="Transparent" />
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="HorizontalOptions" Value="StartAndExpand" />
+        </Style>
+
+        <Style TargetType="BoxView" x:Key="Divider">
+            <Setter Property="HeightRequest" Value="1"/>
+            <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
+            <Setter Property="Color" Value="#adadad"/>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="550"/>
+            <RowDefinition Height="200"/>
+        </Grid.RowDefinitions>
+        
+        <VerticalStackLayout Spacing="15" x:DataType="model:SongMoreOptionsModel" Margin="0,15">
+            <HorizontalStackLayout Spacing="12" Padding="16,0">
+                <Border StrokeShape="RoundRectangle 8" StrokeThickness="0">
+                    <Image Source="{Binding Track.Image}" WidthRequest="80" HeightRequest="80"/>
+                </Border>
+
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="FillAndExpand">
+                    <Label Text="{Binding Track.Title}" TextColor="White" FontAttributes="Bold" FontSize="16"/>
+                    <Label Text="{Binding Track.Artist.Name}" FontSize="14" TextColor="LightGray"/>
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+
+            <BoxView Style="{StaticResource Divider}"/>
+
+            <Button Text="Open In Spotify" Command="{Binding OpenInSpotifyCommand}" Padding="0" Margin="16,0"/>
+        </VerticalStackLayout>
+
+        <VerticalStackLayout Grid.Row="1" HorizontalOptions="Center" Spacing="10">
+            <Label Text="Based on Beautiful Lyrics by @surfbryce on GitHub" TextColor="LightGray" HorizontalTextAlignment="Center"/>
+            <Label Text="{Binding VersionText}" TextColor="LightGray" HorizontalTextAlignment="Center" FontSize="13"/>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

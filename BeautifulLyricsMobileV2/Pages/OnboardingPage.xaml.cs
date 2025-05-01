@@ -1,7 +1,10 @@
 ﻿using CommunityToolkit.Maui.Alerts;
-using Microsoft.Maui.Controls;
-using BeautifulLyricsMobileV2.Services;
 using BeautifulLyricsMobileV2.PageModels;
+using BeautifulLyricsMobileV2.Services;
+using Newtonsoft.Json.Linq;
+using SpotifyAPI.Web;
+using Newtonsoft.Json;
+using Image = Microsoft.Maui.Controls.Image;
 
 #if ANDROID
 using Com.Spotify.Android.Appremote.Api;
@@ -17,15 +20,18 @@ public partial class OnboardingPage : ContentPage
 	RadialGradientBrush firstPage;
 	RadialGradientBrush secondPage;
 	RadialGradientBrush thirdPage;
+	RadialGradientBrush fourthPage;
 
 	private readonly Color[] firstPageColors;
 	private readonly Color[] secondPageColors;
 	private readonly Color[] thirdPageColors;
+	private readonly Color[] fourthPageColors;
 
 	private readonly OnboardingModel onboarding;
 	private string spotifyId;
 
 	private bool spotifyConnected;
+	ISpotifyRemoteService spotify;
 
 	public OnboardingPage()
 	{
@@ -37,8 +43,11 @@ public partial class OnboardingPage : ContentPage
 		secondPage = Resources["SpotifyPageBrush"] as RadialGradientBrush;
 		secondPageColors = secondPage.GradientStops.Select(x => x.Color).ToArray();
 
-		thirdPage = Resources["LastPageBrush"] as RadialGradientBrush;
+		thirdPage = Resources["SpotifyWebPageBrush"] as RadialGradientBrush;
 		thirdPageColors = thirdPage.GradientStops.Select(x => x.Color).ToArray();
+
+		fourthPage = Resources["LastPageBrush"] as RadialGradientBrush;
+		fourthPageColors = fourthPage.GradientStops.Select(x => x.Color).ToArray();
 
 		onboarding = new OnboardingModel();
 		BindingContext = onboarding;
@@ -63,9 +72,9 @@ public partial class OnboardingPage : ContentPage
 
 	private void OnWindowResumed(object? sender, EventArgs e)
 	{
-		if(spotifyConnected)
+		if (spotifyConnected)
 		{
-			onboardingView.ScrollTo(3);
+			onboardingView.ScrollTo(2);
 			onboardingView.IsSwipeEnabled = false;
 		}
 	}
@@ -95,48 +104,42 @@ public partial class OnboardingPage : ContentPage
 		);
 	}
 
-	private void ConnectSpotify()
+	private async Task ConnectSpotify()
 	{
 		if (DeviceInfo.Platform == DevicePlatform.Android)
 		{
 #if ANDROID
 			try
 			{
-				ISpotifyRemoteService spotify = IPlatformApplication.Current.Services.GetRequiredService<ISpotifyRemoteService>();
-
-				ConnectionListener listener = new ConnectionListener();
-
-				listener.Connected += (s, e) =>
+				if(!SpotifyAppRemote.IsSpotifyInstalled(Platform.CurrentActivity))
 				{
-					spotify.SetRemoteClient(e.Remote);
-					spotify.InvokeConnected();
+					await Toast.Make("Couldn't find Spotify installation. Please ensure Spotify is installed").Show();
+					return;
+				}
 
-					onboarding.Items.Add(new OnboardingItem("Beautiful Lyrics", "You're all set to use Beautiful Lyrics!", "", "Get Started", 2, false));
+				spotify = IPlatformApplication.Current.Services.GetRequiredService<ISpotifyRemoteService>();
+
+				bool success = await spotify.Connect(true, spotifyId);
+
+				if (success)
+				{
+					onboarding.Items.Add(new OnboardingItem("Beautiful Lyrics", "Now let's connect the Web API", "", "Connect", 2, false));
 					spotifyConnected = true;
-				};
+				}
+				else
+					await Toast.Make("Failed to connect to Spotify!").Show();
 
-				listener.Failed += (s, e) => Toast.Make(e.ErrorMessage, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
-
-				SpotifyAppRemote remote;
-				ConnectionParams connectionParams = new ConnectionParams.Builder(spotifyId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
-
-				var spotifyIntent = Platform.CurrentActivity.PackageManager.GetLaunchIntentForPackage("com.spotify.music");
-				spotifyIntent?.AddFlags(ActivityFlags.ReorderToFront);
-				Platform.CurrentActivity.StartActivity(spotifyIntent);
-
-				SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, listener);
-
-				SecureStorage.SetAsync("spotifyId", spotifyId);
+				await SecureStorage.SetAsync("spotifyId", spotifyId);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
-				Toast.Make(ex.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
+				await Toast.Make(ex.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
 			}
 #endif
 		}
 	}
 
-	private void ProgressOnboarding(object sender, EventArgs e)
+	private async void ProgressOnboarding(object sender, EventArgs e)
 	{
 		switch (onboardingView.Position)
 		{
@@ -148,18 +151,72 @@ public partial class OnboardingPage : ContentPage
 
 				if (string.IsNullOrWhiteSpace(spotifyId))
 				{
-					Toast.Make("Please enter your Spotify client ID").Show();
+					await Toast.Make("Please enter your Spotify client ID").Show();
 					break;
 				}
 
-				ConnectSpotify();
+				await ConnectSpotify();
 				break;
 
 			case 2:
+				using (HttpClient client = new HttpClient() { BaseAddress = new Uri("https://beautifullyrics.lenerd.tech/api/") })
+				{
+					try
+					{
+						HttpResponseMessage responseMessage = await client.GetAsync("spotify/login");
+						if (!responseMessage.IsSuccessStatusCode)
+						{
+							await Toast.Make($"Failed to get login URI - {responseMessage.StatusCode}").Show();
+							break;
+						}
+
+						JObject json = JObject.Parse(await responseMessage.Content.ReadAsStringAsync());
+						await SecureStorage.SetAsync("state", json["state"].ToString());
+
+						await WebAuthenticator.Default.AuthenticateAsync(new Uri(json["loginUri"].ToString()), new Uri("beautifullyrics://"));
+					}
+					catch(TaskCanceledException) 
+					{
+						string state = await SecureStorage.GetAsync("state");
+						if (string.IsNullOrWhiteSpace(state))
+						{
+							await Toast.Make("Invalid state").Show();
+							break;
+						}
+
+						HttpResponseMessage responseMessage = await client.GetAsync($"spotify/auth?state={state}");
+
+						if(!responseMessage.IsSuccessStatusCode)
+						{
+							await Toast.Make($"Failed to authenticate - {responseMessage.StatusCode}").Show();
+							break;
+						}
+
+						string auth = await responseMessage.Content.ReadAsStringAsync();
+						PKCETokenResponse token = JsonConvert.DeserializeObject<PKCETokenResponse>(auth);
+						if (token == null)
+						{
+							await Toast.Make("Failed to authenticate").Show();
+							break;
+						}
+
+						spotify.Token = token.AccessToken;
+						var config = SpotifyClientConfig.CreateDefault().WithAuthenticator(new PKCEAuthenticator(spotifyId, token));
+						spotify.WebClient = new SpotifyClient(config);
+						File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, "creds.json"), auth);
+
+						onboarding.Items.Add(new OnboardingItem("Beautiful Lyrics", "You're all set to use Beautiful Lyrics!", "", "Get Started", 2, false));
+						onboardingView.ScrollTo(3);
+					}
+				}
+				break;
+
+			case 3:
 				Preferences.Set("Onboarding", true);
 
-				Application.Current?.OpenWindow(new Window(new AppShell()));
-				Application.Current?.CloseWindow(GetParentWindow());
+				if (Application.Current?.Windows[0].Page != null)
+					Application.Current.Windows[0].Page = new AppShell();
+
 				break;
 		}
 	}
@@ -169,7 +226,7 @@ public partial class OnboardingPage : ContentPage
 	private async void HelpButtonTapped(object sender, TappedEventArgs e)
 	{
 		Image button = sender as Image;
-		
+
 		await button.ScaleTo(0.8, 150, Easing.CubicIn);
 		await button.ScaleTo(1, 150, Easing.CubicOut);
 
@@ -223,6 +280,15 @@ public partial class OnboardingPage : ContentPage
 				{
 					Color startColor = onboarding.Background.GradientStops[i].Color;
 					Color endColor = thirdPageColors[i];
+					AnimateGradientStop(i, startColor, endColor);
+				}
+				break;
+
+			case 3:
+				for (int i = 0; i < onboarding.Background.GradientStops.Count; i++)
+				{
+					Color startColor = onboarding.Background.GradientStops[i].Color;
+					Color endColor = fourthPageColors[i];
 					AnimateGradientStop(i, startColor, endColor);
 				}
 				break;

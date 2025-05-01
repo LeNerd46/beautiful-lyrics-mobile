@@ -1,6 +1,7 @@
 ﻿using BeautifulLyricsMobileV2.PageModels;
 using BeautifulLyricsMobileV2.Pages;
 using BeautifulLyricsMobileV2.Services;
+using MauiIcons.Core;
 using System.Diagnostics;
 
 namespace BeautifulLyricsMobileV2
@@ -11,7 +12,10 @@ namespace BeautifulLyricsMobileV2
 		{
 			InitializeComponent();
 
-			LyricsViewModel song = new LyricsViewModel(service);
+			LyricsViewModel song = new LyricsViewModel(service)
+			{
+				Current = this
+			};
 
 			song.Saved = false;
 

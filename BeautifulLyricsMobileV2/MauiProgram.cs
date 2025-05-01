@@ -9,6 +9,8 @@ using Microsoft.Maui.Controls.Compatibility.Hosting;
 using BeautifulLyricsMobileV2.Controls;
 using SkiaSharp.Views.Maui.Handlers;
 using Syncfusion.Maui.Toolkit.Hosting;
+using OverSheet.Hosting;
+
 
 
 
@@ -29,6 +31,7 @@ namespace BeautifulLyricsMobileV2
                 .UseMauiCommunityToolkit()
                 .UseMauiCommunityToolkitMediaElement()
                 .UseMaterialRoundedMauiIcons()
+                .ConfigureOverSheet()
                 .ConfigureLifecycleEvents(events =>
                 {
 #if ANDROID

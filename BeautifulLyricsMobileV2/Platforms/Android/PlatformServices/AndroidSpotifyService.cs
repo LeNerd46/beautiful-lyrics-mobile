@@ -1,4 +1,4 @@
-﻿using Android.AdServices.OnDevicePersonalization;
+﻿using Android.Content;
 using Android.Runtime;
 using BeautifulLyricsMobileV2.Entities;
 using BeautifulLyricsMobileV2.Services;
@@ -6,7 +6,7 @@ using Com.Spotify.Android.Appremote.Api;
 using Com.Spotify.Protocol.Client;
 using Com.Spotify.Protocol.Types;
 using CommunityToolkit.Maui.Alerts;
-using Java.Lang;
+using SpotifyAPI.Web;
 
 namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 {
@@ -19,10 +19,17 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 		public void SetRemoteClient(object client)
 		{
 			Remote = (client as SpotifyAppRemote)!;
-			Toast.Make("Spotify Connected!");
 		}
 
 		public object Client => Remote;
+
+		private SpotifyClient _webClient;
+		public SpotifyClient WebClient { get => _webClient; set => _webClient = value; }
+
+		private string _token;
+		public string Token { get => _token; set => _token = value; }
+
+		public bool IsConnected { get => Remote.IsConnected; }
 
 		public async Task<SpotifyPlayerState> GetPlayerState()
 		{
@@ -69,6 +76,40 @@ namespace BeautifulLyricsMobileV2.Platforms.Android.PlatformServices
 		public void InvokeConnected() => Connected?.Invoke(this, EventArgs.Empty);
 		public void InvokeResumed() => Resumed?.Invoke(this, EventArgs.Empty);
 		public void Resume() => Remote?.PlayerApi?.Resume();
+		
+		public async Task<bool> Connect(bool openSpotify = false, string id = "")
+		{
+			TaskCompletionSource<bool> completeSource = new TaskCompletionSource<bool>();
+
+			if (string.IsNullOrWhiteSpace(id))
+				id = await SecureStorage.GetAsync("spotifyId");
+
+			SpotifyAppRemote remote;
+			ConnectionParams connectionParams = new ConnectionParams.Builder(id).SetRedirectUri("https://beautifullyrics.lenerd.tech/api/spotify/success").ShowAuthView(true).Build();
+
+			ConnectionListener listener = new ConnectionListener();
+
+			listener.Connected += (s, e) =>
+			{
+				SetRemoteClient(e.Remote);
+				Connected?.Invoke(this, EventArgs.Empty);
+
+				completeSource.TrySetResult(true);
+			};
+
+			listener.Failed += (s, e) => completeSource.TrySetResult(false);
+
+			if(openSpotify)
+			{
+				var spotifyIntent = Platform.CurrentActivity.PackageManager.GetLaunchIntentForPackage("com.spotify.music");
+				spotifyIntent?.AddFlags(ActivityFlags.ReorderToFront);
+				Platform.CurrentActivity.StartActivity(spotifyIntent);
+			}
+
+			SpotifyAppRemote.Connect(Platform.CurrentActivity, connectionParams, listener);
+
+			return await completeSource.Task;
+		}
 
 		public async Task<SpotifyLibraryState> GetLibraryState(string id, PlayableItemType type = PlayableItemType.Track)
 		{

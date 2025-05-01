@@ -19,7 +19,6 @@ public partial class LyricsView : ContentView
 	private static CancellationTokenSource? cancelSource;
 
 	private static Stopwatch stopwatch = new Stopwatch();
-	private KeyValuePair<bool, int> updatedPosition = new(false, 0);
 	private static Dictionary<FlexLayout, List<ISyncedVocals>> vocalGroups;
 	private static bool appeared = false;
 
@@ -87,6 +86,21 @@ public partial class LyricsView : ContentView
 		{
 			Song.Remote.Connected += async (sender, eC) =>
 			{
+#if ANDROID
+				SpotifyBroadcastReceiver.SongChanged += async (s, e) =>
+				{
+					SpotifyPlayerState? player = await TryGetPlayerState();
+
+					if (player?.Track == null)
+					{
+						Debug.WriteLine("Failed to get current track");
+						return;
+					}
+
+					await UpdateSong(player.Track);
+				};
+#endif
+
 				SpotifyPlayerState? player = await TryGetPlayerState();
 				if (player == null) return;
 
@@ -177,7 +191,7 @@ public partial class LyricsView : ContentView
 						BaseAddress = new Uri("https://beautiful-lyrics.socalifornian.live/lyrics/")
 					};
 
-					client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "BQDLdaKMJYKr8LRep_MvqrQfV72ty55wFL4oXYuPM9AaPVcEOjqbLh3UAcSzQpOckxn4cfWn9hfDFJ-1W0scDjl214UjytYJYG-fOsqNOYvWbttLWLegqW9o8EoIZecBZbqVSeaa9rUI7qQg4has3p2WD80daDugR2KNU89EVefoFySCVPYSPk9eBKUFgVmOMUCYr8Q7TOj05Jb5Mn2gbKfEkPXOODXjG60pspeOC4jxScu9-Xay4r-ks7bZwKsinu6kvYnUGWbhe-ST2PFmebcDwJxS");
+					client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Song.Remote.Token);
 
 					HttpResponseMessage response = await client.GetAsync(Song.Track.Id, cancel);
 
@@ -504,10 +518,5 @@ public partial class LyricsView : ContentView
 			// await ScrollViewer.ScrollToAsync(0, 0, true);
 			lyricsContainer.Children.Clear();
 		});
-	}
-
-	private void TapGestureRecognizer_Tapped(object sender, TappedEventArgs e)
-	{
-		backgroundVisual.UpdateBlurState();
 	}
 }

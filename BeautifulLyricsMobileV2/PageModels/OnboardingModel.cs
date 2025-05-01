@@ -21,7 +21,7 @@ namespace BeautifulLyricsMobileV2.PageModels
 		public OnboardingModel()
 		{
 			Items.Add(new OnboardingItem("Beautiful Lyrics", "Revolutionize your lyrics with beautiful lyrics", "Get started to experience lyrics like never before", "Get Started", 2, false));
-			Items.Add(new OnboardingItem("Beautiful Lyrics", "Beautiful Lyrics needs access to Spotify in order to function", "Connect with Spotify to continue", "Connect With Spotify", 2, true));
+			Items.Add(new OnboardingItem("Beautiful Lyrics", "Beautiful Lyrics needs access to Spotify in order to function", "This will take you to the Spotify app, come back here once you've authorized the app", "Connect With Spotify", 2, true));
 		}
 	}
 }

@@ -1,4 +1,5 @@
 using BeautifulLyricsMobileV2.Services;
+using CommunityToolkit.Maui.Alerts;
 using System.Threading.Tasks;
 
 namespace BeautifulLyricsMobileV2.Pages;
@@ -17,6 +18,18 @@ public partial class LoadingPage : ContentPage
 	{
 		base.OnAppearing();
 
+		if (Spotify.Client != null)
+		{
+			if (Spotify.IsConnected)
+				await Shell.Current.GoToAsync("//MainPage");
+			else if (await Spotify.Connect())
+				await Shell.Current.GoToAsync("//MainPage");
+			else
+				await Toast.Make("Failed to connect to Spotify!").Show();
+
+			return;
+		}
+
 		var tcs = new TaskCompletionSource<bool>();
 
 		Spotify.Connected += async (s, e) => tcs.TrySetResult(true);
@@ -29,11 +42,8 @@ public partial class LoadingPage : ContentPage
 		{
 			Preferences.Set("Onboarding", false);
 
-			Window window = new Window(new OnboardingPage());
-			Application.Current?.OpenWindow(window);
-
-			Window shell = Application.Current?.Windows.FirstOrDefault(x => x.Page is AppShell);
-			if (shell != null) Application.Current?.CloseWindow(shell);
+			if (Application.Current?.Windows[0].Page != null)
+				Application.Current.Windows[0].Page = new OnboardingPage();
 		}
 	}
 }

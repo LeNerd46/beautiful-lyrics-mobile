@@ -9,14 +9,11 @@ It would be really awesome if I could just have everyone use the app without nee
 
 # Creating the App
 
-* Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-* Create an app
-* For the redirect URL's, add http://localhost:5543/callback
-* Spotify requires the Android app package name. The package name is `com.lenerd46.beautifullyrics` and the SHA1 fingerprint is `FD:9C:96:42:D8:F5:D7:EB:F0:8A:CE:F1:47:3D:D5:F9:C2:13:73:F9`
-* For API and SDK's, select Android/iOS and Web API
-
-> [!NOTE]
-> You can safely ignore the warning about the Web API. It shouldn't affect this process, and this app isn't using the Web API at the moment
+- Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+- Create an app
+- For the redirect URL's, add https://beautifullyrics.lenerd.tech/api/spotify/success
+- Spotify requires the Android app package name. The package name is `com.lenerd46.beautifullyrics` and the SHA1 fingerprint is `FD:9C:96:42:D8:F5:D7:EB:F0:8A:CE:F1:47:3D:D5:F9:C2:13:73:F9`
+- For API and SDK's, select Android/iOS and Web API
 
 # Set Up
 Once you've created your app, make sure to save it. Copy and paste your client ID into the app.

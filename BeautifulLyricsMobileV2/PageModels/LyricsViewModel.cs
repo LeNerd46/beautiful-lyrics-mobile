@@ -1,7 +1,9 @@
 ﻿using BeautifulLyricsMobileV2.Entities;
+using BeautifulLyricsMobileV2.Pages.Sheets;
 using BeautifulLyricsMobileV2.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using OverSheet;
 
 namespace BeautifulLyricsMobileV2.PageModels
 {
@@ -28,6 +30,8 @@ namespace BeautifulLyricsMobileV2.PageModels
 
 		[ObservableProperty]
 		private SpotifyTrack track;
+
+		public Page Current { get; set; }
 
 		[RelayCommand]
 		public async Task NoFunctionButton(Image image)
@@ -56,6 +60,15 @@ namespace BeautifulLyricsMobileV2.PageModels
 		{
 			await image.ScaleTo(0.8, 150, Easing.CubicIn);
 			await image.ScaleTo(1, 150, Easing.CubicOut);
+
+			MoreOptionsSheet sheet = new MoreOptionsSheet(new SongMoreOptionsModel
+			{
+				Track = Track
+			});
+#if ANDROID
+
+			Current.ShowBottomSheet(sheet, 15);
+#endif
 
 			// Doesn't work in .NET 9 :(
 			// await sheet.ShowAsync();

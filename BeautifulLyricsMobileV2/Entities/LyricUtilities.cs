@@ -1,12 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NTextCat;
 using NTextCat.Commons;
-using Swan;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BeautifulLyricsMobileV2.Entities
 {

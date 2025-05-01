@@ -3,15 +3,27 @@ All notable changes to this project will be documented in this file.
 
 Heavily based on [beautiful-lyrics](https://github.com/surfbryce/beautiful-lyrics) by [@surfbryce](https://github.com/surfbryce)
 
-## [1.0.0] - 2025-5-
+## [1.0.0] - 2025-5-1
 Full release!
 
 ### Added
+- Ability to seek through the song
+- Ability to leave the app and return again
+- Opposite aligned interludes
+- Checks if Spotify is installed before opening
+- More options menu
 
 ### Fixed
 - Background actually darkens now
+- No more gaps between word groups!
+- Starting interludes will actually appear now
+- DJ doesn't crash the app anymore
+- Redirect URI uses HTTPS now, no more localhost
+- Onboarding screen no longer crashes on the last page
 
 ### Changed
+- The background visual was improved
+- Background fades from one song to the next instead of removing the background and instantly adding the new one
 
 ## [1.0.0-preview] - 2025-4-25
 Complete rewrite of the app, almost everything is different. This version focused **heavily** on stability instead of new features

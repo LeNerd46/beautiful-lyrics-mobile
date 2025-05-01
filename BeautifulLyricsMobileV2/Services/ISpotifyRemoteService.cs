@@ -1,15 +1,12 @@
 ﻿using BeautifulLyricsMobileV2.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SpotifyAPI.Web;
 
 namespace BeautifulLyricsMobileV2.Services
 {
 	public interface ISpotifyRemoteService
 	{
 		public void SetRemoteClient(object client);
+
 		public event EventHandler Connected;
 		public event EventHandler Resumed;
 
@@ -21,6 +18,26 @@ namespace BeautifulLyricsMobileV2.Services
 		/// </summary>
 		/// <returns>An object that can be casted to the platform specific client</returns>
 		public object Client { get; }
+
+		/// <summary>
+		/// The user's Spotify access token
+		/// </summary>
+		public string Token { get; set; }
+
+		/// <summary>
+		/// Gets whether the Spotify app remote is connected
+		/// </summary>
+		public bool IsConnected { get; }
+
+		/// <summary>
+		/// Gets the Spotify Web Client
+		/// </summary>
+		public SpotifyClient WebClient { get; set; }
+
+		/// <summary>
+		/// Asks to connect to Spotify
+		/// </summary>
+		public Task<bool> Connect(bool openSpotify = false, string id = "");
 
 		/// <summary>
 		/// Gets information about the current track being played

@@ -16,6 +16,7 @@ using System.Runtime.CompilerServices;
 namespace BeautifulLyricsMobileV2
 {
 	[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, LaunchMode = LaunchMode.SingleTop, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+	[IntentFilter([Intent.ActionView], Categories = [Intent.CategoryDefault, Intent.CategoryBrowsable], DataScheme = "beautifullyrics")]
 	public class MainActivity : MauiAppCompatActivity
 	{
 		ISpotifyRemoteService Remote;
@@ -44,9 +45,7 @@ namespace BeautifulLyricsMobileV2
 			base.OnResume();
 			RegisterReceiver(receiver, filter, ReceiverFlags.Exported);
 			resume++;
-
-			// if (!Preferences.Get("Onboarding", false))
-			// 	return;
+			if (!Preferences.Get("Onboarding", false)) return;
 
 			try
 			{
@@ -66,22 +65,20 @@ namespace BeautifulLyricsMobileV2
 				listener.Failed += (s, e) =>
 				{
 					//Preferences.Set("Onboarding", false);
-					Toast.Make(string.IsNullOrWhiteSpace(e.Exception.Message) ? "Error connecting Spotify" : e.Exception.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
+					//Toast.Make(string.IsNullOrWhiteSpace(e.Exception.Message) ? "Error connecting Spotify" : e.Exception.Message, CommunityToolkit.Maui.Core.ToastDuration.Long).Show();
 				};
 
 				SpotifyAppRemote remote;
-				ConnectionParams connectionParams = new ConnectionParams.Builder(spotifyId).SetRedirectUri("http://localhost:5543/callback").ShowAuthView(true).Build();
+				ConnectionParams connectionParams = new ConnectionParams.Builder(spotifyId).SetRedirectUri("https://beautifullyrics.lenerd.tech/api/spotify/success").ShowAuthView(true).Build();
 				SpotifyAppRemote.Connect(this, connectionParams, listener);
 
 				if (resume > 0)
 					Remote.InvokeResumed();
 
-				// SpotifyClient client;
+				SpotifyClient client;
 
-				/*if (File.Exists(Path.Combine(FileSystem.AppDataDirectory, "creds.json")))
-					client = GetToken(clientId);
-				else
-					CreateToken(clientId).Wait();*/
+				if (File.Exists(Path.Combine(FileSystem.AppDataDirectory, "creds.json")))
+					client = GetToken(spotifyId);
 			}
 			catch (System.Exception ex)
 			{
@@ -113,14 +110,11 @@ namespace BeautifulLyricsMobileV2
 			var json = File.ReadAllText(Path.Combine(FileSystem.AppDataDirectory, "creds.json"));
 			var token = JsonConvert.DeserializeObject<PKCETokenResponse>(json);
 
+			Remote.Token = token.AccessToken;
 			var auth = new PKCEAuthenticator(id, token!);
-			SecureStorage.SetAsync("token", token.AccessToken);
 			auth.TokenRefreshed += (sender, token) => File.WriteAllText(Path.Combine(FileSystem.AppDataDirectory, "creds.json"), JsonConvert.SerializeObject(token));
 
 			var config = SpotifyClientConfig.CreateDefault().WithAuthenticator(auth);
-
-			// Create HttpClient
-
 			return new SpotifyClient(config);
 		}
 

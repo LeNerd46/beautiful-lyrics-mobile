@@ -20,6 +20,11 @@ What exactly is beautiful lyrics? This is a **companian** app to Spotify, intend
 ## Help
 - Not sure how to set up the developer app? Check out [setup.md](https://github.com/LeNerd46/beautiful-lyrics-mobile/blob/main/setup.md)
 
+## Preview
+Look, pretty videos and stuff! <small>(The gifs kind of lower the quality a bit)</small>
+
+<img src="./previews/preview.gif" width="250"/>
+<img src="./previews/preview1.gif" width="250"/>
 
 ## License
 

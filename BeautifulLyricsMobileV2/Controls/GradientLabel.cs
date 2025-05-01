@@ -8,7 +8,7 @@ namespace BeautifulLyricsMobileV2.Controls
 {
     public class GradientLabel : Label, IElement
     {
-        public static readonly BindableProperty StartColorProperty = BindableProperty.Create(nameof(StartColor), typeof(Color), typeof(Color), Colors.White);
+        public static readonly BindableProperty StartColorProperty = BindableProperty.Create(nameof(StartColor), typeof(Color), typeof(GradientLabel), Colors.White);
 
         public Color StartColor
 		{
@@ -16,7 +16,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(StartColorProperty, value);
 		}
 
-		public static readonly BindableProperty EndColorProperty = BindableProperty.Create(nameof(EndColor), typeof(Color), typeof(Color), new Color(224, 224, 224));
+		public static readonly BindableProperty EndColorProperty = BindableProperty.Create(nameof(EndColor), typeof(Color), typeof(GradientLabel), new Color(224, 224, 224));
 
 		public Color EndColor
 		{
@@ -24,7 +24,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(EndColorProperty, value);
 		}
 
-		public static readonly BindableProperty ProgressProperty = BindableProperty.Create(nameof(Progress), typeof(float), typeof(float), 0.0f);
+		public static readonly BindableProperty ProgressProperty = BindableProperty.Create(nameof(Progress), typeof(float), typeof(GradientLabel), 0.0f);
 
 		public float Progress
 		{
@@ -32,7 +32,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(ProgressProperty, value);
 		}
 
-		public static readonly BindableProperty LabelOpacityProperty = BindableProperty.Create(nameof(LabelOpacity), typeof(float), typeof(float), 0.35f);
+		public static readonly BindableProperty LabelOpacityProperty = BindableProperty.Create(nameof(LabelOpacity), typeof(float), typeof(GradientLabel), 0.35f);
 
 		public float LabelOpacity
 		{
@@ -40,7 +40,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(LabelOpacityProperty, value);
 		}
 
-		public static readonly BindableProperty ShadowRadiusProperty = BindableProperty.Create(nameof(ShadowRadius), typeof(float), typeof(float), 10.0f);
+		public static readonly BindableProperty ShadowRadiusProperty = BindableProperty.Create(nameof(ShadowRadius), typeof(float), typeof(GradientLabel), 10.0f);
 
 		public float ShadowRadius
 		{
@@ -48,7 +48,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(ShadowRadiusProperty, value);
 		}
 
-		public static readonly BindableProperty ShadowOpacityProperty = BindableProperty.Create(nameof(ShadowOpacity), typeof(float), typeof(float), 0.0f);
+		public static readonly BindableProperty ShadowOpacityProperty = BindableProperty.Create(nameof(ShadowOpacity), typeof(float), typeof(GradientLabel), 0.0f);
 
 		public float ShadowOpacity
 		{
@@ -56,7 +56,7 @@ namespace BeautifulLyricsMobileV2.Controls
 			set => SetValue(ShadowOpacityProperty, value);
 		}
 
-		public static readonly BindableProperty LineVocalProperty = BindableProperty.Create(nameof(LineVocal), typeof(bool), typeof(bool), false);
+		public static readonly BindableProperty LineVocalProperty = BindableProperty.Create(nameof(LineVocal), typeof(bool), typeof(GradientLabel), false);
 
 		public bool LineVocal
 		{
