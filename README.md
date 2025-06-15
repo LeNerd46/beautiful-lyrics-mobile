@@ -1,5 +1,8 @@
 # Beautiful Lyrics Mobile
 
+> [!WARNING]
+> As of June 15, 2025, I will be leaving this project alone in favor of my new Xposed module, [Spotify Plus](https://github.com/LeNerd46/SpotifyPlus). Not only is it far more stable than this app, it works directly inside of Spotify, not a stand alone app. I see much more potential with this new project, and I think people will be more happy with it too. The API used to authenticate with Spotify will be shutting down as well, so if you wish to continue using this app, you will need to install v1.0.0-preview
+
 Tired of Spotify's boring lyrics? Hate Musixmatch's inaccuracy and basicness? This project aims to fix that by making lyrics *beautiful*, heavily based on [beautiful-lyrics](https://github.com/surfbryce/beautiful-lyrics) by [@surfbryce](https://github.com/surfbryce)
 
 ## Description
